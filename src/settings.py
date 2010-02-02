@@ -73,10 +73,10 @@ class Settings:
 							'user':'dclord_updates',
 							'password':'the-game-rules'
 			},'map':{
-							'bg_color':'black',
+							'bg_color':'#444444',
 							'fleet_route_color':'white',
 							'own_planet_color':'magenta',
-							'inhabited_planet_color':'green',
+							'inhabited_planet_color':'#8880DD',
 							'planet_color':'grey',
 							'last_pos_x':-1,
 							'last_pos_y':-1
