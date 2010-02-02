@@ -9,9 +9,9 @@ def diffPos(start, end):
 	return (x1-x0,y1-y0)
 	
 def realValue(visible):
-	pos = int(visible) % 2000
+	pos = int(visible) % 1000
 	if pos == 0:
-		return 2000
+		return 1000
 	return pos
 	
 def realPos(visible):
@@ -31,16 +31,19 @@ def mul(c1, d):
 	return (c1[0]*d, c1[1]*d)
 
 class Map(wx.Window):
-	def __init__(self, parent, db):
+	def __init__(self, parent, db, conf):
 		wx.Window.__init__(self, parent, -1, size=(800,600), style=wx.NO_FULL_REPAINT_ON_RESIZE)
 		
-		self.position = (1,1)
+		self.conf= conf
 	
 		self.db = db
+		self.anything = None
 		self.update(False)
 		
-		if len(self.planet)>0:
-			self.position=sub(self.planet.keys()[0], (5,5))
+		x = int(self.conf.s['map']['last_pos_x'])
+		y = int(self.conf.s['map']['last_pos_y'])
+		if x!=-1 and y!=-1:
+			self.position = (x,y)		
 		
 		# is the map moving now ( right button pressed )		
 		self.moving = False
@@ -56,7 +59,7 @@ class Map(wx.Window):
 		self.coordShift = (0,0)
 		self.selectedCell = None
 		
-		self.SetBackgroundColour("WHITE")
+		self.SetBackgroundColour(self.conf.s['map']['bg_color'])
 		self.Bind(wx.EVT_PAINT, self.OnPaint)
 
 		self.Bind(wx.EVT_RIGHT_DOWN, self.onRightDown)
@@ -65,22 +68,13 @@ class Map(wx.Window):
 		self.Bind(wx.EVT_MOTION, self.onMotion)
 		self.Bind(wx.EVT_MOUSEWHEEL, self.onScroll)
 		
-	def update(self, shouldRefresh=True):
-		self.planet = self.db.getFullPlanets()
-		self.fleet = self.db.getFullFleets()
-		self.player = self.db.getPlayers()
+	def update(self, shouldRefresh=True):		
+		if not self.anything:
+			self.anything = self.db.getNotEmptyCoord()
+			if self.anything:
+				self.position=sub(self.anything, (5,5))
 		if shouldRefresh:
 			self.Refresh()
-		
-	def getData(self, pos):
-		planet = None
-		if pos in self.planet:
-			planet = self.planet[pos]
-
-		fleets = []
-		if pos in self.fleet:
-			fleets = self.fleet[pos]
-		return (planet,fleets)
 	
 	def OnPaint(self, event):
 		dc = wx.PaintDC(self)
@@ -90,25 +84,30 @@ class Map(wx.Window):
 
 		dc.DestroyClippingRegion()
 		dc.SetClippingRegion(self.coordShift[0], self.coordShift[1], size.width, size.height)		
-		dc.SetPen(wx.Pen(wx.BLACK, 1, wx.DOT))
+		dc.SetPen(wx.Pen(wx.WHITE, 1, wx.DOT))
 		self.drawGrid(dc)
-		dc.SetPen(wx.BLACK_PEN)
+		dc.SetPen(wx.WHITE_PEN)
 		
 		xl = int(self.position[0])
 		yl = int(self.position[1])
 		
-		for x in range(xl, xl+size.width/self.planetSize+2):
-			for y in range(yl, yl+size.height/self.planetSize+2):
-				if realPos((x,y)) in self.planet:
-					self.drawPlanet(dc, (x,y))
-				if realPos((x,y)) in self.fleet:
-					self.drawFleets(dc, (x,y))
-					
+		#ask db to preload all items that we are looking for
+		sz = div(size,self.planetSize)
+		self.db.prepare((xl,yl), sz)
+		
+		planets = self.db.getAreaPlanets((xl,yl), sz)
+		for planet in planets.values():
+			self.drawPlanet(dc, planet)
+		
+		fleets = self.db.getAreaFleets((xl,yl), sz)
+		for flee in fleets.values():
+			self.drawFleets(dc, flee)
+
 	def onScroll(self, mouse):
 		pos = mouse.GetPosition()
 		logicPos = div(pos, float(self.planetSize))
 
-		if mouse.GetWheelRotation() > 0:
+		if mouse.GetWheelRotation() < 0:
 			if(self.planetSize <= self.minPlanetSize):
 				return
 				
@@ -138,12 +137,8 @@ class Map(wx.Window):
 		diff = div(sub(mouse.GetPosition(), self.shift()), self.planetSize)		
 		p=add(intPos(self.position), intPos(diff))
 
-		if p in self.planet:
-			wx.PostEvent(self.GetParent(), ObjectFocus(attr1=p, attr2=self.planet[p]))
-		elif p in self.fleet:
-			wx.PostEvent(self.GetParent(), ObjectFocus(attr1=p, attr2=self.fleet[p]))
-		else:
-			wx.PostEvent(self.GetParent(), ObjectFocus(attr1=p, attr2=""))
+		objects = self.db.getObjects(p[0],p[1])
+		wx.PostEvent(self.GetParent(), ObjectFocus(attr1=p, attr2=objects))
 		
 	def onMotion(self, mouse):
 		if not self.moving:
@@ -163,14 +158,14 @@ class Map(wx.Window):
 			self.Refresh()
 			self.prevPos = curPos
 
-	def drawFleets(self, dc, pos):
-		
-		for f in self.fleet[pos]:
-			self.drawFleet(dc, pos, f)
+	def drawFleets(self, dc, fleets):
+		for f in fleets:
+			self.drawFleet(dc, f)
 
-	def drawFleet(self, dc, pos, fleet):
-		f = fleet
-		if f.turnsLeft==0:
+	def drawFleet(self, dc, f):
+		pos = f.coord
+		
+		if not f.turnsLeft or f.turnsLeft==0:
 			if pos == f.posFrom and f.posFrom != f.coord: return
 			x,y = mul(sub(pos, self.position), self.planetSize)
 			dc.DrawCircle(x+3, y+3, 3)
@@ -193,50 +188,67 @@ class Map(wx.Window):
 		fy=(dy-sy)*2/3.0
 		
 		
-		dc.SetPen(wx.BLACK_PEN)	
+		dc.SetPen(wx.Pen(self.conf.s['map']['fleet_route_color']))
 		dc.DrawLine(sx+width,sy+width, sx+fx+width, sy+fy+width)
 		
-		dc.SetPen(wx.Pen(wx.BLACK, 1, wx.DOT))		
+		dc.SetPen(wx.Pen(self.conf.s['map']['fleet_route_color'], 1, wx.DOT))		
 		dc.DrawLine(dx+width,dy+width, sx+fx+width, sy+fy+width)
 		
-		dc.SetPen(wx.BLACK_PEN)
+		dc.SetPen(wx.Pen(self.conf.s['map']['fleet_route_color']))
 				
 		# and place on the 2/3ds of this route
 		cx,cy =  sx+fx+self.planetSize/2,sy+fy+self.planetSize/2
 		dc.DrawCircle(cx,cy, 3);
 		
-		text=f.ownerName
-		if f.name:
-			text+='/'+f.name
-		if f.turnsLeft!=0:
-			text+='[%s]'%(f.turnsLeft,)
-		
-		dc.DrawText(text, cx+5, cy+4)
+		#o = 'unknown'
+		#if f.owner:
+		#	o = f.owner.name
+		#text='%s/%s'%(o,f.name)
+		#if f.turnsLeft!=0:
+		#	text+='[%s]'%(f.turnsLeft,)
+		#
+		#dc.DrawText(text, cx+5, cy+4)
 		
 #		dc.DrawLine(sx+self.planetSize/2,sy+self.planetSize/2, ddx+self.planetSize/2, ddy+self.planetSize/2)
 
-	def drawPlanet(self, dc, pos):
-		planet = self.planet[realPos(pos)]
+	def drawPlanet(self, dc, planet):
+		#planet = self.planet[realPos(pos)]
+		pos = planet.coord
 		p = mul(sub(pos, self.position), self.planetSize)
 	
 		size = self.planetSize/2
-		if planet.geo and len(planet.geo) > 0:
-			size = size * int(planet.geo[0]/5+1) / 20.0
+		if 's' in planet.geo.keys():
+			size = size * (planet.geo['s']/5+1) / 20.0
 			if size < 1:
 				size = 1
 
 		x,y=p
-		
-		dc.DrawCircle(x+self.planetSize/2,y+self.planetSize/2, size)
+		#TODO: Check why only one race will draw MAGENTA
 		if planet.owner:
-			dc.DrawCircle(x+self.planetSize/2,y+self.planetSize/2, size - 4)
-			text = planet.ownerName
-			if planet.name:
-				text+='/'+planet.name
-			dc.DrawText(text, x+self.planetSize/2,y+self.planetSize/2)
+			if planet.owner.name in self.conf.users:
+				dc.SetPen(wx.Pen(self.conf.s['map']['own_planet_color']))
+				dc.SetBrush(wx.Brush(self.conf.s['map']['own_planet_color']))
+				dc.DrawText(planet.owner.name,x+10,y)
+			else:
+				dc.SetPen(wx.Pen(self.conf.s['map']['inhabited_planet_color']))
+				dc.SetBrush(wx.Brush(self.conf.s['map']['inhabited_planet_color']))
+		else:
+			dc.SetPen(wx.Pen(self.conf.s['map']['planet_color']))
+			dc.SetBrush(wx.Brush(self.conf.s['map']['planet_color']))
+		dc.DrawCircle(x+self.planetSize/2,y+self.planetSize/2, size)
+		#if planet.owner:
+		#	dc.DrawCircle(x+self.planetSize/2,y+self.planetSize/2, size - 4)
+		#	for l in conf.users.items():
+		#		text = l[0]
+		#		if planet.owner.name == text:
+		#			dc.DrawText(text, x+self.planetSize/2,y+self.planetSize/2)
+
+#		if planet.owner:
+#			dc.SetPen(wx.GREY_PEN)
+#			dc.SetBrush(wx.Brush('GREY'))
 		
-		if len(planet.geo)==5:
-			self.drawGeo(dc, p, planet.geo)
+#		if len(planet.geo)==5:
+#			self.drawGeo(dc, p, planet.geo)
 
 	def drawGeo(self, dc, pos, geo):
 		if self.planetSize < 20:

@@ -1,11 +1,10 @@
 def pos(name, coord):
-	#return '<%s>%s:%s</%s>'%(name, coord[0],coord[1],name)
 	return val(name, '%s:%s'%(coord[0],coord[1]))
 
 def val(name, value):
 	return '<%s>%s</%s>'%(name, value, name)
 
-class Request:
+class RequestMaker:
 	def __init__(self):
 		self.id = 0
 		self.req = ''
@@ -20,9 +19,42 @@ class Request:
 	
 	def planetSetName(self, coord, name):
 		return self.act("change_planet_name", pos('planetid', coord)+val('newname', name))
-	#	return '<act name="change_planet_name" id="1"><newname>%s</newname><planetid>%s:%s</planetid></act>'%(name,coord[0],coord[1])
 	
 	def fleetMove(self, fleetId, to):
 		return self.act('move_fleet', pos('move_to', to)+val('fleet_id',fleetId))
-	#	return '<act name="fleet_move"><fleet_id>%s</fleet_id><move_to>%s:%s</move_to></act>'%(name,coord[0],coord[1])
+	
+	def createNewFleet(self, planet, name):
+		plId = pos('planetid', planet)
+		nm = val('new_fleet_name', name)
+		return self.act('create_new_fleet', plId + nm)
+
+class RequestList:
+	def __init__(self):
+		self.req = {}
 		
+#	def 
+#
+#class Command:
+#	def __init__(self, db, player, cb):
+#		self.db = db
+#		self.player=player
+#		self.req = RequestMaker()
+#		self.cb = cb
+		
+	def renamePlanet(self, player, coord, name):
+		return self.req[player].planetSetName(coord, name)
+	
+	def createFleet(self, player, coord, name):
+		"""return pseudo fleet id
+		"""
+		return self.req[player].createNewFleet(coord, name)
+
+	def moveFleet(self, player, fleet, coord):
+		return self.req[player].fleetMove(fleet.id, coord)
+	
+#	def req(self):
+#		al = AsyncLoader()
+#	
+#class RequestFrame(wx.Frame):
+#	def __init__(self, parent):
+#		wx.Frame.__init__(self, parent, wx.ID_ANY)
