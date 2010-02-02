@@ -56,7 +56,6 @@ class Loader:
 	def parse(self, file):
 		xmldoc = minidom.parse(file)
 		node = xmldoc.firstChild
-		#print "turn:",node.attributes["turn"].value
 				
 		main = node.getElementsByTagName("iframe")
 		err = node.getElementsByTagName("errors")
@@ -87,7 +86,7 @@ class Loader:
 			return None
 		thisPlayer = generalInfo[0].getElementsByTagName("this-player")[0]
 
-		player = convertDict(thisPlayer.attributes,{'player-id':'id', 'player-name':'name',
+		player = convertDict(thisPlayer.attributes,{'login':'login','player-id':'id', 'player-name':'name',
 																								 'homeworldx':'hw_x', 'homeworldy':'hw_y'}) 
 		self.db.addObject('player', player)
 		
@@ -151,7 +150,9 @@ class Loader:
 
 		players = node.getElementsByTagName('diplomacy')
 		for p in players[0].getElementsByTagName('rel'):
-			self.db.addObject('player', convertDict(p.attributes, {'player':'id', 'name':'name'}))
+			d = convertDict(p.attributes, {'player':'id', 'name':'name'})
+			if not self.db.getPlayer(d['id']):
+				self.db.addObject('player', d)
 			
 		return True
 

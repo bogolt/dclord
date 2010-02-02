@@ -225,7 +225,7 @@ class Map(wx.Window):
 		x,y=p
 		#TODO: Check why only one race will draw MAGENTA
 		if planet.owner:
-			if planet.owner.name in self.conf.users:
+			if planet.owner.login in self.conf.users:
 				dc.SetPen(wx.Pen(self.conf.s['map']['own_planet_color']))
 				dc.SetBrush(wx.Brush(self.conf.s['map']['own_planet_color']))
 				dc.DrawText(planet.owner.name,x+10,y)
