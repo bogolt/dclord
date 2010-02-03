@@ -36,6 +36,7 @@ class Map(wx.Window):
 		
 		self.conf= conf
 	
+		self.position = 1,1
 		self.db = db
 		self.anything = None
 		self.update(False)
@@ -43,7 +44,7 @@ class Map(wx.Window):
 		x = int(self.conf.s['map']['last_pos_x'])
 		y = int(self.conf.s['map']['last_pos_y'])
 		if x!=-1 and y!=-1:
-			self.position = (x,y)		
+			self.position = (x,y)
 		
 		# is the map moving now ( right button pressed )		
 		self.moving = False
