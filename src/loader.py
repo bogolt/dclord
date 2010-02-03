@@ -149,8 +149,8 @@ class Loader:
 				self.db.addObject('proto',p)
 
 		players = node.getElementsByTagName('diplomacy')
-		for p in players[0].getElementsByTagName('rel'):
-			d = convertDict(p.attributes, {'player':'id', 'name':'name'})
+		for player in players[0].getElementsByTagName('rel'):
+			d = convertDict(player.attributes, {'player':'id', 'name':'name'})
 			if not self.db.getPlayer(d['id']):
 				self.db.addObject('player', d)
 			

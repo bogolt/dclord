@@ -145,9 +145,9 @@ class DcFrame(wx.Frame):
 		#self.req = {'userid',req}
 
 		asyncLoader = AsyncLoader(self, self.conf)
-		for l in self.conf.users.items():
-			asyncLoader.recvUserInfo(l, 'all', self.conf.pathArchive)
-			asyncLoader.recvUserInfo(l, 'known_planets', self.conf.pathArchive)
+		for login in self.conf.users.items():
+			asyncLoader.recvUserInfo(login, 'all', self.conf.pathArchive)
+			asyncLoader.recvUserInfo(login, 'known_planets', self.conf.pathArchive)
 			
 			
 			

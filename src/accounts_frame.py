@@ -35,8 +35,8 @@ class AccountsFrame(wx.Frame):
 		
 		self.users.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.playersMenu)
 		
-		for user,pasw in self.conf.users.items():
-			self.users.Append((user,pasw))
+		for user,password in self.conf.users.items():
+			self.users.Append((user,password))
 	
 
 	def close(self, evt):

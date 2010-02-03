@@ -47,12 +47,11 @@ class PlanetProperty(wx.Panel):
 
 		root = self.tree.AddRoot('rt')
 
-		for u in planet.garrison():
+		for units in planet.garrison():
 			text = ''
-			if u.quantity > 1:
-				text = str(u.quantity)
-			self.tree.AppendItem(root, text, self.conf.imageList.getImageKey(u.proto))
-
+			if units.quantity > 1:
+				text = str(units.quantity)
+			self.tree.AppendItem(root, text, self.conf.imageList.getImageKey(units.proto))
 		self.tree.ExpandAll()
 		self.SetAutoLayout(True)
 		self.Layout()
@@ -82,20 +81,20 @@ class FleetProperty(wx.Panel):
 
 		root = self.tree.AddRoot('rt')
 		users = {}
-		for f in fleets:
+		for fleet in fleets:
 			name = '? unknown'
-			if f.owner:
-				name = f.owner.name
+			if fleet.owner:
+				name = fleet.owner.name
 			
 			if not (name in users.keys()):
 				users[name] = self.tree.AppendItem(root, name)
 			fn = 'unknown'
-			if f.name:
-				fn = f.name
+			if fleet.name:
+				fn = fleet.name
 			fobj = self.tree.AppendItem(users[name], fn)
-			for u in f.units:
-				imgKey = self.conf.imageList.getImageKey(u.proto)
-				self.tree.AppendItem(fobj, str(u.proto.weight), imgKey)
+			for unit in fleet.units:
+				imgKey = self.conf.imageList.getImageKey(unit.proto)
+				self.tree.AppendItem(fobj, str(unit.proto.weight), imgKey)
 
 		self.tree.ExpandAll()
 		self.SetAutoLayout(True)
