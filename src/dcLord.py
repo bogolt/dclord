@@ -124,6 +124,7 @@ class DcFrame(wx.Frame):
 	def showAbout(self, event):
 		info = wx.AboutDialogInfo()
 		info.AddDeveloper('bogolt (bogolt@gmail.com)')
+		info.AddDeveloper('librarian (menkovich@gmail.com)')
 		info.SetName('dcLord')
 		info.SetWebSite('http://sourceforge.net/projects/dclord')
 		info.SetVersion(version)
