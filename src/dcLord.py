@@ -8,6 +8,7 @@ from loader import Loader, AsyncLoader
 from property import PlanetProperty, FleetProperty, Messages
 from db import Db
 from settings import Settings
+#from update import Update
 
 #don't remove this - otherwise cxfreeze don't freeze it properly
 from accounts_frame import AccountsFrame
@@ -26,7 +27,9 @@ class DcFrame(wx.Frame):
 		self.SetStatusBar(self.status)
 		
 		self.db = Db()
-		self.conf = Settings(self)			
+		self.conf = Settings(self)	
+		
+		#self.update = Update(self, self.conf, version)		
 		
 		self.loader = Loader(self.conf, self.db, self)
 		self.loader.load()
