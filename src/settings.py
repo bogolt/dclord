@@ -67,8 +67,9 @@ class Settings:
 		self.s = {
 			'network':{
 								'host':'www.the-game.ru',
-								'debug':'0'
+								'debug':0
 			},'update':{
+							'disable':0,
 							'host':'xor.undo.it',
 							'user':'dclord_updates',
 							'password':'the-game-rules'
