@@ -43,7 +43,7 @@ def toDict(pairList):
 
 class Settings:
 	def __init__(self, callback):
-		self.dir = wx.StandardPaths.Get().GetUserDataDir()
+		self.dir = wx.StandardPaths.Get().GetUserConfigDir() + '/.config/dclord'
 		assurePathExist(self.dir)
 		self.path = os.path.join(self.dir, 'dcLord.cfg')
 		self.usersPath = os.path.join(self.dir, 'users.cfg')
