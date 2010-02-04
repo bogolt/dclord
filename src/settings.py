@@ -1,6 +1,7 @@
 import wx
 import ConfigParser
 import os.path
+import logging
 from zipfile import ZipFile
 from tempfile import gettempdir
 from loader import AsyncLoader
@@ -45,15 +46,13 @@ class Settings:
 	def __init__(self, callback):
 		self.dir = wx.StandardPaths.Get().GetUserConfigDir() + '/.config/dclord'
 		assurePathExist(self.dir)
-		self.path = os.path.join(self.dir, 'dcLord.cfg')
+		self.path = os.path.join(self.dir, 'dclord.cfg')
 		self.usersPath = os.path.join(self.dir, 'users.cfg')
 		self.callback = callback
 		self.panes = ''
 		self.users = {} 
-		
 		self.debug = False
-		
-		self.pathTemp = os.path.join(gettempdir(),'dc_lord')
+		self.pathTemp = os.path.join(gettempdir(),'dclord')
 		assurePathExist(self.pathTemp)
 				
 		self.pathArchive = os.path.join(self.pathTemp, 'archive')
@@ -82,7 +81,9 @@ class Settings:
 							'planet_color':'grey',
 							'last_pos_x':-1,
 							'last_pos_y':-1
-		}
+			}, 'log':{
+								'log':0
+			}
 		}
 		
 		self.load()
