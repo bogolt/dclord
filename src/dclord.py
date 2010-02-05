@@ -1,8 +1,9 @@
 import wx.aui
 import dcevent
 from wx import xrc
-
+import logging
 import os.path
+
 from map import Map
 from loader import Loader, AsyncLoader
 from property import PlanetProperty, FleetProperty, Messages
@@ -13,21 +14,26 @@ from settings import Settings
 #don't remove this - otherwise cxfreeze don't freeze it properly
 from accounts_frame import AccountsFrame
 
-version = '0.1.3'
 
-class DcFrame(wx.Frame):
+version = '0.1.3'
+debug = False
+if debug:
+	LOG_PATH='/tmp/dclord.log'
+	logging.basicConfig(filename=LOG_PATH,level=logging.DEBUG,format="%(asctime)s  %(levelname)s : %(message)s")
+	
+
+
+class DcFrame(wx.Frame, logging.Handler):
 	def __init__(self, parent):
 		wx.Frame.__init__(self, parent, -1, "dcLord (%s): Divide & Conquer client (www.the-game.ru)"%(version,), style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
 
 		self.players = None
-		
 		self.status = wx.StatusBar(self)
 		self.status.SetStatusText("loading...")
 		self.SetStatusBar(self.status)
-		
+		logging.debug('dclord init')
 		self.db = Db()
-		self.conf = Settings(self)	
-		
+		self.conf = Settings(self)
 		#self.update = Update(self, self.conf, version)		
 		
 		self.loader = Loader(self.conf, self.db, self)
@@ -121,6 +127,7 @@ class DcFrame(wx.Frame):
 	def showAbout(self, event):
 		info = wx.AboutDialogInfo()
 		info.AddDeveloper('bogolt (bogolt@gmail.com)')
+		info.AddDeveloper('librarian (menkovich@gmail.com)')
 		info.SetName('dcLord')
 		info.SetWebSite('http://sourceforge.net/projects/dclord')
 		info.SetVersion(version)

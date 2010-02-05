@@ -1,6 +1,7 @@
 import wx
 import ConfigParser
 import os.path
+import logging
 from zipfile import ZipFile
 from tempfile import gettempdir
 from loader import AsyncLoader
@@ -14,7 +15,6 @@ class UnitImageList:
 	def getImageKey(self, proto):
 		pKey = (proto.id,proto.color)
 		if pKey in self.imgKeys.keys():
-			print '%s key already in'%(pKey,)
 			return self.imgKeys[pKey]
 		
 		pt = ['%s.gif'%(proto.id,),'carps/%s_%s.gif'%(proto.carapace,proto.color)]
@@ -23,7 +23,7 @@ class UnitImageList:
 			if os.path.exists(imgPath):
 				key = self.imgList.Add(wx.Image(imgPath).Rescale(20,20).ConvertToBitmap())
 				self.imgKeys[pKey] = key
-				print 'key %s %s loaded for class %s, cara %s'%(key, imgPath, proto.id, proto.carapace)
+				#print 'key %s %s loaded for class %s, cara %s'%(key, imgPath, proto.id, proto.carapace)
 				return key
 
 		# the only bug can happen if static.zip is not downloaded yet, but it will be fixed after
@@ -44,17 +44,15 @@ def toDict(pairList):
 
 class Settings:
 	def __init__(self, callback):
-		self.dir = wx.StandardPaths.Get().GetUserDataDir()
+		self.dir = wx.StandardPaths.Get().GetUserConfigDir() + '/.config/dclord'
 		assurePathExist(self.dir)
-		self.path = os.path.join(self.dir, 'dcLord.cfg')
+		self.path = os.path.join(self.dir, 'dclord.cfg')
 		self.usersPath = os.path.join(self.dir, 'users.cfg')
 		self.callback = callback
 		self.panes = ''
 		self.users = {} 
-		
 		self.debug = False
-		
-		self.pathTemp = os.path.join(gettempdir(),'dc_lord')
+		self.pathTemp = os.path.join(gettempdir(),'dclord')
 		assurePathExist(self.pathTemp)
 				
 		self.pathArchive = os.path.join(self.pathTemp, 'archive')
@@ -86,7 +84,9 @@ class Settings:
 							'grid_color':'darkgrey',
 							'coord_color':'white',
 							'add_debug_planets':0
-		}
+			}, 'log':{
+								'log':0
+			}
 		}
 		
 		self.load()
