@@ -19,7 +19,6 @@ class DcFrame(wx.Frame):
 	def __init__(self, parent):
 		wx.Frame.__init__(self, parent, -1, "dcLord (%s): Divide & Conquer client (www.the-game.ru)"%(version,), style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
 
-		#self.res, self.playerView = None,None
 		self.players = None
 		
 		self.status = wx.StatusBar(self)
@@ -56,8 +55,6 @@ class DcFrame(wx.Frame):
 		self._mgr.AddPane(self.messages, wx.BOTTOM, "Messages")
 
 		self._mgr.Update()
-		#self._mgr.LoadPerspective(self.conf.panes, True)
-		#update aui
 
 		self.res = xrc.XmlResource('res/dcLord.xrc')
 
@@ -113,9 +110,9 @@ class DcFrame(wx.Frame):
 		self.showHidePane(self.messages)
 		
 	def onClose(self, event):
-		self.conf.panes = self._mgr.SavePerspective()
-		#print 'saving "%s"'%(self.conf.panes,)
-		#self.conf.save()
+#		self.conf.panes = self._mgr.SavePerspective()
+#		#print 'saving "%s"'%(self.conf.panes,)
+#		#self.conf.save()
 		self.Destroy()
 		
 	def closeApp(self, event):
@@ -141,24 +138,12 @@ class DcFrame(wx.Frame):
 	
 	def sync(self, event):
 		self.syncMenu.Enable(False)
-		
-		#self.req = {'userid',req}
 
 		asyncLoader = AsyncLoader(self, self.conf)
 		for login in self.conf.users.items():
 			asyncLoader.recvUserInfo(login, 'all', self.conf.pathArchive)
 			asyncLoader.recvUserInfo(login, 'known_planets', self.conf.pathArchive)
-			
-			
-			
-#			asyncLoader.recvActionsReply(loginInfo, self.req[], self.conf.pathArchive)
-		
 		asyncLoader.start()
-
-		#self.syncMenu.Enable(False)
-		
-		#self.loader = Loader(self.conf, self.db, self)
-		#self.loader.sync()
 	
 	def objectFocus(self, event):
 		pos = event.attr1
@@ -186,6 +171,7 @@ class DcFrame(wx.Frame):
 		self.syncMenu.Enable(True)
 		
 		self.SetStatusText('sync finished')
+
 
 if __name__ == '__main__':
 	app = wx.PySimpleApp()

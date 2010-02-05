@@ -85,7 +85,6 @@ class Map(wx.Window):
 
 		dc.DestroyClippingRegion()
 		dc.SetClippingRegion(self.coordShift[0], self.coordShift[1], size.width, size.height)		
-		dc.SetPen(wx.Pen(wx.WHITE, 1, wx.DOT))
 		self.drawGrid(dc)
 		dc.SetPen(wx.WHITE_PEN)
 		
@@ -94,7 +93,8 @@ class Map(wx.Window):
 		
 		#ask db to preload all items that we are looking for
 		sz = div(size,self.planetSize)
-		self.db.prepare((xl,yl), sz)
+		ps = (xl,yl)
+		self.db.prepare(ps, sz)
 		
 		planets = self.db.getAreaPlanets((xl,yl), sz)
 		for planet in planets.values():
@@ -306,7 +306,8 @@ class Map(wx.Window):
 
 		dx,dy=self.shift()
 
-		y=0					
+		dc.SetPen(wx.Pen(self.conf.s['map']['grid_color']))
+		y=0			
 		for x in range(0, size.width/self.planetSize+2):			
 			dc.DrawLine(dx + x*self.planetSize, dy+y*self.planetSize, dx+x*self.planetSize, y+size.height+self.planetSize)
 
@@ -327,6 +328,7 @@ class Map(wx.Window):
 
 		topCoordHeight = 0
 		dc.DestroyClippingRegion()
+		dc.SetPen(wx.Pen(self.conf.s['map']['coord_color']))
 		#top(vertical) row of coordinates
 		if self.planetSize < textSize[0]:
 			i=1

@@ -28,12 +28,13 @@ class PlanetProperty(wx.Panel):
 		l.Add(self.planetView)
 		self.tree = wx.TreeCtrl(self, style = wx.TR_HIDE_ROOT)
 		self.conf = conf
-		self.tree.AssignImageList(self.conf.imageList.imgList)
+		self.tree.SetImageList(self.conf.imageList.imgList)
 		
 		l.Add(self.tree, 2, wx.EXPAND)
 		self.SetSizer(l)
 		self.SetAutoLayout(True)
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
+		self.SetAutoLayout(True)
 	
 	def onSize(self, evt):
 		if self.GetAutoLayout():
@@ -44,7 +45,6 @@ class PlanetProperty(wx.Panel):
 		self.planetView.set(planet)
 		if not planet:
 			return
-
 		root = self.tree.AddRoot('rt')
 
 		for units in planet.garrison():
@@ -53,7 +53,6 @@ class PlanetProperty(wx.Panel):
 				text = str(units.quantity)
 			self.tree.AppendItem(root, text, self.conf.imageList.getImageKey(units.proto))
 		self.tree.ExpandAll()
-		self.SetAutoLayout(True)
 		self.Layout()
 
 class FleetProperty(wx.Panel):
@@ -63,7 +62,7 @@ class FleetProperty(wx.Panel):
 		l = wx.BoxSizer(wx.VERTICAL)
 		self.tree = wx.TreeCtrl(self, style = wx.TR_HIDE_ROOT)
 		self.conf = conf
-		self.tree.AssignImageList(self.conf.imageList.imgList)
+		self.tree.SetImageList(self.conf.imageList.imgList)
 		
 		l.Add(self.tree, 2, wx.EXPAND)
 		self.SetSizer(l)

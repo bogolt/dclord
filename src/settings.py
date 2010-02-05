@@ -14,6 +14,7 @@ class UnitImageList:
 	def getImageKey(self, proto):
 		pKey = (proto.id,proto.color)
 		if pKey in self.imgKeys.keys():
+			print '%s key already in'%(pKey,)
 			return self.imgKeys[pKey]
 		
 		pt = ['%s.gif'%(proto.id,),'carps/%s_%s.gif'%(proto.carapace,proto.color)]
@@ -22,7 +23,7 @@ class UnitImageList:
 			if os.path.exists(imgPath):
 				key = self.imgList.Add(wx.Image(imgPath).Rescale(20,20).ConvertToBitmap())
 				self.imgKeys[pKey] = key
-				#print 'key %s %s loaded for class %s, cara %s'%(key, imgPath, cls, cara)
+				print 'key %s %s loaded for class %s, cara %s'%(key, imgPath, proto.id, proto.carapace)
 				return key
 
 		# the only bug can happen if static.zip is not downloaded yet, but it will be fixed after
@@ -81,7 +82,10 @@ class Settings:
 							'inhabited_planet_color':'#8880DD',
 							'planet_color':'grey',
 							'last_pos_x':-1,
-							'last_pos_y':-1
+							'last_pos_y':-1,
+							'grid_color':'darkgrey',
+							'coord_color':'white',
+							'add_debug_planets':0
 		}
 		}
 		
