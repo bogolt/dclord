@@ -75,8 +75,11 @@ class Settings:
 							'password':'the-game-rules'
 			},'map':{
 							'bg_color':'#444444',
+							'greed_color':'white',
 							'fleet_route_color':'white',
+							'fleet_color':'white',
 							'own_planet_color':'magenta',
+							'planet_owner_text_color':'white',
 							'inhabited_planet_color':'#8880DD',
 							'planet_color':'grey',
 							'last_pos_x':-1,
