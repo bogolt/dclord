@@ -34,7 +34,7 @@ class DcFrame(wx.Frame, logging.Handler):
 		logging.debug('dclord init')
 		self.db = Db()
 		self.conf = Settings(self)
-		#self.update = Update(self, self.conf, version)		
+		#self.update = Update(self, self.conf, version)
 		
 		self.loader = Loader(self.conf, self.db, self)
 		self.loader.load()

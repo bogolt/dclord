@@ -33,10 +33,13 @@ class Loader:
 		if 1==self.conf.s['map']['add_debug_planets']:
 			self.addDebugPlanets()
 			
+		#self.loadGalaxySizes()
+			
 	def addDebugPlanets(self):
-		for x in range(400):
-			for y in range(400):
-				self.db.addObject('planet', {'x':x, 'y':y, 'name':'%s_%s_debug'%(x,y), 's':35})
+		import random
+		for x in range(30):
+			for y in range(10):
+				self.db.addObject('planet', {'x':600+x,'y':300+y,'s':random.randint(1,99)})
 				
 	def loadFile(self, file):
 		bname = os.path.basename(file)
@@ -170,6 +173,12 @@ class Loader:
 			out.write(f.read())
 		
 		f.close()
+		
+	def loadGalaxySizes(self):		
+		with open(os.path.join(self.conf.dir, 'img_size.txt'), 'rb') as f:
+			for line in f:
+				for i,s in enumerate(line):
+					self.db.addObject('planet', {'x':l,'y':i,'s':s*10})
 
 class AsyncLoader(Thread):
 	def __init__(self, cb, conf):

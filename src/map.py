@@ -32,7 +32,7 @@ def mul(c1, d):
 
 class Map(wx.Window):
 	def __init__(self, parent, db, conf):
-		wx.Window.__init__(self, parent, -1, size=(800,600), style=wx.NO_FULL_REPAINT_ON_RESIZE)
+		wx.Window.__init__(self, parent, -1, size=(-1,-1), style=wx.NO_FULL_REPAINT_ON_RESIZE)
 		
 		self.conf= conf
 	
@@ -40,6 +40,10 @@ class Map(wx.Window):
 		self.db = db
 		self.anything = None
 		self.update(False)
+		
+		size = self.GetClientSize()
+		
+		self.img = wx.EmptyBitmap(size[0], size[1])
 		
 		x = int(self.conf.s['map']['last_pos_x'])
 		y = int(self.conf.s['map']['last_pos_y'])
@@ -68,6 +72,12 @@ class Map(wx.Window):
 		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)		
 		self.Bind(wx.EVT_MOTION, self.onMotion)
 		self.Bind(wx.EVT_MOUSEWHEEL, self.onScroll)
+		self.Bind(wx.EVT_SIZE, self.onResize)
+		
+	def onResize(self, evt):
+		size = self.GetClientSize()
+		if self.img.GetSize() != size:
+			self.img = wx.EmptyBitmap(size[0], size[1])
 		
 	def update(self, shouldRefresh=True):		
 		if not self.anything:
@@ -78,15 +88,18 @@ class Map(wx.Window):
 			self.Refresh()
 	
 	def OnPaint(self, event):
-		dc = wx.PaintDC(self)
-		size = self.GetClientSize()
+		dc = wx.BufferedPaintDC(self, self.img)
+		
+		size = self.img.GetSize()#self.GetClientSize()
+		
+		dc.SetBrush(wx.Brush(self.conf.s['map']['bg_color']))
+		dc.DrawRectangle(0,0, size[0], size[1])
 
 		self.drawCoordinates(dc)
 
 		dc.DestroyClippingRegion()
 		dc.SetClippingRegion(self.coordShift[0], self.coordShift[1], size.width, size.height)		
 		self.drawGrid(dc)
-		#dc.SetPen(wx.WHITE_PEN)
 		
 		xl = int(self.position[0])
 		yl = int(self.position[1])
@@ -104,6 +117,8 @@ class Map(wx.Window):
 		fleets = self.db.getAreaFleets((xl,yl), sz)
 		for flee in fleets.values():
 			self.drawFleets(dc, flee)
+			
+		#dc.
 
 	def onScroll(self, mouse):
 		pos = mouse.GetPosition()
@@ -277,11 +292,11 @@ class Map(wx.Window):
 
 		dc.SetPen(wx.Pen(self.conf.s['map']['grid_color']))
 		y=0			
-		for x in range(0, size.width/self.planetSize+2):			
+		for x in range(0, size.width/self.planetSize+2):
 			dc.DrawLine(dx + x*self.planetSize, dy+y*self.planetSize, dx+x*self.planetSize, y+size.height+self.planetSize)
 
 		x=0
-		for y in range(0, size.height/self.planetSize+2):			
+		for y in range(0, size.height/self.planetSize+2):
 			dc.DrawLine(dx + x*self.planetSize, dy+y*self.planetSize, y+size.width+self.planetSize, dy+self.planetSize*y)
 
 	def drawCoordinates(self, dc):
