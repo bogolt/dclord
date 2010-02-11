@@ -29,6 +29,14 @@ class Loader:
 		self.db = db
 		self.callback = callback
 		self.conf = conf
+		
+		if 1==self.conf.s['map']['add_debug_planets']:
+			self.addDebugPlanets()
+			
+	def addDebugPlanets(self):
+		for x in range(400):
+			for y in range(400):
+				self.db.addObject('planet', {'x':x, 'y':y, 'name':'%s_%s_debug'%(x,y), 's':35})
 				
 	def loadFile(self, file):
 		bname = os.path.basename(file)

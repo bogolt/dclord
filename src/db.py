@@ -199,7 +199,8 @@ class Db:
 		
 		self.player[id] = p
 		return p
-	
+
+	#TODO: how will it work for corner coords? -> split into 4 prepares
 	def prepare(self, pos, size):
 		self.planet.update(self.getAreaPlanets(pos, size))
 		self.fleet.update(self.getAreaFleets(pos, size))

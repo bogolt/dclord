@@ -85,17 +85,18 @@ class Map(wx.Window):
 
 		dc.DestroyClippingRegion()
 		dc.SetClippingRegion(self.coordShift[0], self.coordShift[1], size.width, size.height)		
-		dc.SetPen(wx.Pen(wx.WHITE, 1, wx.DOT))
 		self.drawGrid(dc)
-		dc.SetPen(wx.WHITE_PEN)
+		#dc.SetPen(wx.WHITE_PEN)
 		
 		xl = int(self.position[0])
 		yl = int(self.position[1])
 		
 		#ask db to preload all items that we are looking for
 		sz = div(size,self.planetSize)
-		self.db.prepare((xl,yl), sz)
+		ps = (xl,yl)
+		self.db.prepare(ps, sz)
 		
+		dc.SetTextForeground(self.conf.s['map']['planet_owner_text_color'])
 		planets = self.db.getAreaPlanets((xl,yl), sz)
 		for planet in planets.values():
 			self.drawPlanet(dc, planet)
@@ -167,6 +168,7 @@ class Map(wx.Window):
 		pos = f.coord
 		
 		if not f.turnsLeft or f.turnsLeft==0:
+			dc.SetPen(wx.Pen(self.conf.s['map']['fleet_color']))
 			if pos == f.posFrom and f.posFrom != f.coord: return
 			x,y = mul(sub(pos, self.position), self.planetSize)
 			dc.DrawCircle(x+3, y+3, 3)
@@ -180,10 +182,6 @@ class Map(wx.Window):
 		
 		width=self.planetSize/2
 
-				
-		# the fleet is flying, so draw it's route
-		#dc.DrawLine(sx+self.planetSize/2,sy+self.planetSize/2, dx+self.planetSize/2, dy+self.planetSize/2)
-		
 		#get 2/3 of the line
 		fx=(dx-sx)*2/3.0
 		fy=(dy-sy)*2/3.0
@@ -195,25 +193,13 @@ class Map(wx.Window):
 		dc.SetPen(wx.Pen(self.conf.s['map']['fleet_route_color'], 1, wx.DOT))		
 		dc.DrawLine(dx+width,dy+width, sx+fx+width, sy+fy+width)
 		
-		dc.SetPen(wx.Pen(self.conf.s['map']['fleet_route_color']))
+		dc.SetPen(wx.Pen(self.conf.s['map']['fleet_color']))
 				
 		# and place on the 2/3ds of this route
 		cx,cy =  sx+fx+self.planetSize/2,sy+fy+self.planetSize/2
 		dc.DrawCircle(cx,cy, 3);
-		
-		#o = 'unknown'
-		#if f.owner:
-		#	o = f.owner.name
-		#text='%s/%s'%(o,f.name)
-		#if f.turnsLeft!=0:
-		#	text+='[%s]'%(f.turnsLeft,)
-		#
-		#dc.DrawText(text, cx+5, cy+4)
-		
-#		dc.DrawLine(sx+self.planetSize/2,sy+self.planetSize/2, ddx+self.planetSize/2, ddy+self.planetSize/2)
 
 	def drawPlanet(self, dc, planet):
-		#planet = self.planet[realPos(pos)]
 		pos = planet.coord
 		p = mul(sub(pos, self.position), self.planetSize)
 	
@@ -224,7 +210,6 @@ class Map(wx.Window):
 				size = 1
 
 		x,y=p
-		#TODO: Check why only one race will draw MAGENTA
 		if planet.owner:
 			if planet.owner.login in self.conf.users:
 				dc.SetPen(wx.Pen(self.conf.s['map']['own_planet_color']))
@@ -238,19 +223,6 @@ class Map(wx.Window):
 			dc.SetPen(wx.Pen(self.conf.s['map']['planet_color']))
 			dc.SetBrush(wx.Brush(self.conf.s['map']['planet_color']))
 		dc.DrawCircle(x+self.planetSize/2,y+self.planetSize/2, size)
-		#if planet.owner:
-		#	dc.DrawCircle(x+self.planetSize/2,y+self.planetSize/2, size - 4)
-		#	for l in conf.users.items():
-		#		text = l[0]
-		#		if planet.owner.name == text:
-		#			dc.DrawText(text, x+self.planetSize/2,y+self.planetSize/2)
-
-#		if planet.owner:
-#			dc.SetPen(wx.GREY_PEN)
-#			dc.SetBrush(wx.Brush('GREY'))
-		
-#		if len(planet.geo)==5:
-#			self.drawGeo(dc, p, planet.geo)
 
 	def drawGeo(self, dc, pos, geo):
 		if self.planetSize < 20:
@@ -290,9 +262,6 @@ class Map(wx.Window):
 		
 	def visibleGalaxySize(self):
 		return self.GetClientSize() - self.border
-		
-#	def leftTopVisibleGalaxy(self):
-#		return self.border
 
 	def shift(self):
 		xshift = self.position[0]-int(self.position[0])
@@ -307,7 +276,8 @@ class Map(wx.Window):
 
 		dx,dy=self.shift()
 
-		y=0					
+		dc.SetPen(wx.Pen(self.conf.s['map']['grid_color']))
+		y=0			
 		for x in range(0, size.width/self.planetSize+2):			
 			dc.DrawLine(dx + x*self.planetSize, dy+y*self.planetSize, dx+x*self.planetSize, y+size.height+self.planetSize)
 
@@ -328,6 +298,7 @@ class Map(wx.Window):
 
 		topCoordHeight = 0
 		dc.DestroyClippingRegion()
+		dc.SetTextForeground(self.conf.s['map']['coord_color'])
 		#top(vertical) row of coordinates
 		if self.planetSize < textSize[0]:
 			i=1
@@ -348,7 +319,7 @@ class Map(wx.Window):
 
 		dc.DestroyClippingRegion()
 		dc.SetClippingRegion(0, topCoordHeight, textSize[0], size.height)
-		#left(horizontal) now of the coordiantes
+		#left(horizontal) now of the coordinates
 		j=1
 		for y in range(1, size.height/self.planetSize+2):
 			dc.DrawText(str(realValue(self.position[1]+j)), 0, dy+y*self.planetSize)

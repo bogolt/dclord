@@ -23,7 +23,7 @@ class UnitImageList:
 			if os.path.exists(imgPath):
 				key = self.imgList.Add(wx.Image(imgPath).Rescale(20,20).ConvertToBitmap())
 				self.imgKeys[pKey] = key
-				#print 'key %s %s loaded for class %s, cara %s'%(key, imgPath, cls, cara)
+				#print 'key %s %s loaded for class %s, cara %s'%(key, imgPath, proto.id, proto.carapace)
 				return key
 
 		# the only bug can happen if static.zip is not downloaded yet, but it will be fixed after
@@ -75,12 +75,18 @@ class Settings:
 							'password':'the-game-rules'
 			},'map':{
 							'bg_color':'#444444',
+							'greed_color':'white',
 							'fleet_route_color':'white',
+							'fleet_color':'white',
 							'own_planet_color':'magenta',
+							'planet_owner_text_color':'white',
 							'inhabited_planet_color':'#8880DD',
 							'planet_color':'grey',
 							'last_pos_x':-1,
-							'last_pos_y':-1
+							'last_pos_y':-1,
+							'grid_color':'darkgrey',
+							'coord_color':'white',
+							'add_debug_planets':0
 			}, 'log':{
 								'log':0
 			}
