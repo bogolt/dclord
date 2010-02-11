@@ -229,7 +229,8 @@ class Map(wx.Window):
 			if planet.owner.login in self.conf.users:
 				dc.SetPen(wx.Pen(self.conf.s['map']['own_planet_color']))
 				dc.SetBrush(wx.Brush(self.conf.s['map']['own_planet_color']))
-				dc.DrawText(planet.owner.name,x+10,y)
+				#do not display owner planet name... it is good only for debug
+				#dc.DrawText(planet.owner.name,x+10,y)
 			else:
 				dc.SetPen(wx.Pen(self.conf.s['map']['inhabited_planet_color']))
 				dc.SetBrush(wx.Brush(self.conf.s['map']['inhabited_planet_color']))
