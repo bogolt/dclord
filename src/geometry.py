@@ -113,7 +113,6 @@ class GameRect:
 		yield self.pos, sizeTopLeft
 		
 		ext = topRight-self.galaxySize
-		#print 'minimized %s to %s'%(topRight, ext,)
 		if ext.x > 0:
 			rightPos  = Coord(1, self.pos.y)
 			rightSize = ext.x,self.size[1]
