@@ -2,6 +2,7 @@ import wx.aui
 import dcevent
 from wx import xrc
 
+import request
 import os.path
 from map import Map
 from loader import Loader, AsyncLoader
@@ -114,6 +115,7 @@ class DcFrame(wx.Frame):
 		
 	def onClose(self, event):
 		self.conf.panes = self._mgr.SavePerspective()
+
 		#print 'saving "%s"'%(self.conf.panes,)
 		#self.conf.save()
 		self.Destroy()
@@ -125,7 +127,7 @@ class DcFrame(wx.Frame):
 		info = wx.AboutDialogInfo()
 		info.AddDeveloper('bogolt (bogolt@gmail.com)')
 		info.SetName('dcLord')
-		info.SetWebSite('http://sourceforge.net/projects/dclord')
+		info.SetWebSite('https://github.com/bogolt/dclord')
 		info.SetVersion(version)
 		info.SetDescription('Divide and Conquer\ngame client\nsee at: http://www.the-game.ru')
 		wx.AboutBox(info)
@@ -145,6 +147,7 @@ class DcFrame(wx.Frame):
 		#self.req = {'userid',req}
 
 		asyncLoader = AsyncLoader(self, self.conf)
+		
 		for login in self.conf.users.items():
 			asyncLoader.recvUserInfo(login, 'all', self.conf.pathArchive)
 			asyncLoader.recvUserInfo(login, 'known_planets', self.conf.pathArchive)

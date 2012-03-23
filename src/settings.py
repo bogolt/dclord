@@ -134,7 +134,10 @@ class Settings:
 		return True
 
 	def getStatic(self):
-		if self.unpackStatic():
+		try:
+			if self.unpackStatic():
+				return
+		except Exception:
 			return
 		
 		al = AsyncLoader(self.callback, self)

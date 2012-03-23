@@ -200,9 +200,10 @@ class AsyncLoader(Thread):
 		
 	def recvActionsReply(self, loginInfo, actions, outdir):
 		q = '/frames/perform_x_actions/on/1/asxml/'
-		o = 'pwd=%s&login=%s&action=login&xactions=%s'%(loginInfo[0],loginInfo[1],actions)
+		o = 'login=%s&pwd=%s&action=login&xactions=%s'%(loginInfo[0], loginInfo[1], actions)
+		#o = 'login=%s&pwd=%s&action=login&xactions=%s'%(urllib.quote(loginInfo[0]).encode('utf-8'),urllib.quote(loginInfo[1]).encode('utf-8'),urllib.quote(actions).encode('utf-8'))
 		
-		self.queueQuery(query=q, opts=o, query_type='POST', outpath=os.path.join(outdir, '%s_%s.xml.gz'%(loginInfo[0], req)))
+		self.queueQuery(query=q, opts=o, query_type='POST', outpath=os.path.join(outdir, '%s_%s.xml.gz'%(loginInfo[0], 'xactions')))
 	
 	def recvFile(self, q, out):
 		self.queueQuery(query=q, opts=None, query_type='GET', outpath=out)	

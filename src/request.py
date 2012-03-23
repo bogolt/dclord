@@ -15,6 +15,7 @@ class RequestMaker:
 	def act(self, name, value):
 		self.id+=1
 		self.req+='<act id="%s" name="%s">%s</act>'%(self.id, name, value)
+		#self.req+='<action name="%s">%s</action>'%(name, value)
 		return self.id
 	
 	def planetSetName(self, coord, name):
@@ -27,6 +28,9 @@ class RequestMaker:
 		plId = pos('planetid', planet)
 		nm = val('new_fleet_name', name)
 		return self.act('create_new_fleet', plId + nm)
+		
+	def cancelJump(self, fleetId):
+		return self.act('cancel_jump', val('fleet_id', fleetId))
 
 class RequestList:
 	def __init__(self):
@@ -51,7 +55,10 @@ class RequestList:
 
 	def moveFleet(self, player, fleet, coord):
 		return self.req[player].fleetMove(fleet.id, coord)
-	
+		
+	def cancelJump(self, player, fleet):
+		return self.req[player].cancelJump(fleet.id)
+		
 #	def req(self):
 #		al = AsyncLoader()
 #	
