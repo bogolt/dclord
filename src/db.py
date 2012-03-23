@@ -222,7 +222,10 @@ class Db:
 				fl[coord].append(f)
 			else:
 				fl[coord] = [f]
-		st = 'select unit.id,class,hp from unit where fleet_id in (%s)'%(','.join(fl.keys()))
+		ids = []
+		for fleet in fl.values():
+			ids += [unit.id for unit in fleet]
+		st = 'select unit.id,class,hp from unit where fleet_id in (%s)'%(','.join([str(id) for id in ids]),)
 		self.cur.execute(st)
 		for u in self.cur.fetchall():
 			f.units.append(Unit(u[0],self.getProto(u[1]),u[2]))

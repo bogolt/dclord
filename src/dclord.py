@@ -2,6 +2,7 @@ import wx.aui
 import dcevent
 from wx import xrc
 import logging
+
 import os.path
 
 from map import Map
@@ -116,9 +117,10 @@ class DcFrame(wx.Frame, logging.Handler):
 		self.showHidePane(self.messages)
 		
 	def onClose(self, event):
-#		self.conf.panes = self._mgr.SavePerspective()
-#		#print 'saving "%s"'%(self.conf.panes,)
-#		#self.conf.save()
+		self.conf.panes = self._mgr.SavePerspective()
+
+		#print 'saving "%s"'%(self.conf.panes,)
+		#self.conf.save()
 		self.Destroy()
 		
 	def closeApp(self, event):
@@ -129,7 +131,7 @@ class DcFrame(wx.Frame, logging.Handler):
 		info.AddDeveloper('bogolt (bogolt@gmail.com)')
 		info.AddDeveloper('librarian (menkovich@gmail.com)')
 		info.SetName('dcLord')
-		info.SetWebSite('http://sourceforge.net/projects/dclord')
+		info.SetWebSite('https://github.com/bogolt/dclord')
 		info.SetVersion(version)
 		info.SetDescription('Divide and Conquer\ngame client\nsee at: http://www.the-game.ru')
 		wx.AboutBox(info)
@@ -147,6 +149,7 @@ class DcFrame(wx.Frame, logging.Handler):
 		self.syncMenu.Enable(False)
 
 		asyncLoader = AsyncLoader(self, self.conf)
+		
 		for login in self.conf.users.items():
 			asyncLoader.recvUserInfo(login, 'all', self.conf.pathArchive)
 			asyncLoader.recvUserInfo(login, 'known_planets', self.conf.pathArchive)
