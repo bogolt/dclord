@@ -8,6 +8,10 @@ import urllib
 from xml.dom import minidom
 
 import os.path
+import logging
+
+log = logging.getLogger('dclord')
+
 #from request import Request
 ALL="all"
 ALL_XML=ALL+".xml"
@@ -154,7 +158,11 @@ class Loader:
 			
 			for unit in fleet.getElementsByTagName('allien-ship'):
 				u = convertDict(unit.attributes, {'id':'id','class-id':'class'})#,'carapace':'carapace','weight':'weight'})
-				u['fleet_id']=f['id']
+				try:
+					u['fleet_id']=f['id']
+				except KeyError:
+					log.error('fleet not found %s'%(f,))
+					continue
 				self.db.addObject('unit',u)
 				p = convertDict(unit.attributes, {'class-id':'id', 'carapace':'carapace','weight':'weight'})
 				self.db.addObject('proto',p)
@@ -188,11 +196,13 @@ class AsyncLoader(Thread):
 		self.conf = conf
 		
 	def run(self):
+		log.info('async loader started')
 		for arg in self.args:
 			self.query(arg)
 		wx.PostEvent(self.cb, LoaderEvent(attr1=True, attr2=None))
 		
 	def query(self, args):
+		log.info('async-loader executing query %s'%(args,))
 		conn = httplib.HTTPConnection(self.conf.s['network']['host'])
 		conn.set_debuglevel(int(self.conf.s['network']['debug']))
 		conn.request(args['query_type'], args['query'], args['opts'])
@@ -201,9 +211,11 @@ class AsyncLoader(Thread):
 			wx.PostEvent(self.cb, Report(attr1=False, attr2='%s failed: %s'%(args['outpath'],r.reason)))
 			return False
 
+		log.info('req, ok, reading body')
 		with open(args['outpath'],'wb') as f:
 			f.write(r.read())
 
+		log.info('response read, closing connection')
 		#don't forget to close http connection
 		conn.close()
 		wx.PostEvent(self.cb, LoaderEvent(attr1=False, attr2=args['outpath']))
@@ -222,7 +234,7 @@ class AsyncLoader(Thread):
 		
 		self.queueQuery(query=q, opts=o, query_type='POST', outpath=os.path.join(outdir, '%s_%s.xml.gz'%(loginInfo[0], 'xactions')))
 	
-	def recvFile(self, q, out):
+	def recvFile(self, q, out):		
 		self.queueQuery(query=q, opts=None, query_type='GET', outpath=out)	
 	
 	def queueQuery(self, *opts, **kvo):

@@ -17,14 +17,16 @@ from accounts_frame import AccountsFrame
 
 
 version = '0.1.3'
-debug = False
-if debug:
-	LOG_PATH='/tmp/dclord.log'
-	logging.basicConfig(filename=LOG_PATH,level=logging.DEBUG,format="%(asctime)s  %(levelname)s : %(message)s")
-	
 
+log = logging.getLogger('dclord')
 
-class DcFrame(wx.Frame, logging.Handler):
+h = logging.StreamHandler()
+formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+h.setFormatter(formatter)
+log.addHandler(h)
+log.setLevel(logging.DEBUG)
+
+class DcFrame(wx.Frame):
 	def __init__(self, parent):
 		wx.Frame.__init__(self, parent, -1, "dcLord (%s): Divide & Conquer client (www.the-game.ru)"%(version,), style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
 
@@ -32,7 +34,7 @@ class DcFrame(wx.Frame, logging.Handler):
 		self.status = wx.StatusBar(self)
 		self.status.SetStatusText("loading...")
 		self.SetStatusBar(self.status)
-		logging.debug('dclord init')
+		log.debug('dclord init')
 		self.db = Db()
 		self.conf = Settings(self)
 		#self.update = Update(self, self.conf, version)
@@ -149,6 +151,11 @@ class DcFrame(wx.Frame, logging.Handler):
 		self.syncMenu.Enable(False)
 
 		asyncLoader = AsyncLoader(self, self.conf)
+		
+		#import request
+		#req = request.RequestMaker()
+		#req.createNewFleet( '822:978', 'client_generated_16429601')
+		#reply <act id="ActionID" result="ok" return-id="fleet_id"/>
 		
 		for login in self.conf.users.items():
 			asyncLoader.recvUserInfo(login, 'all', self.conf.pathArchive)

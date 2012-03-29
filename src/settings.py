@@ -6,6 +6,8 @@ from zipfile import ZipFile
 from tempfile import gettempdir
 from loader import AsyncLoader
 
+log = logging.getLogger('dclord')
+
 class UnitImageList:
 	def __init__(self, imgDir):
 		self.imgList = wx.ImageList(20,20)
@@ -66,7 +68,7 @@ class Settings:
 		self.s = {
 			'network':{
 								'host':'www.the-game.ru',
-								'debug':0
+								'debug':0 #set to 2 for full network debug
 			},'update':{
 							'disable':0,
 							'debug':0,
@@ -88,7 +90,7 @@ class Settings:
 							'coord_color':'white',
 							'add_debug_planets':0
 			}, 'log':{
-								'log':0
+								'log':1
 			}
 		}
 		
@@ -134,7 +136,9 @@ class Settings:
 	def unpackStatic(self):
 		staticArchive = os.path.join(self.dir, 'static.zip')
 		if not os.path.exists(staticArchive):
+			log.info('static data archive does not exist at %s'%(staticArchive,))
 			return False
+		log.info('static data archive found at %s, unpacking'%(staticArchive,))
 		z = ZipFile(staticArchive, 'r')
 		#TODO: dangerous func ( can copy file to system dir )
 		z.extractall(os.path.join(self.dir, 'static'))
@@ -143,9 +147,10 @@ class Settings:
 	def getStatic(self):
 		try:
 			if self.unpackStatic():
+				log.info('static content unpacked')
 				return
 		except Exception:
-			return
+			log.error('failed to unpack static content')
 		
 		al = AsyncLoader(self.callback, self)
 		al.recvFile('/static/static.zip', os.path.join(self.dir, 'static.zip'))

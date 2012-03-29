@@ -29,6 +29,12 @@ class RequestMaker:
 		nm = val('new_fleet_name', name)
 		return self.act('create_new_fleet', plId + nm)
 		
+	#def createFleetFromChosen(self, coord, units, name):
+		#return self.act('create_fleet_from_choosen', val('planetid', '%d:%d'%(coord[0], coord[1])) + val('new_fleet_name', name)+ val('fleetx', coord[0])+ val('fleety',coord[1]) + ''.join(val('
+		
+	def moveUnitToFleet(self, fleetId, unitId):
+		return self.act('move_unit_to_fleet', val('fleet_id', fleetId)+val('unit_id', unitId))
+		
 	def cancelJump(self, fleetId):
 		return self.act('cancel_jump', val('fleet_id', fleetId))
 
