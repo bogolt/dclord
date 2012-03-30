@@ -11,7 +11,7 @@ class Unit:
 		self.id = id
 		self.proto = proto
 		self.hp = hp
-		self.quantity = 1		
+		self.quantity = 1
 
 class BuildingUnit(Unit):
 	def __init__(self, id, proto, done=None):

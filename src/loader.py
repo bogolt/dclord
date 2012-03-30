@@ -10,6 +10,21 @@ from xml.dom import minidom
 import os.path
 import logging
 
+def get_attr(node, name, value_type=int):
+	if name in node.attributes:
+		return value_type(node.attributes[name])
+	return None
+
+def get_attrs(node, *args):
+	l = []
+	for arg in args:
+		if arg in node.attributes:
+			l.append( int(node.attributes[arg] ))
+		else:
+			l.append( [] )
+			
+	return tuple(l)
+
 log = logging.getLogger('dclord')
 
 #from request import Request

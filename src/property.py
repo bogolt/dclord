@@ -1,4 +1,6 @@
 import wx
+import logging
+log = logging.getLogger('dclord')
 
 class PlanetView(wx.Window):
 	def __init__(self, parent, planet = None):
@@ -62,7 +64,7 @@ class FleetProperty(wx.Panel):
 		l = wx.BoxSizer(wx.VERTICAL)
 		self.tree = wx.TreeCtrl(self, style = wx.TR_HIDE_ROOT)
 		self.conf = conf
-		self.tree.SetImageList(self.conf.imageList.imgList)
+		self.tree.AssignImageList(self.conf.imageList.imgList)
 		
 		l.Add(self.tree, 2, wx.EXPAND)
 		self.SetSizer(l)
@@ -91,9 +93,11 @@ class FleetProperty(wx.Panel):
 			if fleet.name:
 				fn = fleet.name
 			fobj = self.tree.AppendItem(users[name], fn)
+			log.debug('append fleet %s of %s'%(fn, name))
 			for unit in fleet.units:
 				imgKey = self.conf.imageList.getImageKey(unit.proto)
 				self.tree.AppendItem(fobj, str(unit.proto.weight), imgKey)
+				log.debug('unit tree: append item wg %s, img %s'%(unit.proto.weight, imgKey))
 
 		self.tree.ExpandAll()
 		self.SetAutoLayout(True)
