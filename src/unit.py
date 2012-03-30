@@ -2,6 +2,8 @@ import logging
 import loader
 from xml.dom import minidom
 
+log = logging.getLogger('dclord')
+
 class Unit:
 	def __init__(self, node = None, id = None, bc = None, hp = None):
 		#current HP value

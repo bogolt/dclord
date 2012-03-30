@@ -2,6 +2,8 @@ import logging
 import loader
 from xml.dom import minidom
 
+log = logging.getLogger('dclord')
+
 class FleetBase:
 	def __init__(self, id = None, name = None, owner_id = None, pos = None):
 		self.id = id

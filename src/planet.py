@@ -1,4 +1,8 @@
-import wx
+import logging
+import loader
+from xml.dom import minidom
+
+log = logging.getLogger('dclord')
 
 class EmptyPlanet:
 	def __init__(self, coord, name=None, geo=None):
