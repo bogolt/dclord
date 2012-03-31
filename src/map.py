@@ -79,6 +79,10 @@ class Map(wx.Window):
 		if self.img.GetSize() != size:
 			self.img = wx.EmptyBitmap(size[0], size[1])
 		
+	def centerAt(self, pos):
+		self.position = sub(pos, div(div(self.GetClientSize(), self.planetSize), 2 ))
+		self.update()
+		
 	def update(self, shouldRefresh=True):		
 		if not self.anything:
 			self.anything = self.db.getNotEmptyCoord()

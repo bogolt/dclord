@@ -184,7 +184,19 @@ class Db:
 			p.hw = r[1],r[2]		
 		self.player[id] = p		
 		return p		
-		
+			
+	def getAccountsList(self):
+		self.cur.execute("select name,hw_x,hw_y from player")
+		r = self.cur.fetchall()
+		plist = []
+		for name,x,y in r:
+			if x and y:
+				hwx = int(x)
+				hwy = int(y)
+				print 'append %s as %d %d'%(name, hwx, hwy)
+				plist.append( (name,(hwx, hwy)))
+		return plist		
+	
 	def getPlayer(self, id):
 		if id in self.player.keys():
 			return self.player[id] 

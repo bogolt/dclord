@@ -80,6 +80,7 @@ class DcFrame(wx.Frame):
 		viewMenu = wx.Menu()
 		messagesVisible = viewMenu.Append(wx.ID_ANY, 'Me&ssages panel')
 		propertiesVisible = viewMenu.Append(wx.ID_ANY, '&Properties panel')
+		go_to_next_hw = viewMenu.Append(wx.ID_ANY, '&Go to next hw')
 
 		panel = wx.MenuBar()
 		panel.Append(fileMenu, "&File")
@@ -93,6 +94,7 @@ class DcFrame(wx.Frame):
 		
 		self.Bind(wx.EVT_MENU, self.showMessagesView, messagesVisible)
 		self.Bind(wx.EVT_MENU, self.showPropertiesView, propertiesVisible)
+		self.Bind(wx.EVT_MENU, self.showNextHw, go_to_next_hw)
 		self.Bind(wx.EVT_MENU, self.showAbout, about)
 		
 		self.Bind(dcevent.EVT_OBJECT_FOCUS, self.objectFocus)
@@ -102,6 +104,17 @@ class DcFrame(wx.Frame):
 		self.Bind(wx.EVT_CLOSE, self.onClose, self)
 		
 		self.Maximize()
+		
+		self.accounts = []
+		self.last_active_account_index = 0
+
+		
+	def showNextHw(self, evt):
+		self.accounts = self.db.getAccountsList()
+		self.last_active_account_index+=1
+		if self.last_active_account_index >= len(self.accounts):
+			self.last_active_account_index = 0
+		self.map.centerAt( self.accounts[self.last_active_account_index][1] )
 	
 	def showHidePane(self, paneObject):
 		pane = self._mgr.GetPane(paneObject)
