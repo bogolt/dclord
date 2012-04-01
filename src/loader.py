@@ -11,18 +11,15 @@ import os.path
 import logging
 
 def get_attr(node, name, value_type=int):
-	if name in node.attributes:
+	try:
 		return value_type(node.attributes[name])
-	return None
+	except:
+		return None
 
 def get_attrs(node, *args):
 	l = []
 	for arg in args:
-		if arg in node.attributes:
-			l.append( int(node.attributes[arg] ))
-		else:
-			l.append( [] )
-			
+		l.append( get_attr(node, arg) )			
 	return tuple(l)
 
 log = logging.getLogger('dclord')

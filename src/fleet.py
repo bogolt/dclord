@@ -1,5 +1,6 @@
 import logging
-import loader
+import unit
+from loader import get_attr, get_attrs
 from xml.dom import minidom
 
 log = logging.getLogger('dclord')
@@ -23,28 +24,33 @@ class FleetBase:
 			self.fly_from = get_attrs(node,'from-x', 'from-y')
 
 class Fleet(FleetBase):
-	def __init__(self, id = None, name = None, owner_id = None, pos = None):
-		FleetBase.__init__(id, name, owner_id, pos)
+	def __init__(self, node):
+		FleetBase.__init__(self)
 		
 		self.fly_opts = None
 		self.hide_opts = None
 		
+		if node:
+			self.load_from_xml(node)
+		
 	def load_from_xml(self, node):
+		FleetBase.load_from_xml(self, node)
 		self.id = get_attr(node, 'id')
-		FleetBase.load_from_xml(node)
 		for unit_node in node.getElementsByTagName('u'):
-			self.units.append( Unit(unit_node) )
+			self.units.append( unit.Unit(unit_node) )
 		
 class AlienFleet(FleetBase):
-	def __init__(self, id = None, pos = None, name = None, weight = None, owner_id = None):
-		FleetBase.__init__(id, name, owner_id, pos)
+	def __init__(self, node):
+		FleetBase.__init__(self)
 		self.weight = weight
+		if node:
+			self.load_from_xml(node)
 				
 	def load_from_xml(self, node):
-		FleetBase.load_from_xml(node)
+		FleetBase.load_from_xml(self, node)
 		self.id = get_attr(node, 'fleet-id')
 		self.weight = get_attr(node, 'sum-weight')
 		self.owner_id = get_attr(node, 'player-id')
 
 		for unit_node in node.getElementsByTagName('allien-ship'):
-			self.units.append( AlienUnit(unit_node) )
+			self.units.append( unit.AlienUnit(unit_node) )

@@ -1,5 +1,5 @@
 import logging
-import loader
+from loader import get_attr, get_attrs
 from xml.dom import minidom
 
 log = logging.getLogger('dclord')

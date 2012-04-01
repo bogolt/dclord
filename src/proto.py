@@ -1,5 +1,5 @@
 import logging
-import loader
+from loader import get_attr, get_attrs
 from xml.dom import minidom
 
 log = logging.getLogger('dclord')
@@ -229,8 +229,8 @@ class Proto:
 		self.price =  PriceAttr(node)
 		self.stealth = StealthAttr(node)
 		
-		actions = node.getElemnetByTagName('actions')
+		actions = node.getElementsByTagName('actions')
 		if actions:
-			for action_node in actions[0]:
+			for action_node in actions[0].getElementsByTagName('action'):
 				action = UnitAction(action_node)
 				actions[action.id] = action
