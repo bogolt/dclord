@@ -15,6 +15,25 @@ class EmptyPlanet:
 		self.pos = get_attrs(node, 'x','y')
 		self.geo = get_attrs(node, 'o','e','m','t','s')
 
+class KnownPlanet:
+	self __init__(self, node):
+		self.pos = None
+		self.geo = None
+		self.name = None
+		self.owner_id = None
+		self.age = None
+		self.turn = None
+		self.is_open = None
+		
+	def load_from_xml(self, node):
+		self.name = get_attr(node, 'name', str)
+		self.pos = get_attrs(node, 'x','y')
+		self.geo = get_attrs(node, 'o','e','m','t','s')
+		self.owner_id = get_attr(node, 'owner-id')
+		self.age = get_attr(node, 'age')
+		self.turn = get_attr(node, 'turn')
+		self.is_open = get_attr(node, 'open', bool)
+
 class OwnedPlanet(EmptyPlanet):
 	def __init__(self, pos, name, owner_id):
 		EmptyPlanet.__init__(pos, name)

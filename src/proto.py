@@ -4,6 +4,22 @@ from xml.dom import minidom
 
 log = logging.getLogger('dclord')
 
+class UnitAction:
+	def __init__(self, node):
+		self.id = None
+		self.max_count = None
+		self.possible_planet = None
+		self.price = None
+		
+		if node:
+			self.load_from_xml(node)
+			
+	def load_from_xml(self, node):
+		self.id = get_attr(node, 'act')
+		self.max_count = get_attr(node, 'maxcount')
+		self.price = PriceAttr(node)
+		self.possible_planet = get_attr(node, 'planet-can-be', str)
+
 # stealth-lvl="0.0000000" 
 # scan-strength="0.0000000" 
 # detect-range="0" 
@@ -93,22 +109,33 @@ class BonusAttr:
 		self.surface = get_attr(node, 'bonus-surface')
 		self.production = get_attr(node, 'bonus-production')
 
- 
-# maxcount="0" 
-# req-tehn-level="0" 
 #  cost-main="102.7" 
 #  cost-second="25.675" 
 #   cost-money="0" 
-#   build-speed="2500" 
 #   cost-pepl="0" 
+class PriceAttr: 
+	def __init__(self, node):
+		self.main = None
+		self.second = None
+		self.money = None
+		self.people = None
+		
+		if node:
+			self.load_from_xml(node)
+			
+	def load_from_xml(self, node):
+		self.main = get_attr(node, 'cost-main', float)
+		self.second = get_attr(node, 'cost-second', float)
+		self.money = get_attr(node, 'cost-money', float)
+		self.people = get_attr(node, 'cost-pepl')
+
+# maxcount="0" 
+# req-tehn-level="0" 
+#   build-speed="2500" 
 class BuildAttr:
 	def __init__(self, node):
 		self.max_count = None
 		self.require_tech_level = None
-		self.cost_main = None
-		self.cost_second = None
-		self.cost_money = None
-		self.cost_people = None
 		self.build_speed = None
 		
 		if node:
@@ -117,10 +144,6 @@ class BuildAttr:
 	def load_from_xml(self, node):
 		self.max_count = get_attr(node, 'maxcount')
 		self.require_tech_level = get_attr(node, 'req-tehn-level')
-		self.cost_main = get_attr(node, 'cost-main', float)
-		self.cost_second = get_attr(node, 'cost-second', float)
-		self.cost_money = get_attr(node, 'cost-money', float)
-		self.cost_people = get_attr(node, 'cost-pepl')
 		self.build_speed = get_attr(node, 'build-speed')
 		
 
@@ -148,6 +171,8 @@ class BuildAttr:
 # requires-pepl="5000" 
 
 class Proto:
+	Action_GeoExplore = 1
+	#Action_Colonize = 
 	def __init__(self, node = None):
 		self.id = None
 		self.building_class = None
@@ -171,7 +196,7 @@ class Proto:
 		
 		self.damage_resistance_bomb = None
 		self.damage_resistance_laser = None
-		
+			
 		if node:
 			self.load_from_xml(node)
 		
@@ -197,3 +222,15 @@ class Proto:
 		
 		self.damage_resistance_bomb = get_attr(node, 'bomb-dr', float)
 		self.damage_resistance_laser = get_attr(node, 'laser-dr', float)
+		
+		self.fly = FlyAttr(node)
+		self.bonus = BonusAttr(node)
+		self.build = BuildAttr(node)
+		self.price =  PriceAttr(node)
+		self.stealth = StealthAttr(node)
+		
+		actions = node.getElemnetByTagName('actions')
+		if actions:
+			for action_node in actions[0]:
+				action = UnitAction(action_node)
+				actions[action.id] = action

@@ -8,11 +8,6 @@ class Race:
 	def __init__(self, node):
 		pass
 
-def get_node(parent, name):
-	node_list = parent.getElementsByTagName(name)
-	if not node_list:
-		
-
 class Account:
 	def __init__(self, file):
 		self.name = None
@@ -27,6 +22,10 @@ class Account:
 		self.known_planets = {}
 		self.race = None
 		
+		self.stealth_level = None
+		self.scan_strength = None
+		self.detect_range = None
+		
 		if file:
 			self.load_from_file(file)
 	
@@ -34,7 +33,7 @@ class Account:
 		xmldoc = minidom.parse(file)
 		node = xmldoc.firstChild
 		
-		if load_errors(node.getElementsByTagName("errors")):			
+		if load_errors(node.getElementsByTagName("errors")):
 			return
 		
 		main = node.getElementsByTagName("iframe")[0]
@@ -42,6 +41,18 @@ class Account:
 		self.load_planets(main.getElementsByTagName('user-planets')[0])
 		self.load_prototypes(main.getElementsByTagName('building-types')[0])
 		self.load_fleets(main.getElementsByTagName('user-planets')[0])
+		
+	def load_xml_known_planets(self, file):
+		xmldoc = minidom.parse(file)
+		node = xmldoc.firstChild
+		
+		if load_errors(node.getElementsByTagName("errors")):			
+			return
+		
+		planet_list = node.getElementsByTagName("iframe")[0].getElementsByTagName('known-planets')[0]
+		for planet_node in planet_list.getElementsByTagName('planet'):
+			planet = KnownPlanet(planet_node)
+			self.known_planets[ planet.pos ] = planet
 
 	def load_user_info(self, general_info):
 		'load race and basic player info, and id'
@@ -52,15 +63,21 @@ class Account:
 		self.login = get_attr(player, 'login')
 		self.hw_pos = get_attrs(player, 'homeworldx','homeworldy')
 
-	def load_prototypes(self, prototypes):
-		for proto_node in self.prototypes:
-			self.proto
+		self.stealth_level = get_attr(node, 'stealth-lvl', float)
+		self.scan_strength = get_attr(node, 'scan-strength', float)
+		self.detect_range = get_attr(node, 'detect-range')
+		
+	def load_prototypes(self, prototypes_node):
+		for proto_node in prototypes.getElementsByTagName('building_class'):
+			proto = proto.Proto(proto_node)
+			self.prototypes[proto.id] = proto
+	
 	def load_planets(self, planet_list):
 		'load owned planet list'
 		for planet_node in planet_list:
 			self.owned_planets.append( planet.OwnedPlanet(planet_node) )
 		
-	def load_errors(self, err)
+	def load_errors(self, err):
 		if not err:
 			return False
 		hasAny = False
@@ -78,12 +95,3 @@ class Account:
 			#wx.PostEvent(self.callback, Report(attr1=False, attr2=str))
 			hasAny = True
 		return hasAny
-		
-		if main:
-			self.parseKnownPlanets(main[0])
-			self.parseAll(main[0])
-			
-		self.stealth_level = get_attr(node, 'stealth-lvl', float)
-		self.scan_strength = get_attr(node, 'scan-strength', float)
-		self.detect_range = get_attr(node, 'detect-range')
-

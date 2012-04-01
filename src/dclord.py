@@ -160,6 +160,10 @@ class DcFrame(wx.Frame):
 		self.players.setConf(self.conf)
 		self.players.Show(True)
 	
+	def explore_geo(self, evt):
+		pass
+		#find all planets which fit requirements of explorables
+	
 	def sync(self, event):
 		self.syncMenu.Enable(False)
 
@@ -167,10 +171,15 @@ class DcFrame(wx.Frame):
 		
 		#import request
 		#req = request.RequestMaker()
+		#req.specific_action( (69, 120), 3277544, 16546296, 1)
+		#req.store_action(16546296, 1)
+		
 		#req.createNewFleet( '822:978', 'client_generated_16429601')
 		#reply <act id="ActionID" result="ok" return-id="fleet_id"/>
 		
 		for login in self.conf.users.items():
+			#if login[0] =='gobbolt':
+			#	asyncLoader.recvActionsReply(login, req, '/tmp/dclord/out')
 			asyncLoader.recvUserInfo(login, 'all', self.conf.pathArchive)
 			asyncLoader.recvUserInfo(login, 'known_planets', self.conf.pathArchive)
 		asyncLoader.start()
