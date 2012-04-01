@@ -21,6 +21,7 @@ class Account:
 		self.hw_pos = None
 		
 		self.owned_fleets = {}
+		self.owned_flying_fleets={}
 		self.alien_fleets = {}
 		self.prototypes = {}
 		self.owned_planets = {}
@@ -48,21 +49,21 @@ class Account:
 		xmldoc = minidom.parse(file)
 		node = xmldoc.firstChild
 		
-		if load_errors(node.getElementsByTagName("errors")):			
+		if self.load_errors(node.getElementsByTagName("errors")):			
 			return
 		
 		planet_list = node.getElementsByTagName("iframe")[0].getElementsByTagName('known-planets')[0]
 		for planet_node in planet_list.getElementsByTagName('planet'):
-			planet = KnownPlanet(planet_node)
-			self.known_planets[ planet.pos ] = planet
+			pl = planet.KnownPlanet(planet_node)
+			self.known_planets[ pl.pos ] = pl
 
 	def load_user_info(self, general_info):
 		'load race and basic player info, and id'
 		player = general_info.getElementsByTagName('this-player')[0]
 		self.id = get_attr(player, 'player-id')
 		self.race_id = get_attr(player, 'race-id')
-		self.name = get_attr(player, 'name')
-		self.login = get_attr(player, 'login')
+		self.name = get_attr(player, 'name', unicode)
+		self.login = get_attr(player, 'login', unicode)
 		self.hw_pos = get_attrs(player, 'homeworldx','homeworldy')
 		
 	def load_prototypes(self, prototypes_node):
@@ -77,14 +78,28 @@ class Account:
 		
 	def load_fleets(self, node):
 		for fleet_node in node.getElementsByTagName('fleet'):
+			#print 'loading fleet from %s'%(fleet_node,)
 			f = fleet.Fleet(fleet_node)
-			self.owned_fleets[f.id] = f
+			if f.flying:
+				self.owned_flying_fleets[f.id] = f
+			else:
+				self.owned_fleets[f.id] = f
 	
 	def load_planets(self, planet_list):
 		'load owned planet list'
 		for planet_node in planet_list.getElementsByTagName('planet'):
 			pl = planet.OwnedPlanet(planet_node)
 			self.owned_planets[ pl.pos ] = pl
+
+	def get_planet(self, pos):
+		if pos in self.owned_planets:
+			return self.owned_planets[pos]
+		if pos in self.known_planets:
+			return self.known_planets[pos]
+		return None
+
+	def get_proto(self, proto_id):
+		return self.prototypes[proto_id]
 		
 	def load_errors(self, err):
 		if not err:
@@ -104,3 +119,4 @@ class Account:
 			#wx.PostEvent(self.callback, Report(attr1=False, attr2=str))
 			hasAny = True
 		return hasAny
+		

@@ -11,10 +11,10 @@ import os.path
 import logging
 
 def get_attr(node, name, value_type=int):
-	try:
-		return value_type(node.attributes[name])
-	except:
-		return None
+	if node.hasAttribute(name):
+		return value_type(node.getAttribute(name))
+	#print 'Attribute %s not exist in node %s'%(name, node)
+	return None
 
 def get_attrs(node, *args):
 	l = []

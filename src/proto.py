@@ -5,6 +5,8 @@ from xml.dom import minidom
 log = logging.getLogger('dclord')
 
 class UnitAction:
+	Action_GeoExplore = 1
+	#Action_Colonize = 
 	def __init__(self, node):
 		self.id = None
 		self.max_count = None
@@ -15,7 +17,7 @@ class UnitAction:
 			self.load_from_xml(node)
 			
 	def load_from_xml(self, node):
-		self.id = get_attr(node, 'act')
+		self.id = get_attr(node, 'action')
 		self.max_count = get_attr(node, 'maxcount')
 		self.price = PriceAttr(node)
 		self.possible_planet = get_attr(node, 'planet-can-be', str)
@@ -35,7 +37,7 @@ class StealthAttr:
 	def load_from_xml(self, node):
 		self.stealth_level = get_attr(node, 'stealth-lvl', float)
 		self.scan_strength = get_attr(node, 'scan-strength', float)
-		self.detect_range = get_attr(node, 'detect-range')
+		self.detect_range = get_attr(node, 'detect-range', float)
 
 # fly-range="0" 
 # transport-capacity="0" 
@@ -171,8 +173,6 @@ class BuildAttr:
 # requires-pepl="5000" 
 
 class Proto:
-	Action_GeoExplore = 1
-	#Action_Colonize = 
 	def __init__(self, node = None):
 		self.id = None
 		self.building_class = None
@@ -196,10 +196,12 @@ class Proto:
 		
 		self.damage_resistance_bomb = None
 		self.damage_resistance_laser = None
+		
+		self.actions = {}
 			
 		if node:
 			self.load_from_xml(node)
-		
+			
 	def load_from_xml(self, node):
 		self.id = get_attr(node, 'building-id')
 		self.building_class = get_attr(node, 'class')
@@ -231,6 +233,10 @@ class Proto:
 		
 		actions = node.getElementsByTagName('actions')
 		if actions:
-			for action_node in actions[0].getElementsByTagName('action'):
+			for action_node in actions[0].getElementsByTagName('act'):
 				action = UnitAction(action_node)
-				actions[action.id] = action
+				#print 'loading actin %d of bc %d'%(action.id, self.id)
+				self.actions[action.id] = action
+	
+	def can_explore_geo(self):
+		return UnitAction.Action_GeoExplore in self.actions

@@ -13,15 +13,21 @@ class FleetBase:
 		self.incoming_opts = None
 		self.units = []
 		
-		self.fly_opts = None
-		self.fly_from = None
+		self.flying = None
+		self.tta = None
+		self.from_pos = None
 
 	def load_from_xml(self, node):
-		self.name = get_attr(node, 'name', str)
+		self.name = get_attr(node, 'name', unicode)
 		self.pos = get_attrs(node, 'x','y')
-		self.fly_opts = get_attrs(node, 'in-transit', 'tta')
-		if self.fly_opts[1]:
-			self.fly_from = get_attrs(node,'from-x', 'from-y')
+		self.tta = get_attr(node, 'tta')
+		# don't really need this
+		#self.flying = get_attr(node, 'in-transit', bool)
+		if self.tta > 0:
+			self.flying = True
+		
+		if self.flying:
+			self.from_pos = get_attrs(node,'from-x', 'from-y')
 
 class Fleet(FleetBase):
 	def __init__(self, node):

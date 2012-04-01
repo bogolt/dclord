@@ -13,7 +13,7 @@ class PlanetBase:
 		self.owner_id = None
 		
 	def load_from_xml(self, node):
-		self.name = get_attr(node, 'name', str)
+		self.name = get_attr(node, 'name', unicode)
 		self.pos = get_attrs(node, 'x','y')
 		#self.geo = get_attrs(node, 'o','e','m','t','s')
 
