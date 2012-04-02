@@ -41,6 +41,7 @@ class OwnedPlanet(PlanetBase):
 		PlanetBase.__init__(self)
 		self.corruption = None
 		self.population = None
+		self.is_open = None
 		
 		self.production = []
 		self.buildings = []
@@ -54,6 +55,7 @@ class OwnedPlanet(PlanetBase):
 		self.geo = get_attrs(node, 'o','e','m','temperature','surface')
 		self.corruption = get_attr(node, 'corruption')
 		self.population = get_attr(node, 'population')
+		self.is_open = 0==get_attr(node, 'hidden')
 
 	def load_garrison_from_xml(self, node):
 		pos = get_attrs(node, 'x','y')
