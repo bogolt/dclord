@@ -2,6 +2,7 @@ import wx.aui
 import dcevent
 from wx import xrc
 import logging
+import tasks
 
 import os.path
 
@@ -58,7 +59,9 @@ class DcFrame(wx.Frame):
 		self.propPlanet = PlanetProperty(self, self.conf, self.db)
 		self.propFleet = FleetProperty(self, self.conf, self.db)
 		self.messages = Messages(self)
+		self.tasks = tasks.TasksPanel(self, self.conf,  self.db)
 		
+		self._mgr.AddPane(self.tasks, wx.LEFT, "Tasks")
 		self._mgr.AddPane(self.propPlanet, wx.RIGHT, "Planet")
 		self._mgr.AddPane(self.propFleet, wx.RIGHT, "Fleets")
 		self._mgr.AddPane(self.messages, wx.BOTTOM, "Messages")
