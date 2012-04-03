@@ -24,6 +24,7 @@ class Account:
 		self.owned_fleets = {}
 		self.owned_flying_fleets={}
 		self.alien_fleets = {}
+		self.alien_flying_fleets = {}
 		self.prototypes = {}
 		self.owned_planets = {}
 		self.known_planets = {}
@@ -50,6 +51,7 @@ class Account:
 			self.load_garrisons(main.getElementsByTagName('harrisons')[0])
 			self.load_prototypes(main.getElementsByTagName('building-types')[0])
 			self.load_fleets(main.getElementsByTagName('fleets')[0])
+			self.load_alien_fleets(main.getElementsByTagName('allien-fleets')[0])
 			return
 			
 		known_planets_node = main.getElementsByTagName('known-planets')
@@ -80,7 +82,16 @@ class Account:
 		for garrison_node in node.getElementsByTagName('harrison'):
 			pos = get_attrs(garrison_node, 'x', 'y')
 			self.owned_planets[pos].load_garrison_from_xml(garrison_node)
-		
+	
+	def load_alien_fleets(self, node):
+		for fleet_node in node.getElementsByTagName('allien-fleet'):
+			#print 'loading fleet from %s'%(fleet_node,)
+			f = fleet.AlienFleet(fleet_node)
+			if f.flying:
+				self.alien_flying_fleets[f.id] = f
+			else:
+				self.alien_fleets[f.id] = f
+						
 	def load_fleets(self, node):
 		for fleet_node in node.getElementsByTagName('fleet'):
 			#print 'loading fleet from %s'%(fleet_node,)

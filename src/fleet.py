@@ -66,18 +66,18 @@ class Fleet(FleetBase):
 class AlienFleet(FleetBase):
 	def __init__(self, node):
 		FleetBase.__init__(self)
-		self.weight = weight
+		self.weight = None
 		if node:
 			self.load_from_xml(node)
 				
 	def load_from_xml(self, node):
-		FleetBase.load_from_xml(self, node)
 		self.id = get_attr(node, 'fleet-id')
 		self.weight = get_attr(node, 'sum-weight')
 		self.owner_id = get_attr(node, 'player-id')
 		self.tta = get_attr(node, 'turns-till-arrival')
 		if self.tta > 0:
 			self.flying = True
+		FleetBase.load_from_xml(self, node)
 
 		for unit_node in node.getElementsByTagName('allien-ship'):
 			self.units.append( unit.AlienUnit(unit_node) )

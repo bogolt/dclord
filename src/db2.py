@@ -44,6 +44,36 @@ class Db:
 					
 		return pl.values()
 
+	def getFleets(self, rect, my=True, other=True, static = True, flying=True):
+		fl = {}
+		
+		src = []
+		if my:
+			for acc in self.accounts.values():
+				if static and my:
+					src.append( acc.owned_fleets )
+				if flying and my:
+					src.append( acc.owned_flying_fleets )
+
+		if other:
+			for acc in self.accounts.values():
+				if static and other:
+					src.append( acc.alien_fleets )
+				if flying and other:
+					src.append( acc.alien_flying_fleets )
+		
+		for fleet_src in src:
+			for id,fleet in fleet_src.items():
+				if id and id in fl:
+					continue
+				if contains(rect, fleet.pos):
+					fl[id] = fleet
+					continue
+				if fleet.flying and contains(rect, fleet.from_pos):
+					fl[id] = fleet
+					continue
+		return fl.values()
+
 	def getStaticFleets(self, rect):
 		pl = {}
 		for acc in self.accounts.values():

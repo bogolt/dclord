@@ -121,19 +121,15 @@ class Map(wx.Window):
 		dc.SetTextForeground(self.conf.s['map']['planet_owner_text_color'])
 		area = (xl,yl), sz
 		
-		#if not self.planets:
-		#	self.planets = self.db.getAreaPlanets((xl,yl), sz)
-		#planets = self.planets
 		for planet in self.db.getPlanets(area):
 			self.drawPlanet(dc, planet)
 		
-		#if not self.fleets:
-		#	self.fleets = self.db.getAreaFleets((xl,yl), sz)
-		for fleet in self.db.getStaticFleets(area):
-			self.drawStaticFleet(dc, fleet)
+		for fleet in self.db.getFleets(area):
+			if fleet.flying:
+				self.drawFlyingFleet(dc, fleet)
+			else:
+				self.drawStaticFleet(dc, fleet)
 			
-		for fleet in self.db.getFlyingFleets(area):
-			self.drawFlyingFleet(dc, fleet)
 
 	def onScroll(self, mouse):
 		pos = mouse.GetPosition()
