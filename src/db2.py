@@ -46,7 +46,7 @@ class Db:
 					
 		return pl.values()
 
-	def getFleets(self, rect, my=True, other=True, static = True, flying=True):
+	def getFleets(self, rect, my=True, other=True, static = True, flying=True, include_starting_pos = True):
 		fl = {}
 		
 		src = []
@@ -71,7 +71,7 @@ class Db:
 				if contains(rect, fleet.pos):
 					fl[id] = fleet
 					continue
-				if fleet.flying and contains(rect, fleet.from_pos):
+				if fleet.flying and include_starting_pos and contains(rect, fleet.from_pos):
 					fl[id] = fleet
 					continue
 		return fl.values()
@@ -96,7 +96,7 @@ class Db:
 		return pl.values()
 		
 	def get_objects(self, pos):
-		return self.get_planet(pos), self.getFleets((pos,(0,0)))
+		return self.get_planet(pos), self.getFleets((pos,(0,0)), include_starting_pos = False)
 
 	def get_planet(self, pos):
 		for acc in self.accounts.values():
