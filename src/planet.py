@@ -5,6 +5,12 @@ from xml.dom import minidom
 
 log = logging.getLogger('dclord')
 
+def map_tuple(keys, values):
+	m = {}
+	for ind, k in enumerate(keys):
+		m[k] = values[ind]
+	return m
+
 class PlanetBase:
 	def __init__(self):
 		self.pos = None
@@ -30,7 +36,7 @@ class KnownPlanet(PlanetBase):
 		
 	def load_from_xml(self, node):
 		PlanetBase.load_from_xml(self, node)
-		self.geo = get_attrs(node, 'o','e','m','t','s')
+		self.geo = map_tuple(('o','e','m','t','s'), get_attrs(node, 'o','e','m','t','s'))
 		self.owner_id = get_attr(node, 'owner-id')
 		self.age = get_attr(node, 'age')
 		self.turn = get_attr(node, 'turn')
@@ -52,7 +58,7 @@ class OwnedPlanet(PlanetBase):
 
 	def load_from_xml(self, node):
 		PlanetBase.load_from_xml(self, node)
-		self.geo = get_attrs(node, 'o','e','m','temperature','surface')
+		self.geo = map_tuple(('o','e','m','t','s') , get_attrs(node, 'o','e','m','temperature','surface'))		
 		self.corruption = get_attr(node, 'corruption')
 		self.population = get_attr(node, 'population')
 		self.is_open = 0==get_attr(node, 'hidden')

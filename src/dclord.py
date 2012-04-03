@@ -8,7 +8,7 @@ import os.path
 from map import Map
 from loader import Loader, AsyncLoader
 from property import PlanetProperty, FleetProperty, Messages
-from db import Db
+from db2 import Db
 from settings import Settings
 #from update import Update
 
@@ -110,11 +110,18 @@ class DcFrame(wx.Frame):
 
 		
 	def showNextHw(self, evt):
-		self.accounts = self.db.getAccountsList()
-		self.last_active_account_index+=1
-		if self.last_active_account_index >= len(self.accounts):
-			self.last_active_account_index = 0
-		self.map.centerAt( self.accounts[self.last_active_account_index][1] )
+		self.accounts = self.db.accounts
+		if not self.accounts:
+			return
+		
+		#self.last_active_account_index+=1
+		#if self.last_active_account_index >= len(self.accounts):
+		#	self.last_active_account_index = 0
+		for acc in self.db.accounts.values():
+			if acc.hw_pos:
+				print 'set pos for hw of %s at %s'%(acc.login, acc.hw_pos)
+				self.map.centerAt( acc.hw_pos )
+			return
 	
 	def showHidePane(self, paneObject):
 		pane = self._mgr.GetPane(paneObject)
@@ -178,8 +185,6 @@ class DcFrame(wx.Frame):
 		#reply <act id="ActionID" result="ok" return-id="fleet_id"/>
 		
 		for login in self.conf.users.items():
-			#if login[0] =='gobbolt':
-			#	asyncLoader.recvActionsReply(login, req, '/tmp/dclord/out')
 			asyncLoader.recvUserInfo(login, 'all', self.conf.pathArchive)
 			asyncLoader.recvUserInfo(login, 'known_planets', self.conf.pathArchive)
 		asyncLoader.start()

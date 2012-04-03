@@ -43,6 +43,9 @@ class Map(wx.Window):
 		
 		size = self.GetClientSize()
 		
+		self.fleets = None
+		self.planets = None
+		
 		self.img = wx.EmptyBitmap(size[0], size[1])
 		
 		x = int(self.conf.s['map']['last_pos_x'])
@@ -85,7 +88,7 @@ class Map(wx.Window):
 		
 	def update(self, shouldRefresh=True):		
 		if not self.anything:
-			self.anything = self.db.getNotEmptyCoord()
+			self.anything = self.db.getAnything()
 			if self.anything:
 				self.position=sub(self.anything, (5,5))
 		if shouldRefresh:
@@ -103,7 +106,9 @@ class Map(wx.Window):
 
 		dc.DestroyClippingRegion()
 		dc.SetClippingRegion(self.coordShift[0], self.coordShift[1], size.width, size.height)		
-		self.drawGrid(dc)
+		
+		if self.conf.s['map']['grid_enable']:
+			self.drawGrid(dc)
 		
 		xl = int(self.position[0])
 		yl = int(self.position[1])
@@ -111,18 +116,24 @@ class Map(wx.Window):
 		#ask db to preload all items that we are looking for
 		sz = div(size,self.planetSize)
 		ps = (xl,yl)
-		self.db.prepare(ps, sz)
+		#self.db.prepare(ps, sz)
 		
 		dc.SetTextForeground(self.conf.s['map']['planet_owner_text_color'])
-		planets = self.db.getAreaPlanets((xl,yl), sz)
-		for planet in planets.values():
+		area = (xl,yl), sz
+		
+		#if not self.planets:
+		#	self.planets = self.db.getAreaPlanets((xl,yl), sz)
+		#planets = self.planets
+		for planet in self.db.getPlanets(area):
 			self.drawPlanet(dc, planet)
 		
-		fleets = self.db.getAreaFleets((xl,yl), sz)
-		for flee in fleets.values():
-			self.drawFleets(dc, flee)
+		#if not self.fleets:
+		#	self.fleets = self.db.getAreaFleets((xl,yl), sz)
+		for fleet in self.db.getStaticFleets(area):
+			self.drawStaticFleet(dc, fleet)
 			
-		#dc.
+		for fleet in self.db.getFlyingFleets(area):
+			self.drawFlyingFleet(dc, fleet)
 
 	def onScroll(self, mouse):
 		pos = mouse.GetPosition()
@@ -183,18 +194,14 @@ class Map(wx.Window):
 		for f in fleets:
 			self.drawFleet(dc, f)
 
-	def drawFleet(self, dc, f):
-		pos = f.coord
-		
-		if not f.turnsLeft or f.turnsLeft==0:
-			dc.SetPen(wx.Pen(self.conf.s['map']['fleet_color']))
-			if pos == f.posFrom and f.posFrom != f.coord: return
-			x,y = mul(sub(pos, self.position), self.planetSize)
-			dc.DrawCircle(x+3, y+3, 3)
-			return
+	def drawStaticFleet(self, dc, fleet):
+		dc.SetPen(wx.Pen(self.conf.s['map']['fleet_color']))
+		x,y = mul(sub(fleet.pos, self.position), self.planetSize)
+		dc.DrawCircle(x+3, y+3, 3)
 
-		sx,sy=f.posFrom
-		dx,dy=f.coord
+	def drawFlyingFleet(self, dc, fleet):
+		sx,sy=fleet.from_pos
+		dx,dy=fleet.pos
 		
 		sx,sy = mul(sub((sx,sy), self.position), self.planetSize)
 		dx,dy = mul(sub((dx,dy), self.position), self.planetSize)
@@ -218,19 +225,31 @@ class Map(wx.Window):
 		cx,cy =  sx+fx+self.planetSize/2,sy+fy+self.planetSize/2
 		dc.DrawCircle(cx,cy, 3);
 
+	def drawFleet(self, dc, f):
+		pos = f.pos
+		
+		if not f.tta or f.tta==0:
+			dc.SetPen(wx.Pen(self.conf.s['map']['fleet_color']))
+			if pos == f.posFrom and f.posFrom != f.coord: return
+			x,y = mul(sub(pos, self.position), self.planetSize)
+			dc.DrawCircle(x+3, y+3, 3)
+			return
+
+
+
 	def drawPlanet(self, dc, planet):
-		pos = planet.coord
+		pos = planet.pos
 		p = mul(sub(pos, self.position), self.planetSize)
 	
 		size = self.planetSize/2
-		if 's' in planet.geo.keys():
+		if 's' in planet.geo.keys() and planet.geo['s']:
 			size = size * (planet.geo['s']/5+1) / 20.0
 			if size < 1:
 				size = 1
 
 		x,y=p
-		if planet.owner:
-			if planet.owner.login in self.conf.users:
+		if planet.owner_id:
+			if self.db.is_mult(planet.owner_id):
 				dc.SetPen(wx.Pen(self.conf.s['map']['own_planet_color']))
 				dc.SetBrush(wx.Brush(self.conf.s['map']['own_planet_color']))
 				#do not display owner planet name... it is good only for debug

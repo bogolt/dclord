@@ -69,15 +69,8 @@ class Settings:
 			'network':{
 								'host':'www.the-game.ru',
 								'debug':0 #set to 2 for full network debug
-			},'update':{
-							'disable':0,
-							'debug':0,
-							'host':'xor.undo.it',
-							'user':'dclord_updates',
-							'password':'the-game-rules'
 			},'map':{
 							'bg_color':'#444444',
-							'greed_color':'white',
 							'fleet_route_color':'white',
 							'fleet_color':'white',
 							'own_planet_color':'magenta',
@@ -87,6 +80,7 @@ class Settings:
 							'last_pos_x':-1,
 							'last_pos_y':-1,
 							'grid_color':'darkgrey',
+							'grid_enable':1,
 							'coord_color':'white',
 							'add_debug_planets':0
 			}, 'log':{

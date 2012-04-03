@@ -12,6 +12,7 @@ class Race:
 	def __init__(self, node):
 		pass
 
+
 class Account:
 	def __init__(self, file):
 		self.name = None
@@ -34,28 +35,32 @@ class Account:
 	def load_from_file(self, file):
 		xmldoc = minidom.parse(file)
 		node = xmldoc.firstChild
+		self.id = get_attr(node, 'id')
 		
 		if self.load_errors(node.getElementsByTagName("errors")):
 			return
 		
 		main = node.getElementsByTagName("iframe")[0]
-		self.load_user_info(main.getElementsByTagName('general-info')[0])
-		self.load_planets(main.getElementsByTagName('user-planets')[0])
-		self.load_garrisons(main.getElementsByTagName('harrisons')[0])
-		self.load_prototypes(main.getElementsByTagName('building-types')[0])
-		self.load_fleets(main.getElementsByTagName('fleets')[0])
 		
-	def load_xml_known_planets(self, file):
-		xmldoc = minidom.parse(file)
-		node = xmldoc.firstChild
-		
-		if self.load_errors(node.getElementsByTagName("errors")):			
+		gen_info = main.getElementsByTagName('general-info')
+		if gen_info:
+			#print 'loading user info from %s'%(file,)
+			self.load_user_info(gen_info[0])
+			self.load_planets(main.getElementsByTagName('user-planets')[0])
+			self.load_garrisons(main.getElementsByTagName('harrisons')[0])
+			self.load_prototypes(main.getElementsByTagName('building-types')[0])
+			self.load_fleets(main.getElementsByTagName('fleets')[0])
+			return
+			
+		known_planets_node = main.getElementsByTagName('known-planets')
+		if known_planets_node:
+			#print 'loading known planets from %s'%(file,)
+			for planet_node in known_planets_node[0].getElementsByTagName('planet'):
+				pl = planet.KnownPlanet(planet_node)
+				self.known_planets[ pl.pos ] = pl
 			return
 		
-		planet_list = node.getElementsByTagName("iframe")[0].getElementsByTagName('known-planets')[0]
-		for planet_node in planet_list.getElementsByTagName('planet'):
-			pl = planet.KnownPlanet(planet_node)
-			self.known_planets[ pl.pos ] = pl
+		log.error('nothing to load from %s'%(file,))
 
 	def load_user_info(self, general_info):
 		'load race and basic player info, and id'
@@ -89,6 +94,7 @@ class Account:
 		'load owned planet list'
 		for planet_node in planet_list.getElementsByTagName('planet'):
 			pl = planet.OwnedPlanet(planet_node)
+			pl.owner_id = self.id
 			self.owned_planets[ pl.pos ] = pl
 
 	def get_planet(self, pos):

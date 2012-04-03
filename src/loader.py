@@ -15,12 +15,24 @@ def get_attr(node, name, value_type=int):
 		return value_type(node.getAttribute(name))
 	#print 'Attribute %s not exist in node %s'%(name, node)
 	return None
+	
+	
+def set_attr(node, name, val):
+	if not val:
+		return
+	node.setAttribute(name, str(val))
 
 def get_attrs(node, *args):
 	l = []
 	for arg in args:
 		l.append( get_attr(node, arg) )			
 	return tuple(l)
+
+def set_attrs(node, tpl, *args):
+	index = 0
+	for arg in args:
+		set_attr(node, arg, tpl[index])
+		index +=1
 
 log = logging.getLogger('dclord')
 
@@ -45,6 +57,7 @@ class Loader:
 		self.db = db
 		self.callback = callback
 		self.conf = conf
+		self.accounts = {}
 		
 		if 1==self.conf.s['map']['add_debug_planets']:
 			self.addDebugPlanets()
@@ -81,6 +94,9 @@ class Loader:
 			self.db.addObject('planet', p)
 		
 	def parse(self, file):
+		self.db.load_account(file)
+	
+	def old_parse(self, file):
 		xmldoc = minidom.parse(file)
 		node = xmldoc.firstChild
 				
