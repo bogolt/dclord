@@ -1,6 +1,7 @@
 import wx
 import logging
 import planet
+import unit
 log = logging.getLogger('dclord')
 
 class PlanetView(wx.Window):
@@ -80,32 +81,39 @@ class FleetProperty(wx.Panel):
 		if self.GetAutoLayout():
 			self.Layout()
 
+	def append_unit(self, item, fleet):
+		bc = {}
+		for u in fleet.units:
+			bc.setdefault(u.bc, []).append(u)
+		for units in bc.values():
+			u = units[0]
+			carapase,color=None,None
+			
+			if isinstance(u, unit.Unit):
+				carapace = u.proto.carapace
+				color = u.proto.color
+			else:
+				carapace = u.carapace
+				color = u.color
+				
+			self.tree.AppendItem(item, '%d x%d'%(u.bc, len(units)), self.conf.imageList.getImageKey(u.bc, carapace, color))
+
 	def set(self, fleets):
 		self.tree.DeleteAllItems()
 		if not fleets:
 			return
 
-		return
-		
 		root = self.tree.AddRoot('rt')
 		users = {}
 		for fleet in fleets:
-			name = '? unknown'
-			if fleet.owner_id:
-				name = fleet.owner.name
+			if fleet.flying:
+				continue
+			#( hm, or there is ) no need to show empty fleets
+			#if not fleet.units:
+			#	continue
+			fl_item = self.tree.AppendItem(root, '%s'%(fleet.name, ))
+			self.append_unit(fl_item, fleet)
 			
-			if not (name in users.keys()):
-				users[name] = self.tree.AppendItem(root, name)
-			fn = 'unknown'
-			if fleet.name:
-				fn = fleet.name
-			fobj = self.tree.AppendItem(users[name], fn)
-			log.debug('append fleet %s of %s'%(fn, name))
-			for unit in fleet.units:
-				imgKey = self.conf.imageList.getImageKey(unit.proto)
-				self.tree.AppendItem(fobj, str(unit.proto.weight), imgKey)
-				log.debug('unit tree: append item wg %s, img %s'%(unit.proto.weight, imgKey))
-
 		self.tree.ExpandAll()
 		self.SetAutoLayout(True)
 		self.Layout()

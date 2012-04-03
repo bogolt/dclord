@@ -48,17 +48,19 @@ class AlienUnit:
 	def __init__(self, node = None, id = None, bc = None, carapase = None, weight = None):
 		self.id = id
 		self.bc = bc
-		self.carapse = carapase
+		self.carapace = carapase
 		self.weight = weight
+		self.color = None
 		
 		if node:
 			self.load_from_xml(node)
 				
 	def load_from_xml(self, node):
-		self.carapse = get_attr(node, 'carpace')
+		self.carapace = get_attr(node, 'carapace')
 		self.bc = get_attr(node, 'class-id')
 		self.id = get_attr(node, 'id')
 		self.weight = get_attr(node, 'weight')
+		self.color = get_attr(node, 'color')
 
 	def load(self, node):
 		return self.load_from_xml(node)
