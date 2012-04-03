@@ -48,11 +48,17 @@ class PlanetProperty(wx.Panel):
 		self.planetView.set(pl)
 		if not pl:
 			return
+			
 		root = self.tree.AddRoot('rt')
 
 		if isinstance(pl, planet.OwnedPlanet):
+			bc = {}
 			for unit in pl.garrison:
-				self.tree.AppendItem(root, 'u %s %s'%(unit.id,unit.bc), self.conf.imageList.getImageKey(unit.bc, unit.proto.carapace, unit.proto.color))
+				bc.setdefault(unit.bc, []).append(unit)
+			
+			for ulist in bc.values():
+				unit = ulist[0]
+				self.tree.AppendItem(root, 'x%d'%(len(ulist),), self.conf.imageList.getImageKey(unit.bc, unit.proto.carapace, unit.proto.color))
 		self.tree.ExpandAll()
 		self.Layout()
 
