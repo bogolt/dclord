@@ -10,27 +10,28 @@ log = logging.getLogger('dclord')
 
 class UnitImageList:
 	def __init__(self, imgDir):
-		self.imgList = wx.ImageList(20,20)
+		self.imgList = wx.ImageList(40,40)
 		self.imgKeys = {}
 		self.dir = imgDir
 
-	def getImageKey(self, proto):
-		pKey = (proto.id,proto.color)
+	def getImageKey(self, bc, carapace, color):
+		pKey = (bc, color)
 		if pKey in self.imgKeys.keys():
 			return self.imgKeys[pKey]
 		
-		pt = ['%s.gif'%(proto.id,),'carps/%s_%s.gif'%(proto.carapace,proto.color)]
+		pt = ['%s.gif'%(bc,),'carps/%s_%s.gif'%(carapace,color)]
 		for p in pt: 
 			imgPath = os.path.join(self.dir, p)
 			if os.path.exists(imgPath):
-				key = self.imgList.Add(wx.Image(imgPath).Rescale(20,20).ConvertToBitmap())
+				#key = self.imgList.Add(wx.Image(imgPath).Rescale(20,20).ConvertToBitmap())
+				key = self.imgList.Add(wx.Image(imgPath).ConvertToBitmap())
 				self.imgKeys[pKey] = key
 				#print 'key %s %s loaded for class %s, cara %s'%(key, imgPath, proto.id, proto.carapace)
 				return key
 
 		# the only bug can happen if static.zip is not downloaded yet, but it will be fixed after
 		#  app restart
-		print 'not found for %s %s'%(proto.id,proto.color)
+		print 'not found for %s %s'%(bc,color)
 		self.imgKeys[pKey] = None
 		return None
 

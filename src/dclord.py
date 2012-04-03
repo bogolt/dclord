@@ -193,8 +193,10 @@ class DcFrame(wx.Frame):
 		pos = event.attr1
 
 		self.status.SetStatusText(str(pos))
-		self.propPlanet.set(event.attr2[0])
-		self.propFleet.set(event.attr2[1])
+		pl,fleets = event.attr2
+		
+		self.propPlanet.set(pl)
+		self.propFleet.set(fleets)
 	
 	def report(self, event):
 		self.status.SetStatusText(event.attr2)

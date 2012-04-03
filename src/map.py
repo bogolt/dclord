@@ -165,7 +165,7 @@ class Map(wx.Window):
 		diff = div(sub(mouse.GetPosition(), self.shift()), self.planetSize)		
 		p=add(intPos(self.position), intPos(diff))
 
-		objects = self.db.getObjects(p[0],p[1])
+		objects = self.db.get_objects(p)
 		wx.PostEvent(self.GetParent(), ObjectFocus(attr1=p, attr2=objects))
 		
 	def onMotion(self, mouse):

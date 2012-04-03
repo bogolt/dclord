@@ -62,6 +62,13 @@ class Fleet(FleetBase):
 	def load(self, node):
 		return self.load_from_xml(node)
 		
+	def set_proto(self, protos):
+		for u in self.units:
+			if not u.bc in protos:
+				log.error('unknown unit %d proto %d'%(u.id,u.bc))
+				continue
+			u.proto = protos[u.bc]
+		
 		
 class AlienFleet(FleetBase):
 	def __init__(self, node):

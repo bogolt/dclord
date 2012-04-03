@@ -93,8 +93,23 @@ class Db:
 
 		return pl.values()
 		
-	def getObjects(self, a,b):
-		return []
+	def get_objects(self, pos):
+		return self.get_planet(pos), self.getFleets((pos,(0,0)))
+
+	def get_planet(self, pos):
+		for acc in self.accounts.values():
+			for p in acc.owned_planets.values():
+				if p.pos == pos:
+					return p
+
+		#TODO can be returned not most informative here
+		for acc in self.accounts.values():
+			for p in acc.known_planets.values():
+				if p.pos == pos:
+					return p
+		return None
+		
+			
 
 	def is_mult(self, player_id):
 		for acc in self.accounts.values():

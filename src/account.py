@@ -47,9 +47,10 @@ class Account:
 		if gen_info:
 			#print 'loading user info from %s'%(file,)
 			self.load_user_info(gen_info[0])
+			#load them first, to be able to assign protopes to garrison and fleet units
+			self.load_prototypes(main.getElementsByTagName('building-types')[0])
 			self.load_planets(main.getElementsByTagName('user-planets')[0])
 			self.load_garrisons(main.getElementsByTagName('harrisons')[0])
-			self.load_prototypes(main.getElementsByTagName('building-types')[0])
 			self.load_fleets(main.getElementsByTagName('fleets')[0])
 			self.load_alien_fleets(main.getElementsByTagName('allien-fleets')[0])
 			return
@@ -82,6 +83,8 @@ class Account:
 		for garrison_node in node.getElementsByTagName('harrison'):
 			pos = get_attrs(garrison_node, 'x', 'y')
 			self.owned_planets[pos].load_garrison_from_xml(garrison_node)
+			for u in self.owned_planets[pos].garrison:
+				u.proto = self.prototypes[u.bc]
 	
 	def load_alien_fleets(self, node):
 		for fleet_node in node.getElementsByTagName('allien-fleet'):
@@ -96,6 +99,7 @@ class Account:
 		for fleet_node in node.getElementsByTagName('fleet'):
 			#print 'loading fleet from %s'%(fleet_node,)
 			f = fleet.Fleet(fleet_node)
+			f.set_proto(self.prototypes)
 			if f.flying:
 				self.owned_flying_fleets[f.id] = f
 			else:

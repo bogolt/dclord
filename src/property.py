@@ -1,5 +1,6 @@
 import wx
 import logging
+import planet
 log = logging.getLogger('dclord')
 
 class PlanetView(wx.Window):
@@ -9,7 +10,7 @@ class PlanetView(wx.Window):
 		self.planet = planet
 		text=''
 		if self.planet:
-			text = '%s %s'%(self.planet.owner,self.planet.name)
+			text = '%s %s'%(self.planet.owner_id,self.planet.name)
 		self.name = wx.StaticText(self,wx.ID_ANY, text)
 
 	def set(self, planet=None):
@@ -17,7 +18,7 @@ class PlanetView(wx.Window):
 
 		text=u''
 		if self.planet:
-			text = u'%s %s'%(self.planet.owner,self.planet.name)
+			text = u'%s %s'%(self.planet.owner_id,self.planet.name)
 		self.name.SetLabel(text)
 		
 class PlanetProperty(wx.Panel):
@@ -42,18 +43,16 @@ class PlanetProperty(wx.Panel):
 		if self.GetAutoLayout():
 			self.Layout()
 
-	def set(self, planet):
+	def set(self, pl):
 		self.tree.DeleteAllItems()
-		self.planetView.set(planet)
-		if not planet:
+		self.planetView.set(pl)
+		if not pl:
 			return
 		root = self.tree.AddRoot('rt')
 
-		for units in planet.garrison():
-			text = ''
-			if units.quantity > 1:
-				text = str(units.quantity)
-			self.tree.AppendItem(root, text, self.conf.imageList.getImageKey(units.proto))
+		if isinstance(pl, planet.OwnedPlanet):
+			for unit in pl.garrison:
+				self.tree.AppendItem(root, 'u %s %s'%(unit.id,unit.bc), self.conf.imageList.getImageKey(unit.bc, unit.proto.carapace, unit.proto.color))
 		self.tree.ExpandAll()
 		self.Layout()
 
@@ -80,11 +79,13 @@ class FleetProperty(wx.Panel):
 		if not fleets:
 			return
 
+		return
+		
 		root = self.tree.AddRoot('rt')
 		users = {}
 		for fleet in fleets:
 			name = '? unknown'
-			if fleet.owner:
+			if fleet.owner_id:
 				name = fleet.owner.name
 			
 			if not (name in users.keys()):

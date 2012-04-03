@@ -12,6 +12,8 @@ class Unit:
 		self.bc = bc
 		#server unit id
 		self.id = id
+		
+		self.proto = None
 		#unit level ( obsolete )
 		#self.level = None
 		
