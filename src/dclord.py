@@ -106,6 +106,8 @@ class DcFrame(wx.Frame):
 		
 		self.Bind(wx.EVT_CLOSE, self.onClose, self)
 		
+		self.Bind(dcevent.EVT_SET_MAP_POS, self.setMapPos)
+		
 		self.Maximize()
 		
 		self.accounts = []
@@ -214,13 +216,16 @@ class DcFrame(wx.Frame):
 			
 			self.loader.loadFile(event.attr2)
 			self.map.update()
+			self.tasks.update()
 			return
 		
 		#all files loaded(or not)
 		self.syncMenu.Enable(True)
 		
 		self.SetStatusText('sync finished')
-
+	
+	def setMapPos(self, evt):
+		self.map.centerAt(evt.attr1)
 
 if __name__ == '__main__':
 	app = wx.PySimpleApp()
