@@ -43,6 +43,7 @@ class Fleet(FleetBase):
 		
 		self.fly_opts = None
 		self.hide_opts = None
+		self.owner_id = None
 		
 		if node:
 			self.load_from_xml(node)

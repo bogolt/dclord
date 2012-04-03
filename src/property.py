@@ -1,6 +1,7 @@
 import wx
 import logging
 import planet
+import fleet
 import unit
 log = logging.getLogger('dclord')
 
@@ -23,10 +24,11 @@ class PlanetView(wx.Window):
 		self.name.SetLabel(text)
 		
 class PlanetProperty(wx.Panel):
-	def __init__(self, parent, conf):
+	def __init__(self, parent, conf, db):
 		wx.Window.__init__(self, parent, size=(150,150))
 		self.planet = None
 		self.conf = conf
+		self.db = db
 		l = wx.BoxSizer(wx.VERTICAL)
 		self.planetView = PlanetView(self)
 		l.Add(self.planetView)
@@ -64,12 +66,13 @@ class PlanetProperty(wx.Panel):
 		self.Layout()
 
 class FleetProperty(wx.Panel):
-	def __init__(self, parent, conf):
+	def __init__(self, parent, conf, db):
 		wx.Window.__init__(self, parent, size=(150,150))
 		self.fleet = []
 		l = wx.BoxSizer(wx.VERTICAL)
 		self.tree = wx.TreeCtrl(self, style = wx.TR_HIDE_ROOT)
 		self.conf = conf
+		self.db = db
 		self.tree.AssignImageList(self.conf.imageList.imgList)
 		
 		l.Add(self.tree, 2, wx.EXPAND)
@@ -81,9 +84,9 @@ class FleetProperty(wx.Panel):
 		if self.GetAutoLayout():
 			self.Layout()
 
-	def append_unit(self, item, fleet):
+	def append_unit(self, item, fl):
 		bc = {}
-		for u in fleet.units:
+		for u in fl.units:
 			bc.setdefault(u.bc, []).append(u)
 		for units in bc.values():
 			u = units[0]
@@ -95,7 +98,7 @@ class FleetProperty(wx.Panel):
 			else:
 				carapace = u.carapace
 				color = u.color
-				
+			
 			self.tree.AppendItem(item, '%d x%d'%(u.bc, len(units)), self.conf.imageList.getImageKey(u.bc, carapace, color))
 
 	def set(self, fleets):
@@ -105,14 +108,31 @@ class FleetProperty(wx.Panel):
 
 		root = self.tree.AddRoot('rt')
 		users = {}
-		for fleet in fleets:
-			if fleet.flying:
-				continue
-			#( hm, or there is ) no need to show empty fleets
-			#if not fleet.units:
-			#	continue
-			fl_item = self.tree.AppendItem(root, '%s'%(fleet.name, ))
-			self.append_unit(fl_item, fleet)
+		for fl in fleets:			
+			if fl.owner_id:
+				users.setdefault(fl.owner_id,[]).append(fl)
+			else:
+				users.setdefault(-1,[]).append(fl)
+				
+		for player_id, fleets in users.items():
+			player_fleets = self.tree.AppendItem(root, self.db.get_player_name(player_id))
+			for fl in fleets:
+				#( hm, or there is ) no need to show empty fleets
+				#if not fleet.units:
+				#	continue
+
+				tta = 0
+				s = ''
+				if fl.flying:
+					if isinstance(fl, fleet.Fleet):
+						s = '[%s tta: %d]'%(fl.name, fl.tta)
+					else:
+						s = '[unknown tta: %d]'%(fl.tta,)
+				else:
+					s = fl.name
+
+				fl_item = self.tree.AppendItem(player_fleets, s)
+				self.append_unit(fl_item, fl)
 			
 		self.tree.ExpandAll()
 		self.SetAutoLayout(True)

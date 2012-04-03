@@ -55,8 +55,8 @@ class DcFrame(wx.Frame):
 
 		self._mgr.AddPane(self.map, info)
 		
-		self.propPlanet = PlanetProperty(self, self.conf)
-		self.propFleet = FleetProperty(self, self.conf)
+		self.propPlanet = PlanetProperty(self, self.conf, self.db)
+		self.propFleet = FleetProperty(self, self.conf, self.db)
 		self.messages = Messages(self)
 		
 		self._mgr.AddPane(self.propPlanet, wx.RIGHT, "Planet")

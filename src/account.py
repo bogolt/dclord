@@ -4,6 +4,7 @@ import planet
 import proto
 import fleet
 import unit
+import player
 from xml.dom import minidom
 
 log = logging.getLogger('dclord')
@@ -29,6 +30,7 @@ class Account:
 		self.owned_planets = {}
 		self.known_planets = {}
 		self.race = None
+		self.known_players = {}
 		
 		if file:
 			self.load_from_file(file)
@@ -53,6 +55,7 @@ class Account:
 			self.load_garrisons(main.getElementsByTagName('harrisons')[0])
 			self.load_fleets(main.getElementsByTagName('fleets')[0])
 			self.load_alien_fleets(main.getElementsByTagName('allien-fleets')[0])
+			self.load_known_players(main.getElementsByTagName('diplomacy')[0])
 			return
 			
 		known_planets_node = main.getElementsByTagName('known-planets')
@@ -65,15 +68,20 @@ class Account:
 		
 		log.error('nothing to load from %s'%(file,))
 
+	def load_known_players(self, dip_nodes):
+		for dip_node in dip_nodes.getElementsByTagName('rel'):
+			p = player.Player(dip_node)
+			self.known_players[p.id] = p
+		
 	def load_user_info(self, general_info):
 		'load race and basic player info, and id'
 		player = general_info.getElementsByTagName('this-player')[0]
 		self.id = get_attr(player, 'player-id')
 		self.race_id = get_attr(player, 'race-id')
-		self.name = get_attr(player, 'name', unicode)
+		self.name = get_attr(player, 'player-name', unicode)
 		self.login = get_attr(player, 'login', unicode)
 		self.hw_pos = get_attrs(player, 'homeworldx','homeworldy')
-		
+
 	def load_prototypes(self, prototypes_node):
 		for proto_node in prototypes_node.getElementsByTagName('building_class'):
 			pr = proto.Proto(proto_node)
@@ -100,6 +108,7 @@ class Account:
 			#print 'loading fleet from %s'%(fleet_node,)
 			f = fleet.Fleet(fleet_node)
 			f.set_proto(self.prototypes)
+			f.owner_id = self.id
 			if f.flying:
 				self.owned_flying_fleets[f.id] = f
 			else:

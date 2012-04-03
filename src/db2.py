@@ -1,6 +1,9 @@
+import logging
 import os
 import os.path
 from account import Account
+
+log = logging.getLogger('dclord')
 
 def contains(rect, pos):
 	p,s = rect
@@ -23,12 +26,11 @@ class Db:
 		for suffix in suffix_list:
 			ending = suffix + '.' + ext
 			if fname.endswith(ending ):
-				login = fname[:len(ending) ]
+				login = fname[:-len(ending) ]
 				break
 		
-		if not login in self.accounts:
-			self.accounts[login] = Account(None)
-		self.accounts[login].load_from_file(file)
+		log.debug('loading file %s as account %s'%(file, login))
+		self.accounts.setdefault(login, Account(None)).load_from_file(file)
 
 	def getPlanets(self, rect):
 		pl = {}
@@ -109,13 +111,26 @@ class Db:
 					return p
 		return None
 		
-			
-
 	def is_mult(self, player_id):
 		for acc in self.accounts.values():
 			if player_id == acc.id:
 				return True
 		return False
+		
+	def get_player_name(self, player_id):
+		if player_id <=0:
+			return 'unknown'
+		for acc in self.accounts.values():
+			if player_id == acc.id:
+				if not acc.name:
+					log.error('wrong name for %d %s'%(player_id, acc.login))
+					continue
+				return acc.name
+			if player_id in acc.known_players:
+				if acc.known_players[player_id].name:
+					return acc.known_players[player_id].name
+		return 'error_id %d'%(player_id,)
+		
 
 	def getAnything(self):
 		for acc in self.accounts.values():
