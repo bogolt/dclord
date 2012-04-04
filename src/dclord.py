@@ -111,7 +111,9 @@ class DcFrame(wx.Frame):
 		self.Bind(wx.EVT_CLOSE, self.onClose, self)
 		
 		self.Bind(dcevent.EVT_SET_MAP_POS, self.setMapPos)
-		self.Bind(dcevent.EVT_REQUEST_ACTION_PERFORM, self.onPerformActionRequest)
+		
+		#disable actions for now
+		#self.Bind(dcevent.EVT_REQUEST_ACTION_PERFORM, self.onPerformActionRequest)
 		
 		self.Maximize()
 		
