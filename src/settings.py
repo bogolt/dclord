@@ -4,6 +4,7 @@ import os.path
 import logging
 import dcevent
 import network
+import platform
 from zipfile import ZipFile
 from tempfile import gettempdir
 from loader import AsyncLoader
@@ -49,7 +50,9 @@ def toDict(pairList):
 
 class Settings:
 	def __init__(self, callback):
-		self.dir = wx.StandardPaths.Get().GetUserConfigDir() + '/.config/dclord'
+		
+		conf_dir = 'dclord' if 'Windows' == platform.system() else '.config/dclord'
+		self.dir = os.path.join(wx.StandardPaths.Get().GetUserConfigDir(), conf_dir)
 		assurePathExist(self.dir)
 		self.path = os.path.join(self.dir, 'dclord.cfg')
 		self.usersPath = os.path.join(self.dir, 'users.cfg')
