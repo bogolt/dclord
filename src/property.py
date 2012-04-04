@@ -6,13 +6,17 @@ import unit
 log = logging.getLogger('dclord')
 
 class PlanetView(wx.Window):
-	def __init__(self, parent, planet = None):
+	def __init__(self, parent, db, planet = None):
 		wx.Window.__init__(self, parent, wx.ID_ANY)
 		
 		self.planet = planet
+		self.db = db
 		text=''
 		if self.planet:
-			text = '%s %s'%(self.planet.owner_id,self.planet.name)
+			
+			if self.planet.owner_id > 0:
+				text += db.get_player_name(self.planet.owner_id);
+			text += ' ' + self.planet.name
 		self.name = wx.StaticText(self,wx.ID_ANY, text)
 
 	def set(self, planet=None):
