@@ -61,9 +61,9 @@ class DcFrame(wx.Frame):
 		self.messages = Messages(self)
 		self.tasks = tasks.TasksPanel(self, self.conf,  self.db)
 		
+		self._mgr.AddPane(self.propPlanet, wx.LEFT, "Planet")
+		self._mgr.AddPane(self.propFleet, wx.LEFT, "Fleets")
 		self._mgr.AddPane(self.tasks, wx.LEFT, "Tasks")
-		self._mgr.AddPane(self.propPlanet, wx.RIGHT, "Planet")
-		self._mgr.AddPane(self.propFleet, wx.RIGHT, "Fleets")
 		self._mgr.AddPane(self.messages, wx.BOTTOM, "Messages")
 
 		self._mgr.Update()

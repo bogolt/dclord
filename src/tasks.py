@@ -16,10 +16,10 @@ class AccountTasks(wx.Window):
 		self.title = wx.StaticText(self,wx.ID_ANY, acc.name)
 		vbox.Add(self.title)
 		
-		self.task_list = wx.ListView(self, wx.ID_ANY, style=wx.LC_NO_HEADER|wx.LC_REPORT)
-		vbox.Add(self.task_list)
-		self.task_list.InsertColumn(0,'task')
-		self.task_list.Append( ('Test',) )
+		#self.task_list = wx.ListView(self, wx.ID_ANY, style=wx.LC_NO_HEADER|wx.LC_REPORT)
+		#vbox.Add(self.task_list)
+		#self.task_list.InsertColumn(0,'task')
+		#self.task_list.Append( ('Test',) )
 		vbox.Layout()
 		
 		self.title.Bind(wx.EVT_LEFT_DCLICK, self.onActivated)
@@ -54,5 +54,5 @@ class TasksPanel(wx.Panel):
 			log.debug('add tasks %s'%(acc.name,))
 			self.accounts[acc.id] = tasks
 			self.sizer.Add(tasks)
-		
+		self.sizer.Layout()
 	
