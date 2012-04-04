@@ -2,6 +2,8 @@ import wx
 import ConfigParser
 import os.path
 import logging
+import dcevent
+import network
 from zipfile import ZipFile
 from tempfile import gettempdir
 from loader import AsyncLoader
@@ -89,7 +91,15 @@ class Settings:
 							'add_debug_planets':0
 			}, 'log':{
 								'log':1
-			}
+			},'resource':{								
+								'host':'dl.dropbox.com',
+								'url' :'/u/931528/the_game/static.zip'
+		},'update':{
+								'host':'dl.dropbox.com',
+								'url_binary_hash' :'/u/931528/the_game/dclord/version',
+								'url_binary' :'/u/931528/the_game/dclord/dcLord.exe',
+								'hash_sha1' :''
+				}
 		}
 		
 		self.load()
@@ -150,9 +160,12 @@ class Settings:
 		except Exception:
 			log.error('failed to unpack static content')
 		
-		al = AsyncLoader(self.callback, self)
-		al.recvFile('/static/static.zip', os.path.join(self.dir, 'static.zip'))
-		al.start()
+		static_path = os.path.join(self.dir, 'static.zip')
+		st_body = network.http_load( self.s['resource']['host'], self.s['resource']['url'])
+		if st_body:
+			with open(static_path, 'wb') as f:
+				f.write(st_body)
+		wx.PostEvent(self.callback, dcevent.LoaderEvent(attr1=False, attr2=static_path))
 	
 	def saveUsers(self):
 		conf = ConfigParser.RawConfigParser()

@@ -1,20 +1,26 @@
-import httplib
+import network
+import threading
+import os
+import sys
 
-class Update(Thread):
-	def __init__(self, cb, conf, v):
-		Thread.__init__(self)
+class Update(threading.Thread):
+	def __init__(self, cb, conf):
+		threading.Thread.__init__(self)
 		self.cb = cb
 		self.conf = conf
 		
-		self.start()
+		#self.start()
 		
 	def run(self):
 		cf = self.conf.s['update']
-		ftp = ftplib.FTP()
-		ftp.set_debuglevel(cf['debug'])
-		try:
-			ftp.connect(cf['host'])
-			ftp.login(cf['user'], cf['password'])
-			print max(ftp.nlst()) 
-		except Exception, e:
-			print 'update error %s'%(e,)
+		hash_str = network.http_load(cf['host'], cf['url_binary_hash'])
+		
+		
+		print 'current version string %s'%(hash_str,)
+
+
+#u = Update(1,2,3)
+
+print 'file is %s'%(__file__,)
+print 'argv0 is %s'%(sys.argv[0],)
+print 'path is %s'%(os.getcwd(),)
