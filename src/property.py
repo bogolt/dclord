@@ -11,20 +11,17 @@ class PlanetView(wx.Window):
 		
 		self.planet = planet
 		self.db = db
-		text=''
-		if self.planet:
-			
-			if self.planet.owner_id > 0:
-				text += db.get_player_name(self.planet.owner_id);
-			text += ' ' + self.planet.name
-		self.name = wx.StaticText(self,wx.ID_ANY, text)
+		self.name = wx.StaticText(self,wx.ID_ANY, "")
 
 	def set(self, planet=None):
 		self.planet = planet
 
 		text=u''
 		if self.planet:
-			text = u'%s %s'%(self.planet.owner_id,self.planet.name)
+			if self.planet.owner_id > 0:
+				text += self.db.get_player_name(self.planet.owner_id);
+			if self.planet.name:
+				text += ' ' + self.planet.name
 		self.name.SetLabel(text)
 		
 class PlanetProperty(wx.Panel):
@@ -34,7 +31,7 @@ class PlanetProperty(wx.Panel):
 		self.conf = conf
 		self.db = db
 		l = wx.BoxSizer(wx.VERTICAL)
-		self.planetView = PlanetView(self)
+		self.planetView = PlanetView(self, self.db)
 		l.Add(self.planetView)
 		self.tree = wx.TreeCtrl(self, style = wx.TR_HIDE_ROOT)
 		self.conf = conf
