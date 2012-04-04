@@ -116,6 +116,14 @@ class Db:
 			if player_id == acc.id:
 				return True
 		return False
+
+	def get_login(self, user_id):
+		if user_id <=0:
+			return 'unknown'
+		for acc in self.accounts.values():
+			if user_id == acc.id:
+				return acc.login
+		return ''
 		
 	def get_player_name(self, player_id):
 		if player_id <=0:
@@ -130,7 +138,12 @@ class Db:
 				if acc.known_players[player_id].name:
 					return acc.known_players[player_id].name
 		return 'error_id %d'%(player_id,)
-		
+
+	def get_fleet_owner_id(self, fleet_id):
+		for acc in self.accounts.values():
+			if fleet_id in acc.owned_fleets or fleet_id in acc.owned_flying_fleets:
+				return acc.id
+		return -1
 
 	def getAnything(self):
 		for acc in self.accounts.values():

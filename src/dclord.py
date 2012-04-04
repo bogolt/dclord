@@ -3,7 +3,7 @@ import dcevent
 from wx import xrc
 import logging
 import tasks
-
+import request
 import os.path
 
 from map import Map
@@ -46,6 +46,8 @@ class DcFrame(wx.Frame):
 		self.map = Map(self, self.db, self.conf)
 		
 		self._mgr = wx.aui.AuiManager(self)
+		
+		self.requeusts_queue = {}
 
 		info = wx.aui.AuiPaneInfo()
 		info.CenterPane()
@@ -77,7 +79,8 @@ class DcFrame(wx.Frame):
 		about = fileMenu.Append(wx.ID_ANY, "&About dcLord")
 		
 		gameMenu = wx.Menu()
-		self.syncMenu = gameMenu.Append(wx.ID_ANY, "S&yncronize")
+		self.syncMenu = gameMenu.Append(wx.ID_ANY, "G&et data")
+		self.requestCommandsMenu = gameMenu.Append(wx.ID_ANY, "&Upload commands")
 		playersView = gameMenu.Append(wx.ID_ANY, "&Accounts")
 		
 		viewMenu = wx.Menu()
@@ -92,7 +95,8 @@ class DcFrame(wx.Frame):
 		self.SetMenuBar(panel)
 		
 		self.Bind(wx.EVT_MENU, self.closeApp, id=wx.ID_EXIT)
-		self.Bind(wx.EVT_MENU, self.sync, self.syncMenu)	
+		self.Bind(wx.EVT_MENU, self.sync, self.syncMenu)
+		self.Bind(wx.EVT_MENU, self.upload, self.requestCommandsMenu)
 		self.Bind(wx.EVT_MENU, self.showPlayersView, playersView)
 		
 		self.Bind(wx.EVT_MENU, self.showMessagesView, messagesVisible)
@@ -107,6 +111,7 @@ class DcFrame(wx.Frame):
 		self.Bind(wx.EVT_CLOSE, self.onClose, self)
 		
 		self.Bind(dcevent.EVT_SET_MAP_POS, self.setMapPos)
+		self.Bind(dcevent.EVT_REQUEST_ACTION_PERFORM, self.onPerformActionRequest)
 		
 		self.Maximize()
 		
@@ -153,6 +158,9 @@ class DcFrame(wx.Frame):
 	def closeApp(self, event):
 		self.Close()
 
+	def onPerformActionRequest(self, event):
+		self.requeusts_queue.setdefault( event.attr1[0], [] ).append( ( event.attr1[1], event.attr1[2] ) )
+		
 	def showAbout(self, event):
 		info = wx.AboutDialogInfo()
 		info.AddDeveloper('bogolt (bogolt@gmail.com)')
@@ -175,6 +183,24 @@ class DcFrame(wx.Frame):
 	def explore_geo(self, evt):
 		pass
 		#find all planets which fit requirements of explorables
+	
+	def upload(self, _):
+		
+		#swap with empty value, to assure newly added commands will not interfere with sending ones
+		tmp = {}
+		tmp, self.requeusts_queue = self.requeusts_queue, tmp
+		for user_id, actions in tmp.items():
+			log.debug('request to send actions from user %d'%(user_id,))
+			asyncLoader = AsyncLoader(self, self.conf)
+			req = request.RequestMaker()
+			for unit_id, action_id in actions:
+				log.debug('store action %d %d'%(unit_id,action_id))
+				req.store_action( unit_id, action_id)
+			
+			uname = self.db.get_login(user_id)
+			log.debug('send actions %s for user %s'%(req, uname))
+			asyncLoader.recvActionsReply( (uname,self.conf.users[uname]), req, self.conf.pathOut)
+			asyncLoader.start()
 	
 	def sync(self, event):
 		self.syncMenu.Enable(False)

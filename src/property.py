@@ -2,6 +2,7 @@ import wx
 import logging
 import planet
 import fleet
+import dcevent
 import unit
 log = logging.getLogger('dclord')
 
@@ -80,6 +81,22 @@ class FleetProperty(wx.Panel):
 		self.SetSizer(l)
 		self.SetAutoLayout(True)
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
+		self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onChanged, self.tree)
+		
+	def onChanged(self, evt):
+		selected = evt.GetItem()
+		if selected:
+			item = self.tree.GetPyData(selected)
+			if isinstance(item, unit.Unit):
+				log.debug('item selected %s of bc %s has %d actions'%(item.id,item.bc, len(item.proto.actions)))
+				
+				#perform action
+				for action_id in item.proto.actions.keys():
+					log.debug('request action %d perform for item %d '%(action_id, item.id))
+					wx.PostEvent(self.GetParent(), dcevent.RequestActionPerform(attr1=(self.db.get_fleet_owner_id(item.fleet_id), item.id, action_id)))
+					break
+		
+		
 	
 	def onSize(self, evt):
 		if self.GetAutoLayout():
@@ -100,7 +117,8 @@ class FleetProperty(wx.Panel):
 				carapace = u.carapace
 				color = u.color
 			
-			self.tree.AppendItem(item, '%d x%d'%(u.bc, len(units)), self.conf.imageList.getImageKey(u.bc, carapace, color))
+			item = self.tree.AppendItem(item, '%d x%d'%(u.bc, len(units)), self.conf.imageList.getImageKey(u.bc, carapace, color))
+			self.tree.SetPyData(item, u)
 
 	def set(self, fleets):
 		self.tree.DeleteAllItems()

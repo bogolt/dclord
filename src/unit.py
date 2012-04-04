@@ -17,6 +17,8 @@ class Unit:
 		#unit level ( obsolete )
 		#self.level = None
 		
+		self.fleet_id = None
+		
 		if node:
 			self.load_from_xml(node)
 		

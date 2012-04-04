@@ -64,6 +64,9 @@ class Settings:
 		self.pathXml = os.path.join(self.pathTemp,'xml')
 		assurePathExist(self.pathXml)
 		
+		self.pathOut = os.path.join(self.pathTemp, 'out')
+		assurePathExist(self.pathOut)
+		
 		self.imageList = UnitImageList(os.path.join(self.dir, 'static/img/buildings'))
 		
 		self.s = {

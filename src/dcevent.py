@@ -8,3 +8,5 @@ Report, EVT_REPORT = wx.lib.newevent.NewEvent()
 LoaderEvent, EVT_LOADER = wx.lib.newevent.NewEvent()
 
 SetMapPosEvent, EVT_SET_MAP_POS = wx.lib.newevent.NewEvent()
+
+RequestActionPerform,EVT_REQUEST_ACTION_PERFORM = wx.lib.newevent.NewEvent()

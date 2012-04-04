@@ -58,7 +58,9 @@ class Fleet(FleetBase):
 		FleetBase.load_from_xml(self, node)
 		
 		for unit_node in node.getElementsByTagName('u'):
-			self.units.append( unit.Unit(unit_node) )
+			u = unit.Unit(unit_node)
+			u.fleet_id = self.id
+			self.units.append( u )
 	
 	def load(self, node):
 		return self.load_from_xml(node)

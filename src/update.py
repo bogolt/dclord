@@ -1,5 +1,4 @@
-import ftplib
-from threading import Thread
+import httplib
 
 class Update(Thread):
 	def __init__(self, cb, conf, v):

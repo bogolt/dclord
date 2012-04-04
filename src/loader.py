@@ -268,6 +268,29 @@ class AsyncLoader(Thread):
 	def queueQuery(self, *opts, **kvo):
 		self.args.append(kvo)
 
+class FileAsyncLoader:
+	def __init__(self, cbt):
+		Thread.__init__(self)
+		self.cb = cb
+		self.requests = []
+		
+	def run(self):
+		log.info('file async loader started')
+		for req in self.requests:
+			self.perform(req)
+		#wx.PostEvent(self.cb, LoaderEvent(attr1=True, attr2=None))
+	
+	def perform(self, request):
+		is_get, host, url, opts = request
+		req_type = 'GET' if is_get else 'POST'
+		conn = httplib.HTTPConnection(host)
+		conn.set_debuglevel(2)
+		conn.request(req_type, url, opts)
+		r = conn.getresponse()
+		if r.status != 200:
+			log.error('Error %d requesting url %s from host %s'%(r.status, url, host))
+			return
+
 import csv
 
 def planetsFromCSV(file):
