@@ -141,7 +141,10 @@ class DcFrame(wx.Frame):
 			return
 	
 	def showUnit(self, event):
-		self.units_panel.set_unit(event.attr1)
+		#self.units_panel.set_unit(event.attr1)
+		for acc in self.db.accounts.values():
+			self.units_panel.set_filter(acc)
+			break
 	
 	def showHidePane(self, paneObject):
 		pane = self._mgr.GetPane(paneObject)

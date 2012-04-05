@@ -149,4 +149,22 @@ class Account:
 			#wx.PostEvent(self.callback, Report(attr1=False, attr2=str))
 			hasAny = True
 		return hasAny
-		
+
+	def get_type_units(self, proto_id):
+		units = []
+		fleet_types = [self.owned_fleets, self.owned_flying_fleets]
+		for src in fleet_types:
+			for f in src.values():
+				for un in f.units:
+					if un.bc == proto_id:
+						units.append(un)
+		for p in self.owned_planets.values():
+			for un in p.garrison:
+				if un.bc == proto_id:
+					units.append(un)
+		return units
+	
+	def filter_protos(self, can_fly = True, transportable = False, min_transport_cells = 0 ):
+		for pr in self.prototypes.values():
+			if ((pr.fly.fly_speed > 0.0001) == can_fly) and (min_transport_cells == 0 or (pr.fly.transport_capacity >= min_transport_cells)):
+				yield pr

@@ -21,15 +21,7 @@ class UnitWindow(wx.Window):
 		self.add_support(vbox, self.unit.fleet.owner.race.second, self.unit.proto.support_second)
 		hbox.Add(vbox)
 		self.add_fly_spec(vbox, self.unit)
-		
-		#vbox = wx.BoxSizer(wx.VERTICAL)
-		#self.title = wx.StaticText(self,wx.ID_ANY, acc.name)
-		#vbox.Add(self.title)
-		
-		#self.task_list = wx.ListView(self, wx.ID_ANY, style=wx.LC_NO_HEADER|wx.LC_REPORT)
-		#vbox.Add(self.task_list)
-		#self.task_list.InsertColumn(0,'task')
-		#self.task_list.Append( ('Test',) )
+
 		self.SetSizer(hbox)
 		hbox.Layout()
 		
@@ -42,7 +34,6 @@ class UnitWindow(wx.Window):
 		sizer.Add(hbox)
 	
 	def add_fly_spec(self, sizer, u):
-			
 		hbox = wx.BoxSizer(wx.VERTICAL)
 		if u.proto.fly.fly_speed > 0.000001:
 			hbox.Add( wx.StaticText(self,wx.ID_ANY, 'Speed: %0.2f'%(self.unit.proto.fly.fly_speed,)))
@@ -52,7 +43,56 @@ class UnitWindow(wx.Window):
 			hbox.Add( wx.StaticText(self,wx.ID_ANY, 'Transport: %d'%(self.unit.proto.fly.transport_capacity,)))
 			
 		sizer.Add(hbox)
+
+
+class ProtoWindow(wx.Window):
+	def __init__(self, parent, conf, race, p, num):
+		wx.Window.__init__(self, parent, wx.ID_ANY)
+		self.proto = p
+		self.race = race
+		self.conf = conf
+		self.num = num
+		#self.SetBackgroundColour(wx.Color(0,0,0))
+		vbox = wx.BoxSizer(wx.VERTICAL)
+		
+		hbox = wx.BoxSizer(wx.HORIZONTAL)
+		img = wx.StaticBitmap(self, wx.ID_ANY)
+		img.SetBitmap( conf.imageList.imgList.GetBitmap(conf.imageList.getImageKey(p.id, p.carapace, p.color)) )
+		hbox.Add(img)		
+		hbox.Add( wx.StaticText(self,wx.ID_ANY, 'x%d'%(self.num,)))
+		
+		vboxs = wx.BoxSizer(wx.VERTICAL)
+		self.add_support(vboxs, self.race.main, self.proto.support_main)
+		self.add_support(vboxs, self.race.second, self.proto.support_second)
+		hbox.Add(vboxs)
+		
+		vbox.Add(hbox)
+		
+		self.add_fly_spec(vbox)
+
+		self.SetSizer(vbox)
+		vbox.Layout()
+		
+	def add_support(self, sizer, res_type, res_value):
+		hbox = wx.BoxSizer(wx.HORIZONTAL)
+		img_res = wx.StaticBitmap(self, wx.ID_ANY)
+		img_res.SetBitmap( self.conf.get_image('%s_ico.gif'%(res_type,) ))
+		hbox.Add(img_res)
+		hbox.Add( wx.StaticText(self,wx.ID_ANY, '%0.2f'%(res_value,)))
+		sizer.Add(hbox)
+	
+	def add_fly_spec(self, sizer):
+		hbox = wx.BoxSizer(wx.VERTICAL)
+		if self.proto.fly.fly_speed > 0.000001:
+			hbox.Add( wx.StaticText(self,wx.ID_ANY, 'Speed: %0.2f'%(self.proto.fly.fly_speed,)))
+			hbox.Add( wx.StaticText(self,wx.ID_ANY, 'Range: %0.2f'%(self.proto.fly.fly_range,)))
+
+		if self.proto.fly.transport_capacity >= 1:
+			hbox.Add( wx.StaticText(self,wx.ID_ANY, 'Transport: %d'%(self.proto.fly.transport_capacity,)))
 			
+		sizer.Add(hbox)
+
+
 class UnitsPanel(wx.Panel):
 	def __init__(self, parent, conf, db):
 		wx.Window.__init__(self, parent, -1, size=(120,200))
@@ -60,8 +100,13 @@ class UnitsPanel(wx.Panel):
 		self.db = db
 		self.units = []
 		
+		self.sz = wx.BoxSizer(wx.VERTICAL)		
+		self.scrolled = wx.ScrolledWindow(self, wx.ID_ANY)
+		self.sz.Add(self.scrolled)
+		self.SetSizer(self.sz)
+		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		self.SetSizer(self.sizer)
+		self.scrolled.SetSizer(self.sizer)
 		self.SetAutoLayout(True)
 		self.accounts = {}
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
@@ -69,6 +114,20 @@ class UnitsPanel(wx.Panel):
 	def onSize(self, evt):
 		if self.GetAutoLayout():
 			self.Layout()
+	
+	def set_filter(self, acc, can_fly = True, transportable = False, min_transport_cells = 0 ):
+		self.units = []
+		self.sizer.DeleteWindows()
+
+		for u in acc.filter_protos(can_fly, transportable, min_transport_cells):
+			type_units = acc.get_type_units(u.id)
+			if not type_units:
+				log.debug('no units of proto %d exist on account %s'%(u.id, acc.name))
+				#continue
+			un = ProtoWindow( self.scrolled, self.conf, acc.race, u, len(type_units))
+			self.units.append( un)
+			self.sizer.Add(un)
+		self.Layout()
 	
 	def set_unit(self, u):		
 		self.units = []
