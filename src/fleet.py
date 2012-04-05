@@ -44,6 +44,7 @@ class Fleet(FleetBase):
 		self.fly_opts = None
 		self.hide_opts = None
 		self.owner_id = None
+		self.owner = None
 		
 		if node:
 			self.load_from_xml(node)
@@ -60,6 +61,7 @@ class Fleet(FleetBase):
 		for unit_node in node.getElementsByTagName('u'):
 			u = unit.Unit(unit_node)
 			u.fleet_id = self.id
+			u.fleet = self
 			self.units.append( u )
 	
 	def load(self, node):

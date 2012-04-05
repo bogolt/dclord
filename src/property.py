@@ -89,12 +89,13 @@ class FleetProperty(wx.Panel):
 			item = self.tree.GetPyData(selected)
 			if isinstance(item, unit.Unit):
 				log.debug('item selected %s of bc %s has %d actions'%(item.id,item.bc, len(item.proto.actions)))
+				wx.PostEvent(self.GetParent(), dcevent.SelectUnit(attr1=item))
 				
 				#perform action
-				for action_id in item.proto.actions.keys():
-					log.debug('request action %d perform for item %d '%(action_id, item.id))
-					wx.PostEvent(self.GetParent(), dcevent.RequestActionPerform(attr1=(self.db.get_fleet_owner_id(item.fleet_id), item.id, action_id)))
-					break
+				#for action_id in item.proto.actions.keys():
+				#	log.debug('request action %d perform for item %d '%(action_id, item.id))
+				#	wx.PostEvent(self.GetParent(), dcevent.RequestActionPerform(attr1=(self.db.get_fleet_owner_id(item.fleet_id), item.id, action_id)))
+				#	break
 		
 		
 	

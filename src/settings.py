@@ -53,6 +53,7 @@ class Settings:
 		
 		conf_dir = 'dclord' if 'Windows' == platform.system() else '.config/dclord'
 		self.dir = os.path.join(wx.StandardPaths.Get().GetUserConfigDir(), conf_dir)
+		self.img_root = os.path.join(self.dir, 'static/img')
 		assurePathExist(self.dir)
 		self.path = os.path.join(self.dir, 'dclord.cfg')
 		self.usersPath = os.path.join(self.dir, 'users.cfg')
@@ -72,7 +73,9 @@ class Settings:
 		self.pathOut = os.path.join(self.pathTemp, 'out')
 		assurePathExist(self.pathOut)
 		
-		self.imageList = UnitImageList(os.path.join(self.dir, 'static/img/buildings'))
+		self.images = {}
+		
+		self.imageList = UnitImageList(os.path.join(self.img_root, 'buildings'))
 		
 		self.s = {
 			'network':{
@@ -106,6 +109,9 @@ class Settings:
 		}
 		
 		self.load()
+		
+	def get_image(self, key):
+		return self.images.setdefault(key, wx.Bitmap(os.path.join(self.img_root, key)))
 		
 	def load(self):
 		conf = ConfigParser.RawConfigParser()

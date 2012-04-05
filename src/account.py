@@ -5,14 +5,10 @@ import proto
 import fleet
 import unit
 import player
+import race
 from xml.dom import minidom
 
 log = logging.getLogger('dclord')
-
-class Race:
-	def __init__(self, node):
-		pass
-
 
 class Account:
 	def __init__(self, file):
@@ -20,6 +16,7 @@ class Account:
 		self.login = None
 		self.id = None
 		self.race_id = None
+		self.race = None
 		self.hw_pos = None
 		
 		self.owned_fleets = {}
@@ -81,7 +78,9 @@ class Account:
 		self.name = get_attr(player, 'player-name', unicode)
 		self.login = get_attr(player, 'login', unicode)
 		self.hw_pos = get_attrs(player, 'homeworldx','homeworldy')
-
+		
+		self.race = race.Race(general_info.getElementsByTagName('this-player-race')[0])
+	
 	def load_prototypes(self, prototypes_node):
 		for proto_node in prototypes_node.getElementsByTagName('building_class'):
 			pr = proto.Proto(proto_node)
@@ -109,6 +108,7 @@ class Account:
 			f = fleet.Fleet(fleet_node)
 			f.set_proto(self.prototypes)
 			f.owner_id = self.id
+			f.owner = self
 			if f.flying:
 				self.owned_flying_fleets[f.id] = f
 			else:

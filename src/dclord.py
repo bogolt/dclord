@@ -5,6 +5,7 @@ import logging
 import tasks
 import request
 import os.path
+import units_panel
 
 from map import Map
 from loader import Loader, AsyncLoader
@@ -62,11 +63,13 @@ class DcFrame(wx.Frame):
 		self.propFleet = FleetProperty(self, self.conf, self.db)
 		self.messages = Messages(self)
 		self.tasks = tasks.TasksPanel(self, self.conf,  self.db)
+		self.units_panel = units_panel.UnitsPanel(self, self.conf, self.db)
 		
 		self._mgr.AddPane(self.propPlanet, wx.LEFT, "Planet")
 		self._mgr.AddPane(self.propFleet, wx.LEFT, "Fleets")
 		self._mgr.AddPane(self.tasks, wx.LEFT, "Tasks")
 		self._mgr.AddPane(self.messages, wx.BOTTOM, "Messages")
+		self._mgr.AddPane(self.units_panel, wx.RIGHT, "Units")
 
 		self._mgr.Update()
 
@@ -115,6 +118,8 @@ class DcFrame(wx.Frame):
 		#disable actions for now
 		#self.Bind(dcevent.EVT_REQUEST_ACTION_PERFORM, self.onPerformActionRequest)
 		
+		self.Bind(dcevent.EVT_SELECT_UNIT, self.showUnit)
+		
 		self.Maximize()
 		
 		self.accounts = []
@@ -134,6 +139,9 @@ class DcFrame(wx.Frame):
 				print 'set pos for hw of %s at %s'%(acc.login, acc.hw_pos)
 				self.map.centerAt( acc.hw_pos )
 			return
+	
+	def showUnit(self, event):
+		self.units_panel.set_unit(event.attr1)
 	
 	def showHidePane(self, paneObject):
 		pane = self._mgr.GetPane(paneObject)
@@ -161,7 +169,8 @@ class DcFrame(wx.Frame):
 		self.Close()
 
 	def onPerformActionRequest(self, event):
-		self.requeusts_queue.setdefault( event.attr1[0], [] ).append( ( event.attr1[1], event.attr1[2] ) )
+		pass
+		#self.requeusts_queue.setdefault( event.attr1[0], [] ).append( ( event.attr1[1], event.attr1[2] ) )
 		
 	def showAbout(self, event):
 		info = wx.AboutDialogInfo()
