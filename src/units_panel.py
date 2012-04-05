@@ -19,8 +19,8 @@ class UnitWindow(wx.Window):
 		vbox = wx.BoxSizer(wx.VERTICAL)
 		self.add_support(vbox, self.unit.fleet.owner.race.main, self.unit.proto.support_main)
 		self.add_support(vbox, self.unit.fleet.owner.race.second, self.unit.proto.support_second)
-
 		hbox.Add(vbox)
+		self.add_fly_spec(vbox, self.unit)
 		
 		#vbox = wx.BoxSizer(wx.VERTICAL)
 		#self.title = wx.StaticText(self,wx.ID_ANY, acc.name)
@@ -40,10 +40,19 @@ class UnitWindow(wx.Window):
 		hbox.Add(img_res)
 		hbox.Add( wx.StaticText(self,wx.ID_ANY, '%0.2f'%(res_value,)))
 		sizer.Add(hbox)
-			
-		
-		#self.title.Bind(wx.EVT_LEFT_DCLICK, self.onActivated)
 	
+	def add_fly_spec(self, sizer, u):
+			
+		hbox = wx.BoxSizer(wx.VERTICAL)
+		if u.proto.fly.fly_speed > 0.000001:
+			hbox.Add( wx.StaticText(self,wx.ID_ANY, 'Speed: %0.2f'%(self.unit.proto.fly.fly_speed,)))
+			hbox.Add( wx.StaticText(self,wx.ID_ANY, 'Range: %0.2f'%(self.unit.proto.fly.fly_range,)))
+
+		if u.proto.fly.transport_capacity >= 1:
+			hbox.Add( wx.StaticText(self,wx.ID_ANY, 'Transport: %d'%(self.unit.proto.fly.transport_capacity,)))
+			
+		sizer.Add(hbox)
+			
 class UnitsPanel(wx.Panel):
 	def __init__(self, parent, conf, db):
 		wx.Window.__init__(self, parent, -1, size=(120,200))
