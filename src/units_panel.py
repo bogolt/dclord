@@ -1,6 +1,7 @@
 import logging
 import unit
 import wx
+import wx.lib.scrolledpanel
 
 log = logging.getLogger('dclord')
 
@@ -93,9 +94,9 @@ class ProtoWindow(wx.Window):
 		sizer.Add(hbox)
 
 
-class UnitsPanel(wx.Panel):
+class UnitsPanel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent, conf, db):
-		wx.Window.__init__(self, parent, -1, size=(120,200))
+		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, -1, size=(120,200))
 		self.conf = conf
 		self.db = db
 		self.units = []
@@ -128,6 +129,7 @@ class UnitsPanel(wx.Panel):
 			self.units.append( un)
 			self.sizer.Add(un)
 		self.Layout()
+		self.SetupScrolling(scroll_x=False)
 	
 	def set_unit(self, u):		
 		self.units = []
