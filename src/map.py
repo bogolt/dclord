@@ -161,6 +161,7 @@ class Map(wx.Window):
 				return
 
 			self.planetSize+=self.scrollStep
+		self.update()
 
 		#make sure mouse is pointing on the centre  of the scroll area ( just move the pos so that this _is_ the center )
 		newScreenPos = mul(logicPos, self.planetSize)
@@ -186,6 +187,8 @@ class Map(wx.Window):
 		wx.PostEvent(self.GetParent(), ObjectFocus(attr1=p, attr2=objects))
 		
 	def onMotion(self, mouse):
+		#fix for windows focus policy ( after treeCtrl grabs focus it wont let it back )
+		self.SetFocus()
 		if not self.moving:
 			return
 

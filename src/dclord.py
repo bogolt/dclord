@@ -18,7 +18,7 @@ from settings import Settings
 from accounts_frame import AccountsFrame
 
 
-version = '0.1.3'
+version = '0.1.4'
 
 log = logging.getLogger('dclord')
 
@@ -124,6 +124,7 @@ class DcFrame(wx.Frame):
 		
 		self.accounts = []
 		self.last_active_account_index = 0
+		self.map.SetFocus()
 
 		
 	def showNextHw(self, evt):
