@@ -255,7 +255,7 @@ class DcFrame(wx.Frame):
 				return
 			
 			self.loader.loadFile(event.attr2)
-			self.map.update()
+			#self.map.update()
 			self.tasks.update()
 			return
 		

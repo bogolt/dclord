@@ -39,12 +39,10 @@ class Map(wx.Window):
 		self.position = 1,1
 		self.db = db
 		self.anything = None
+		self.img = None
 		self.update(False)
 		
 		size = self.GetClientSize()
-		
-		self.fleets = None
-		self.planets = None
 		
 		self.img = wx.EmptyBitmap(size[0], size[1])
 		
@@ -77,26 +75,44 @@ class Map(wx.Window):
 		self.Bind(wx.EVT_MOUSEWHEEL, self.onScroll)
 		self.Bind(wx.EVT_SIZE, self.onResize)
 		
+		#self.update_screen()
+		
 	def onResize(self, evt):
 		size = self.GetClientSize()
 		if self.img.GetSize() != size:
 			self.img = wx.EmptyBitmap(size[0], size[1])
+		self.update()
 		
 	def centerAt(self, pos):
 		self.position = sub(pos, div(div(self.GetClientSize(), self.planetSize), 2 ))
-		self.update()
+		#self.update()
 		
 	def update(self, shouldRefresh=True):		
 		if not self.anything:
 			self.anything = self.db.getAnything()
 			if self.anything:
 				self.position=sub(self.anything, (5,5))
+		self.update_screen()
 		if shouldRefresh:
 			self.Refresh()
 	
+	def xDraw(self, dc):
+		self.paint(dc)
+
+	def update_screen(self):
+		dc = wx.MemoryDC()
+		if self.img:
+			dc.SelectObject(self.img)
+			self.paint(dc)
+		del dc # need to get rid of the MemoryDC before Update() is called.
+		self.Refresh()
+		self.Update()
+		
 	def OnPaint(self, event):
 		dc = wx.BufferedPaintDC(self, self.img)
-		
+		#self.paint(dc)
+	
+	def paint(self, dc):
 		size = self.img.GetSize()#self.GetClientSize()
 		
 		dc.SetBrush(wx.Brush(self.conf.s['map']['bg_color']))
@@ -160,6 +176,7 @@ class Map(wx.Window):
 		
 	def onRightUp(self, mouse):
 		self.moving = False
+		self.update_screen()
 
 	def onLeftDown(self, mouse):
 		diff = div(sub(mouse.GetPosition(), self.shift()), self.planetSize)		
@@ -185,6 +202,8 @@ class Map(wx.Window):
 			self.position=(x,y)
 			self.Refresh()
 			self.prevPos = curPos
+			
+		self.update_screen()
 
 	def drawFleets(self, dc, fleets):
 		for f in fleets:
