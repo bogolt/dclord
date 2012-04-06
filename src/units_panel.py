@@ -94,42 +94,42 @@ class ProtoWindow(wx.Window):
 		sizer.Add(hbox)
 
 
-class UnitsPanel(wx.lib.scrolledpanel.ScrolledPanel):
+class AccountUnitsPanel(wx.Window):
 	def __init__(self, parent, conf, db):
-		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, -1, size=(120,200))
+		wx.Window.__init__(self, parent, -1, size=(120,200))
 		self.conf = conf
 		self.db = db
 		self.units = []
 		
-		self.sz = wx.BoxSizer(wx.VERTICAL)		
-		self.scrolled = wx.ScrolledWindow(self, wx.ID_ANY)
-		self.sz.Add(self.scrolled)
-		self.SetSizer(self.sz)
+		self.sizer = wx.BoxSizer(wx.VERTICAL)		
+		#self.scrolled = wx.ScrolledWindow(self, wx.ID_ANY)
+		#self.sz.Add(self.scrolled)
+		self.SetSizer(self.sizer)
 		
-		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		self.scrolled.SetSizer(self.sizer)
-		self.SetAutoLayout(True)
-		self.accounts = {}
+		#self.sizer = wx.BoxSizer(wx.VERTICAL)
+		#self.scrolled.SetSizer(self.sizer)
+		#self.SetAutoLayout(True)
+		#self.accounts = {}
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
 		
 	def onSize(self, evt):
 		if self.GetAutoLayout():
 			self.Layout()
 	
-	def set_filter(self, acc, can_fly = True, transportable = False, min_transport_cells = 0 ):
+	def set_filter(self, acc, can_fly = True, existing_units = True, transportable = False, min_transport_cells = 0 ):
 		self.units = []
 		self.sizer.DeleteWindows()
 
+		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, acc.name) )
 		for u in acc.filter_protos(can_fly, transportable, min_transport_cells):
 			type_units = acc.get_type_units(u.id)
-			if not type_units:
+			if not type_units and existing_units:
 				log.debug('no units of proto %d exist on account %s'%(u.id, acc.name))
-				#continue
-			un = ProtoWindow( self.scrolled, self.conf, acc.race, u, len(type_units))
+				continue
+			un = ProtoWindow( self, self.conf, acc.race, u, len(type_units))
 			self.units.append( un)
 			self.sizer.Add(un)
 		self.Layout()
-		self.SetupScrolling(scroll_x=False)
 	
 	def set_unit(self, u):		
 		self.units = []
@@ -138,3 +138,34 @@ class UnitsPanel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.units.append( un)
 		self.sizer.Add(un)
 		self.Layout()
+
+class UnitsPanel(wx.lib.scrolledpanel.ScrolledPanel):
+	def __init__(self, parent, conf, db):
+		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, -1, size=(120,200))
+		self.conf = conf
+		self.db = db
+		self.accounts = []
+			
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.SetSizer(self.sizer)
+		self.SetAutoLayout(True)
+		self.accounts = {}
+		self.Bind(wx.EVT_SIZE, self.onSize, self)
+		
+	def onSize(self, evt):
+		if self.GetAutoLayout():
+			self.Layout()
+	
+	def set_filter(self, can_fly = True, transportable = False, min_transport_cells = 0 ):
+		self.accounts = []
+		self.sizer.DeleteWindows()
+		
+		for acc in self.db.accounts.values():
+			print 'adding acc %s on unit panel'%(acc.name,)
+			acc_panel = AccountUnitsPanel(self, self.conf, self.db)
+			acc_panel.set_filter(acc)
+			self.accounts.append(acc_panel)
+			self.sizer.Add(acc_panel)
+		self.sizer.Layout()
+		self.SetupScrolling(scroll_x=False)
+	

@@ -125,6 +125,7 @@ class DcFrame(wx.Frame):
 		self.accounts = []
 		self.last_active_account_index = 0
 		self.map.SetFocus()
+		self.units_panel.set_filter()
 
 		
 	def showNextHw(self, evt):
@@ -142,10 +143,12 @@ class DcFrame(wx.Frame):
 			return
 	
 	def showUnit(self, event):
+		pass
 		#self.units_panel.set_unit(event.attr1)
-		for acc in self.db.accounts.values():
-			self.units_panel.set_filter(acc)
-			break
+		
+		#for acc in self.db.accounts.values():
+		#	self.units_panel.set_filter(acc)
+		#	break
 	
 	def showHidePane(self, paneObject):
 		pane = self._mgr.GetPane(paneObject)

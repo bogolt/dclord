@@ -85,7 +85,7 @@ class Map(wx.Window):
 		
 	def centerAt(self, pos):
 		self.position = sub(pos, div(div(self.GetClientSize(), self.planetSize), 2 ))
-		#self.update()
+		self.update()
 		
 	def update(self, shouldRefresh=True):		
 		if not self.anything:
