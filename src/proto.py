@@ -177,6 +177,7 @@ class Proto:
 		self.id = None
 		self.building_class = None
 		self.name = None
+		self.description = None
 		self.carapace = None
 		self.weight = None
 		self.color = None
@@ -208,6 +209,9 @@ class Proto:
 		self.carapace = get_attr(node, 'carapace')
 		self.serial = get_attr(node, 'serial')
 		self.color = get_attr(node, 'color')
+		
+		self.name = get_attr(node, 'name', unicode)
+		self.description = get_attr(node, 'description', unicode)
 		
 		self.is_war = get_attr(node, 'is-war', bool)
 		self.is_transportable = get_attr(node, 'is-transportable', bool)
