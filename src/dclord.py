@@ -6,6 +6,7 @@ import tasks
 import request
 import os.path
 import units_panel
+import unit_filter
 
 from map import Map
 from loader import Loader, AsyncLoader
@@ -85,6 +86,7 @@ class DcFrame(wx.Frame):
 		self.syncMenu = gameMenu.Append(wx.ID_ANY, "G&et data")
 		self.requestCommandsMenu = gameMenu.Append(wx.ID_ANY, "&Upload commands")
 		playersView = gameMenu.Append(wx.ID_ANY, "&Accounts")
+		select_units = gameMenu.Append(wx.ID_ANY, "&Units")
 		
 		viewMenu = wx.Menu()
 		messagesVisible = viewMenu.Append(wx.ID_ANY, 'Me&ssages panel')
@@ -106,6 +108,8 @@ class DcFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.showPropertiesView, propertiesVisible)
 		self.Bind(wx.EVT_MENU, self.showNextHw, go_to_next_hw)
 		self.Bind(wx.EVT_MENU, self.showAbout, about)
+		self.Bind(wx.EVT_MENU, self.selectUnits, select_units)
+		
 		
 		self.Bind(dcevent.EVT_OBJECT_FOCUS, self.objectFocus)
 		self.Bind(dcevent.EVT_REPORT, self.report)
@@ -142,6 +146,10 @@ class DcFrame(wx.Frame):
 				self.map.centerAt( acc.hw_pos )
 			return
 	
+	def selectUnits(self, event):
+		self.db.export_known_planets()
+		#uf = unit_filter.UnitFilterFrame(self, self.conf, self.db)
+		#uf.Show()
 	def showUnit(self, event):
 		pass
 		#self.units_panel.set_unit(event.attr1)
@@ -227,15 +235,15 @@ class DcFrame(wx.Frame):
 		
 		#import request
 		#req = request.RequestMaker()
-		#req.specific_action( (69, 120), 3277544, 16546296, 1)
-		#req.store_action(16546296, 1)
+		
+		#req.store_action(16569557, 102)
 		
 		#req.createNewFleet( '822:978', 'client_generated_16429601')
 		#reply <act id="ActionID" result="ok" return-id="fleet_id"/>
 		
 		for login in self.conf.users.items():
-			asyncLoader.recvUserInfo(login, 'all', self.conf.pathArchive)
-			asyncLoader.recvUserInfo(login, 'known_planets', self.conf.pathArchive)
+			syncLoader.recvUserInfo(login, 'all', self.conf.pathArchive)
+			#asyncLoader.recvUserInfo(login, 'known_planets', self.conf.pathArchive)
 		asyncLoader.start()
 	
 	def objectFocus(self, event):

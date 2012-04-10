@@ -5,6 +5,11 @@ from account import Account
 
 log = logging.getLogger('dclord')
 
+def export_planets_to_csv(pl, path):
+	with open(path, 'wt') as f:
+		for p in pl.values():
+			pass
+		
 def contains(rect, pos):
 	p,s = rect
 	if pos[0] < p[0] or pos[1] < p[1]:
@@ -151,3 +156,17 @@ class Db:
 				return acc.hw_pos
 		return (1,1)
 	
+	def export_known_planets(self):
+		pl = {}
+		for acc in self.accounts.values():
+			for p in acc.owned_planets.values():
+				pl[p.pos] = p
+		for acc in self.accounts.values():
+			for p in acc.known_planets.values():
+				if not p in pl:
+					pl[p.pos] = p
+		
+		export_planets_to_csv(pl, '/tmp/dclord/planets.csv')
+	
+
+

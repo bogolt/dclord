@@ -202,7 +202,7 @@ class Proto:
 			
 		if node:
 			self.load_from_xml(node)
-			
+	
 	def load_from_xml(self, node):
 		self.id = get_attr(node, 'building-id')
 		self.building_class = get_attr(node, 'class')

@@ -33,6 +33,7 @@ class RequestMaker:
 		#return self.act('create_fleet_from_choosen', val('planetid', '%d:%d'%(coord[0], coord[1])) + val('new_fleet_name', name)+ val('fleetx', coord[0])+ val('fleety',coord[1]) + ''.join(val('
 	
 	# id==1 - get planet geo
+	# id==102 - offer becoming vassal
 	def store_action(self, unit_id, action_id):
 		return self.act('store_action', val('unit_id', unit_id) + val('action_id',action_id))
 		
