@@ -77,7 +77,7 @@ public:
 		auto sz = 0;
 		for(auto row: c_)
 			for(auto col: row)
-				sz += row.size();
+				sz += col.size();
 		return sz;
 	}
 
