@@ -242,8 +242,8 @@ class DcFrame(wx.Frame):
 		#reply <act id="ActionID" result="ok" return-id="fleet_id"/>
 		
 		for login in self.conf.users.items():
-			syncLoader.recvUserInfo(login, 'all', self.conf.pathArchive)
-			#asyncLoader.recvUserInfo(login, 'known_planets', self.conf.pathArchive)
+			asyncLoader.recvUserInfo(login, 'all', self.conf.pathArchive)
+			asyncLoader.recvUserInfo(login, 'known_planets', self.conf.pathArchive)
 		asyncLoader.start()
 	
 	def objectFocus(self, event):

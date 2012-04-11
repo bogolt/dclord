@@ -120,7 +120,7 @@ class AccountUnitsPanel(wx.Window):
 		self.units = []
 		self.sizer.DeleteWindows()
 
-		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, acc.name) )
+		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, '%s'%(acc.name,)) )
 		for u in acc.filter_protos(can_fly, transportable, min_transport_cells):
 			type_units = acc.get_type_units(u.id)
 			if not type_units and existing_units:

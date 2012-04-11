@@ -25,6 +25,13 @@ struct Coord
         ,y(y_)
     {}
 
+    Coord& operator+=(const CoordLocal& cl)
+    {
+      x+=cl.x();
+      y+=cl.y();
+      return *this;
+    }
+
     unsigned int x,y;
 };
 

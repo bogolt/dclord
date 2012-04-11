@@ -13,7 +13,8 @@ class AccountTasks(wx.Window):
 		self.callback = cb
 		
 		vbox = wx.BoxSizer(wx.VERTICAL)
-		self.title = wx.StaticText(self,wx.ID_ANY, acc.name)
+		log.debug("acc name %s"%(acc.name,))
+		self.title = wx.StaticText(self,wx.ID_ANY, '%s'%(acc.name,))
 		vbox.Add(self.title)
 		
 		#self.task_list = wx.ListView(self, wx.ID_ANY, style=wx.LC_NO_HEADER|wx.LC_REPORT)
