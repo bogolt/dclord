@@ -11,7 +11,7 @@ import unit_filter
 from map import Map
 from loader import Loader, AsyncLoader
 from property import PlanetProperty, FleetProperty, Messages
-from db2 import Db
+from db import Db
 from settings import Settings
 #from update import Update
 
@@ -228,14 +228,37 @@ class DcFrame(wx.Frame):
 			asyncLoader.recvActionsReply( (uname,self.conf.users[uname]), req, self.conf.pathOut)
 			asyncLoader.start()
 	
+
+	def test_action(self):
+		'send all fleets of single acc to a specific pos'
+		import request
+		req = request.RequestMaker()
+		
+		l = ''
+		player = self.db.getPlayerByLogin(l)
+		log.debug('got player %s %s'%(player.id, player.login))
+		go_to = (1, 1)
+		for pos,id,name,arrival,from_p in self.db.getUserFleets(player.id):
+			#log.debug('got fleet %s'%(pos, id, name,,))
+			if go_to == pos:
+				log.debug('fleet %s is already on destination point'%(name,))
+				continue
+			if arrival:
+				log.debug('fleet %s is flying to %s, arrives at: %d'%(name,pos,arrival))
+				continue
+			log.info('moving fleet %s standing at %s'%(name, pos))
+			req.fleetMove(id, go_to)
+		
+		p = self.conf.users[l]
+		asyncLoader.recvActionsReply((l,p), req, '/tmp/dclord/out')
+				
+		asyncLoader.start()
+
 	def sync(self, event):
 		self.syncMenu.Enable(False)
 
 		asyncLoader = AsyncLoader(self, self.conf)
-		
-		#import request
-		#req = request.RequestMaker()
-		
+			
 		#req.store_action(16569557, 102)
 		
 		#req.createNewFleet( '822:978', 'client_generated_16429601')

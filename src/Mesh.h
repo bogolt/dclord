@@ -28,6 +28,34 @@ public:
 			row.resize(height);
 	}
 
+//	void save(const String& out_path) const
+//	{
+//		for(auto i=0;i<width_;i++)
+//			for(auto j=0;j<height_;j++)
+//			{
+//				//Coord c(i * cell_capacity_ + 1, j*cell_capacity_ + 1);
+//				ofstream ofstr(out_path+boost::lexical_cast<std::string>(i)+"_"+boost::lexical_cast<std::string>(j));
+//				for(auto item: c_[i][j])
+//				{
+//					ofstr << item.first << item.second << "\n";
+//				}
+//			}
+//	}
+
+//	void save(const String& out_path) const
+//	{
+//		for(auto i=0;i<width_;i++)
+//			for(auto j=0;j<height_;j++)
+//			{
+//				//Coord c(i * cell_capacity_ + 1, j*cell_capacity_ + 1);
+//				ofstream ofstr(out_path+boost::lexical_cast<std::string>(i)+"_"+boost::lexical_cast<std::string>(j));
+//				for(auto item: c_[i][j])
+//				{
+//					ofstr << item.first << item.second << "\n";
+//				}
+//			}
+//	}
+
 	Value& value(const Coord& c )
 	{
 		auto rc = to_real_coord(c);

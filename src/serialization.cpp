@@ -55,7 +55,7 @@ bool from_str(const std::string& line, Geo& g, Coord& c, const std::string& form
   return true;
 }
 
-bool from_csv(const String& file, GeoMesh& pm)
+bool from_csv(const String& file, GeoList& pm)
 {
   ifstream ifstr(file);
   if(!ifstr.is_open())
@@ -71,7 +71,7 @@ bool from_csv(const String& file, GeoMesh& pm)
     Geo g;
     Coord c(-1,-1);
     if(from_str(line, g, c, ""))
-      pm.value(c) = g;
+      pm.push_back( std::make_pair(c, g));
   }while(!ifstr.eof());
 
   return true;
@@ -93,4 +93,11 @@ void to_csv(const GeoMesh& pm, const String& file)
   {
     ofstr << to_str(item.first) << to_str(item.second) << "\n";
   }
+}
+
+GeoMesh to_mesh(const GeoList& gl)
+{
+  GeoMesh gm;
+  //gm.insert(gl.begin(), gl.end());
+  return gm;
 }

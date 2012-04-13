@@ -137,14 +137,16 @@ class Map(wx.Window):
 		dc.SetTextForeground(self.conf.s['map']['planet_owner_text_color'])
 		area = (xl,yl), sz
 		
-		for planet in self.db.getPlanets(area):
-			self.drawPlanet(dc, planet)
+		#for pos,pl in self.db.known_planets.items():
+		for (x,y),player_id,pl_name,s in self.db.knownPlanets(area):
+			#print 'drawing planet %d %d'%(x,y)
+			self.drawPlanet(dc, (x,y), player_id,s)
 		
-		for fleet in self.db.getFleets(area):
-			if fleet.flying:
-				self.drawFlyingFleet(dc, fleet)
-			else:
-				self.drawStaticFleet(dc, fleet)
+		#for fleet in self.db.getFleets(area):
+		#	if fleet.flying:
+		#		self.drawFlyingFleet(dc, fleet)
+		#	else:
+		#		self.drawStaticFleet(dc, fleet)
 			
 
 	def onScroll(self, mouse):
@@ -255,26 +257,25 @@ class Map(wx.Window):
 
 
 
-	def drawPlanet(self, dc, planet):
-		pos = planet.pos
+	def drawPlanet(self, dc, pos, player_id, s):
 		p = mul(sub(pos, self.position), self.planetSize)
 	
 		size = self.planetSize/2
-		if 's' in planet.geo.keys() and planet.geo['s']:
-			size = size * (planet.geo['s']/5+1) / 20.0
+		if s:
+			size = size * (int(s)/5+1) / 20.0
 			if size < 1:
 				size = 1
 
 		x,y=p
-		if planet.owner_id:
-			if self.db.is_mult(planet.owner_id):
-				dc.SetPen(wx.Pen(self.conf.s['map']['own_planet_color']))
-				dc.SetBrush(wx.Brush(self.conf.s['map']['own_planet_color']))
+		if player_id:
+			#if self.db.is_mult(planet.owner_id):
+			dc.SetPen(wx.Pen(self.conf.s['map']['own_planet_color']))
+			dc.SetBrush(wx.Brush(self.conf.s['map']['own_planet_color']))
 				#do not display owner planet name... it is good only for debug
 				#dc.DrawText(planet.owner.name,x+10,y)
-			else:
-				dc.SetPen(wx.Pen(self.conf.s['map']['inhabited_planet_color']))
-				dc.SetBrush(wx.Brush(self.conf.s['map']['inhabited_planet_color']))
+#			else:
+#				dc.SetPen(wx.Pen(self.conf.s['map']['inhabited_planet_color']))
+#				dc.SetBrush(wx.Brush(self.conf.s['map']['inhabited_planet_color']))
 		else:
 			dc.SetPen(wx.Pen(self.conf.s['map']['planet_color']))
 			dc.SetBrush(wx.Brush(self.conf.s['map']['planet_color']))

@@ -157,6 +157,8 @@ class UnitsPanel(wx.lib.scrolledpanel.ScrolledPanel):
 			self.Layout()
 	
 	def set_filter(self, can_fly = True, transportable = False, min_transport_cells = 0 ):
+		return
+		
 		self.accounts = []
 		self.sizer.DeleteWindows()
 		

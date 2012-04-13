@@ -1,5 +1,7 @@
 #include "Coord.h"
 
+using namespace std;
+
 CoordLocal::CoordLocal(CoordLocal::Pos x, CoordLocal::Pos y)
     :pos_( (x << 8) | y)
 {
@@ -29,4 +31,11 @@ Coord to_real_coord(const Coord& c)
     cc.x-=1;
     cc.y-=1;
     return cc;
+}
+
+
+
+ostream& operator<<(ostream& ostr, const CoordLocal& cl)
+{
+  return ostr << cl.x() << ";" <<cl.y();
 }

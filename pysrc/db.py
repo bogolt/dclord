@@ -1,5 +1,9 @@
 import sqlite3
 from objects import Planet, Fleet, Unit, Player, Proto
+import logging
+
+def to_pos(a,b):
+	return int(a),int(b)
 
 class Db:
 	def __init__(self, dbpath=":memory:"):
@@ -13,68 +17,74 @@ class Db:
 		self.preloadArea = None
 		
 		cur = self.cur
+
 		cur.execute("""create table if not exists planet(
 				x integer not null,
 				y integer not null,
-				owner_id integer,
-				name text,
 				o integer(1),
 				e integer(1),
 				m integer(1),
 				t integer(1),
-				s integer(1)
+				s integer(1),
+				owner_id integer,
+				name text,
+				is_open integer(1)
 				)""")
-		
-		cur.execute("""create table if not exists user_planet(
-				id integer primary key AUTOINCREMENT,
-				x integer not null,
-				y integer not null,
-				corruption integer,
-				population integer
-				)""")
+		#corruption integer,
+		#population integer
 
 		cur.execute("""create table if not exists player(
 				id integer primary key,
+				hw_x integer(2),
+				hw_y integer(2),
 				name text not null,
-				login text,
-				hw_x integer,
-				hw_y integer
+				login text
 				)""")
-		
 		#what if approaching unknown fleet does not have an id?
 		#id integer primary key,
 		cur.execute("""create table if not exists fleet(
 				id integer primary key,
-				x integer not null,
-				y integer not null,
+				x integer(2) not null,
+				y integer(2) not null,
 				owner_id integer,
 				name text,
 				from_x integer,
 				from_y integer,
-				tta integer
-				total_mass integer
-				units_count integer
+				arrival_turn integer(2),
+				weight integer,
+				is_hidden integer(1),
+				times_spotted integer(1)
 				)""")
-		
+								
 		cur.execute("""create table if not exists unit(
 				id integer primary key,
-				fleet_id integer,
-				class integer,
-				hp integer
+				fleet_id integer not null,
+				class integer not null,
+				hp integer not null
+				)""")
+				
+		cur.execute("""create table if not exists alien_unit(
+				id integer primary key,
+				fleet_id integer not null,
+				carapace integer not null,
+				color integer(1),
+				weight integer,
+				class integer
 				)""")
 
-		#TODO: remove hp, add quantity
 		cur.execute("""create table if not exists garrison_unit(
 				id integer primary key,
-				garrison_id integer,
-				class integer,
-				hp integer
+				x integer(2) not null,
+				y integer(2) not null,
+				class integer not null,
+				hp integer not null
 				)""")
 		
 		cur.execute("""create table if not exists garrison_queue_unit(
 				id integer primary key,
-				garrison_id integer,
-				class integer,
+				x integer(2) not null,
+				y integer(2) not null,
+				class integer not null,
 				done integer
 				)""")
 		
@@ -82,7 +92,7 @@ class Db:
 				id integer primary key,
 				carapace integer,
 				weight integer,
-				color integer default 0
+				color integer(1) default 0
 				)""")
 		
 	def addObject(self, object, data):
@@ -178,11 +188,12 @@ class Db:
 		
 		#or should we add empty user to the list ?
 		if not r:
+			log.error('player (login: %s) not found'%(login,))
 			return None
-		p = Player(id, r[0], login)		
-		if r[1] and r[2]:
-			p.hw = r[1],r[2]		
-		self.player[id] = p		
+		p = Player(r[0], r[1], login)
+		if r[2] and r[3]:
+			p.hw = to_pos(r[2],r[3])
+		self.player[p.id] = p	
 		return p		
 			
 	def getAccountsList(self):
@@ -255,6 +266,19 @@ class Db:
 		else:
 			self.proto[id] = None
 		return self.proto[id]
+
+	def getAnything(self):
+		self.cur.execute("select hw_x,hw_y from player where hw_x not null and hw_y not null")
+		r = self.cur.fetchone()
+		if r:
+			print 'got place %s'%(r,)
+			return int(r[0]),int(r[1])
+		return 1,1
+
+	def accounts(self):
+		self.cur.execute('select login,name,hw_x,hw_y,id from player where login not null')
+		for login,name,x,y,id in self.cur.fetchall():
+			yield login,name,(int(x),int(y)),int(id)
 	
 	def getAreaPlanets(self, leftTop=(0,0), size=(1000,1000)):
 		cx,cy=leftTop
@@ -276,3 +300,16 @@ class Db:
 			pl[(r[0],r[1])].units[u.id] = u
 					
 		return pl
+
+	def getUserFleets(self, player_id):
+		self.cur.execute('select x,y,id,name,arrival_turn,from_x,from_y from fleet where owner_id=:player_id',(player_id,))
+		for x,y,id,name,arrival_turn,from_x, from_y in self.cur.fetchall():
+			yield to_pos(x,y),id,name,arrival_turn,to_pos(from_x,from_y)
+
+	def knownPlanets(self, area):
+		x,y = area[0]
+		zx = area[1][0]
+		zy = area[1][1]
+		self.cur.execute("select x,y,owner_id,name,s from planet")# where x>=:x and y>=:y and x<=:zx and y<=:zy", (x,y,zx,zy))
+		for c in self.cur.fetchall():
+			yield (int(c[0]),int(c[1])), c[2], c[3], c[4]

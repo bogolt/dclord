@@ -17,6 +17,9 @@ private:
     unsigned short int pos_;
 };
 
+#include <iostream>
+std::ostream& operator<<(std::ostream& ostr, const CoordLocal& cl);
+
 // pair of coordinates for public use ( export/import )
 struct Coord
 {

@@ -13,8 +13,8 @@ class AccountTasks(wx.Window):
 		self.callback = cb
 		
 		vbox = wx.BoxSizer(wx.VERTICAL)
-		log.debug("acc name %s"%(acc.name,))
-		self.title = wx.StaticText(self,wx.ID_ANY, '%s'%(acc.name,))
+		log.debug("acc name %s"%(acc[1],))
+		self.title = wx.StaticText(self,wx.ID_ANY, '%s'%(acc[1],))
 		vbox.Add(self.title)
 		
 		#self.task_list = wx.ListView(self, wx.ID_ANY, style=wx.LC_NO_HEADER|wx.LC_REPORT)
@@ -48,12 +48,12 @@ class TasksPanel(wx.Panel):
 		
 	def update(self):
 		log.debug('update tasks %d'%(len(self.accounts),))
-		for acc in self.db.accounts.values():
-			if acc.id in self.accounts:
+		for login,name,hw,id in self.db.accounts():
+			if id in self.accounts:
 				continue
-			tasks = AccountTasks(self, acc, self.GetParent())
-			log.debug('add tasks %s'%(acc.name,))
-			self.accounts[acc.id] = tasks
+			tasks = AccountTasks(self, (login,name,hw,id), self.GetParent())
+			log.debug('add tasks %s'%(name,))
+			self.accounts[id] = tasks
 			self.sizer.Add(tasks)
 		self.sizer.Layout()
 	

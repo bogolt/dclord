@@ -58,10 +58,12 @@ class Loader:
 		self.callback = callback
 		self.conf = conf
 		self.accounts = {}
+		self.turn = 0
 		
 		if 1==self.conf.s['map']['add_debug_planets']:
 			self.addDebugPlanets()
 			
+		#self.db.load_csv()
 		#self.loadGalaxySizes()
 			
 	def addDebugPlanets(self):
@@ -93,12 +95,14 @@ class Loader:
 			p=convertDict(planet.attributes, {'x':'x', 'y':'y', 'name':'name', 'owner-id':'owner_id','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s'})
 			self.db.addObject('planet', p)
 		
-	def parse(self, file):
-		self.db.load_account(file)
+	def stupid_parse(self, file):
+		pass
+		#self.db.load_account(file)
 	
-	def old_parse(self, file):
+	def parse(self, file):
 		xmldoc = minidom.parse(file)
-		node = xmldoc.firstChild
+		node = xmldoc.getElementsByTagName("dc")[0]
+		self.turn = get_attr(node, 'turn-n')
 				
 		main = node.getElementsByTagName("iframe")
 		err = node.getElementsByTagName("errors")
@@ -138,13 +142,12 @@ class Loader:
 		
 		#load user planets
 		for planet in planets:
-			p=convertDict(planet.attributes, {'x':'x', 'y':'y', 'name':'name', 'owner-id':'owner_id','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s'})
-			p['owner_id'] = player['id']
-			self.db.addObject('planet', p)
+			planet_info = convertDict(planet.attributes, {'x':'x', 'y':'y','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s', 'name':'name', 'is-open':'is_open'})
+			planet_info['owner_id'] = player['id']
 			
-			x,y=planet.attributes['x'].value,planet.attributes['y'].value
-			up = convertDict(planet.attributes, {'x':'x', 'y':'y', 'corruption':'corruption', 'population':'population'}) 
-			self.db.addObject('user_planet', up) 
+			#up = convertDict(planet.attributes, {'x':'x', 'y':'y', 'corruption':'corruption', 'population':'population'})
+			planet_info['owner_id'] = player['id']
+			self.db.addObject('planet', planet_info)
 			
 		buildingTypes = node.getElementsByTagName("building-types")[0]
 		for bt in buildingTypes.getElementsByTagName("building_class"):
@@ -154,23 +157,30 @@ class Loader:
 		garrisons = node.getElementsByTagName('harrisons')[0]
 		for garrison in garrisons.getElementsByTagName('harrison'):
 			x,y=garrison.attributes['x'].value,garrison.attributes['y'].value
-			garrisonId = self.db.getUserPlanetId(x,y)
+			#garrisonId = self.db.getUserPlanetId(x,y)
 			for queueUnit in garrison.getElementsByTagName('c-u'):
 				cu = convertDict(queueUnit.attributes, {'done':'done', 'bc':'class','id':'id'})
-				cu['garrison_id']=garrisonId
+				cu['x']=x
+				cu['y']=y
 				self.db.addObject('garrison_queue_unit', cu)
 			for unit in garrison.getElementsByTagName('u'):
 				u = convertDict(unit.attributes, {'hp':'hp', 'bc':'class','id':'id'})
-				u['garrison_id']=garrisonId
+				u['x']=x
+				u['y']=y
 				self.db.addObject('garrison_unit', u)
 				
 		userFleets = node.getElementsByTagName("fleets")
 		fleets = userFleets[0].getElementsByTagName("fleet")
 
-		fleetDict = {'x':'x','y':'y','id':'id','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','tta':'tta','turns-till-arrival':'tta','name':'name'}		
+		fleetDict = {'x':'x','y':'y','id':'id','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name'}		
 		for fleet in fleets:
 			f = convertDict(fleet.attributes, fleetDict)
 			f['owner_id'] = player['id']
+			tta = get_attr(fleet, 'tta')
+			arrive_turn = None
+			if tta > 0:
+				arrive_turn = self.turn + tta
+			f['arrival_turn'] = arrive_turn
 			self.db.addObject('fleet',f)
 			
 			for unit in fleet.getElementsByTagName("u"):
@@ -185,15 +195,15 @@ class Loader:
 			self.db.addObject('fleet',f)
 			
 			for unit in fleet.getElementsByTagName('allien-ship'):
-				u = convertDict(unit.attributes, {'id':'id','class-id':'class'})#,'carapace':'carapace','weight':'weight'})
+				u = convertDict(unit.attributes, {'id':'id','class-id':'class','carapace':'carapace','weight':'weight', 'color':'color'})
 				try:
 					u['fleet_id']=f['id']
 				except KeyError:
 					log.error('fleet not found %s'%(f,))
 					continue
-				self.db.addObject('unit',u)
-				p = convertDict(unit.attributes, {'class-id':'id', 'carapace':'carapace','weight':'weight'})
-				self.db.addObject('proto',p)
+				self.db.addObject('alien_unit',u)
+				#p = convertDict(unit.attributes, {'class-id':'id', 'carapace':'carapace','weight':'weight'})
+				#self.db.addObject('proto',p)
 
 		players = node.getElementsByTagName('diplomacy')
 		for player in players[0].getElementsByTagName('rel'):
