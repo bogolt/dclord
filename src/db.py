@@ -351,6 +351,7 @@ def users():
 def planets():
 	global db
 	c = db.conn.cursor()
-	c.execute('select x,y,owner_id,o,e,m,t,s from planet')
+	k = ('x','y','owner_id','o','e','m','t','s')
+	c.execute('select %s from planet'%(','.join(k),))
 	for r in c:
-		yield r
+		yield dict(zip(k,r))

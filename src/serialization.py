@@ -2,10 +2,10 @@ import db
 import csv
 
 def savePlanets():
-	path='/tmp/dclord/planets.csv'
+	path='/tmp/dclord/planets1.csv'
 	f = open(path, 'wt')
-	writer = csv.writer(f)
-	writer.writerow(('x','y','owner_id','o','e','m','t','s'))
+	writer = csv.DictWriter(f, ('x','y','owner_id','o','e','m','t','s'))
+	writer.writeheader()
 	for p in db.planets():
 		writer.writerow(p)
 
