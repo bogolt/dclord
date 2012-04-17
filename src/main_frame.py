@@ -3,6 +3,7 @@ import logging
 import os.path
 import db
 import version
+import map
 
 log = logging.getLogger('dclord')
 
@@ -16,14 +17,18 @@ class DcFrame(wx.Frame):
 	def __init__(self, parent):
 		wx.Frame.__init__(self, parent, -1, "dcLord (%s): Divide & Conquer client (www.the-game.ru)"%(version.getVersion(),), style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
 		
+		self.map = map.Map(self)
+		
 		self._mgr = wx.aui.AuiManager(self)
 		
 		info = wx.aui.AuiPaneInfo()
 		info.CenterPane()
-		info.DefaultPane()
 		info.Fixed()
+		info.DefaultPane()
 		info.Resizable(True)
 		info.CaptionVisible(False)
+		
+		self._mgr.AddPane(self.map, info)
 
 		self._mgr.Update()
 		
