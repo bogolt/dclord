@@ -3,7 +3,12 @@ import logging
 import os.path
 import db
 import version
+import util
 import map
+import event
+import config
+import import_raw
+import serialization
 
 log = logging.getLogger('dclord')
 
@@ -33,6 +38,11 @@ class DcFrame(wx.Frame):
 		self._mgr.Update()
 		
 		self.makeMenu()
+		
+		self.Bind(event.EVT_DATA_DOWNLOAD, self.onDownloadRawData)
+		
+		serialization.load()
+		#import_raw.processAllUnpacked()
 		
 		#todo - restore previous state
 		#self.Maximize()
@@ -92,11 +102,31 @@ class DcFrame(wx.Frame):
 		self.players.Show(True)
 
 	def onUpdate(self, event):
-		pass
+		'download and process info from server'
+		import loader
+		l = loader.AsyncLoader()
+		out_dir = os.path.join(config.options['data']['path'], 'raw')
+		util.assureDirExist(out_dir)
+		for acc in config.accounts():
+			log.info('requesting user %s info'%(acc['login'],))
+			l.getUserInfo(self, acc['login'], out_dir)
+		l.start()
+			
+	def onDownloadRawData(self, evt):
+		key = evt.attr1
+		data = evt.attr2
+		if not key:
+			log.info('all requested data downloaded')
+			serialization.save()
+		if not data:
+			log.error('failed to load info for user %s'%(key,))
+			return
+		import_raw.processRawData(data)
 
 if __name__ == '__main__':
 	app = wx.PySimpleApp()
 	app.SetAppName('dcLord')
+	config.loadAll()
 	
 	frame = DcFrame(None)
 	frame.Show(True)

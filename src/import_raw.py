@@ -4,13 +4,15 @@ import db
 import serialization
 import os
 import os.path
+import config
+import util
 
 log = logging.getLogger('dclord')
-h = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-h.setFormatter(formatter)
-log.addHandler(h)
-log.setLevel(logging.DEBUG)
+#h = logging.StreamHandler()
+#formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+#h.setFormatter(formatter)
+#log.addHandler(h)
+#log.setLevel(logging.DEBUG)
 
 def getAttrs(src, conv):
 	d={}
@@ -56,24 +58,25 @@ def load_xml(path):
 	p.setContentHandler(XmlHandler())
 	p.parse( open(path) )
 
-def load_user_data(user_login):
-	path = '/tmp/dclord/xml/'
-	load_xml(os.path.join(path, user_login+'_all.xml'))
-	load_xml(os.path.join(path, user_login+'_known_planets.xml'))
+def processRawData(path):
+	log.debug('processing raw data %s'%(path,))
+	xml_dir = os.path.join(config.options['data']['path'], config.options['data']['raw-xml-dir'])
+	util.assureDirExist(xml_dir)
+	base = os.path.basename(path)
+	xml_path = os.path.join(xml_dir, base[:-3])
+	util.unpack(path, xml_path)
+	load_xml(xml_path)
 
-
-def load_all():
-	load_user_data('xarquid')
-	load_user_data('bogolt')
-	load_user_data('gobbolt')
-	load_user_data('overmind')
-	load_user_data('ghost_5')
-	load_user_data('million')
-
-	serialization.save()
+def processAllUnpacked():
+	xml_dir = os.path.join(config.options['data']['path'], config.options['data']['raw-xml-dir'])
+	log.debug('processing all found data at %s'%(xml_dir,))
+	at_least_one = False
+	for file in os.listdir(xml_dir):
+		if not file.endswith('.xml'):
+			continue
+		log.debug('loading %s'%(file,))
+		load_xml( os.path.join(xml_dir, file) )
+		at_least_one = True
+	if at_least_one:
+		serialization.save()
 	
-
-serialization.load()
-
-import time
-time.sleep(10)

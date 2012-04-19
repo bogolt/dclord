@@ -348,10 +348,13 @@ def users():
 	for r in c:
 		yield r
 
-def planets():
+def planets(flt):
 	global db
 	c = db.conn.cursor()
 	k = ('x','y','owner_id','o','e','m','t','s')
-	c.execute('select %s from planet'%(','.join(k),))
+	ws = ''
+	if flt:
+		ws = 'WHERE %s'%(' AND '.join(flt),)
+	c.execute('select %s from planet %s'%(','.join(k),ws))
 	for r in c:
 		yield dict(zip(k,r))
