@@ -2,6 +2,7 @@ import gzip
 import wx
 import os
 import os.path
+import shutil
 
 def add(c1, c2):
 	return (c1[0]+c2[0], c1[1]+c2[1])
@@ -18,10 +19,15 @@ def unpack(path_in, path_out):
 		out.write(f.read())
 	f.close()
 
+
 def assureDirExist(d):
 	if os.path.exists(d):
 		return
 	os.makedirs(d)
+
+def assureNotExist(d):
+	if os.path.exists(d):
+		shutil.rmtree(d)
 
 class BufferedWindow(wx.Window):
 	def __init__(self, parent):
@@ -59,3 +65,4 @@ class BufferedWindow(wx.Window):
 	def onPaint(self, _):
 		'paint prerendered image on screen'
 		dc = wx.BufferedPaintDC(self, self.image)
+

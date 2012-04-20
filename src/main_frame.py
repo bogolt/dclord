@@ -9,6 +9,7 @@ import event
 import config
 import import_raw
 import serialization
+import update
 
 log = logging.getLogger('dclord')
 
@@ -42,6 +43,9 @@ class DcFrame(wx.Frame):
 		self.Bind(event.EVT_DATA_DOWNLOAD, self.onDownloadRawData)
 		
 		serialization.load()
+
+		#update.replace( os.getcwd() )
+		
 		#import_raw.processAllUnpacked()
 		#serialization.save()
 		
@@ -92,7 +96,7 @@ class DcFrame(wx.Frame):
 		info.SetVersion(version.getVersion())
 		info.SetDescription('Divide and Conquer\ngame client\nsee at: http://www.the-game.ru')
 		wx.AboutBox(info)
-
+	
 	def showPlayersView(self, event):
 		if self.players:
 			self.players.Show(True)
@@ -123,12 +127,3 @@ class DcFrame(wx.Frame):
 			log.error('failed to load info for user %s'%(key,))
 			return
 		import_raw.processRawData(data)
-
-if __name__ == '__main__':
-	app = wx.PySimpleApp()
-	app.SetAppName('dcLord')
-	config.loadAll()
-	
-	frame = DcFrame(None)
-	frame.Show(True)
-	app.MainLoop()

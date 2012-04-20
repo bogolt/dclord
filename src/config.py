@@ -12,7 +12,7 @@ users = {}
 options = {
 		'data':{
 			'dir':'data',
-			'path':os.path.join(getOptionsDir(), 'data'),
+			'path':None,
 			'raw-dir':'raw',
 			'raw-xml-dir':'raw_xml'
 			
@@ -47,6 +47,8 @@ def loadAccounts():
 		users[acc['login']] = acc
 
 def loadAll():
+	global options
+	options['data']['path'] = os.path.join(getOptionsDir(), options['data']['dir'])
 	loadAccounts()
 	loadOptions()
 

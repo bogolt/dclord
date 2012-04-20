@@ -127,12 +127,9 @@ class Map(util.BufferedWindow):
 		pf.append('x<%d'%(self.offset_pos[0]+self.screen_size[0]))
 		pf.append('y<%d'%(self.offset_pos[1]+self.screen_size[1]))
 
-		#log.debug('get planets with %s'%(pf,))
 		for p in db.planets(self.planet_filter + pf):
 			self.drawPlanet(dc, p)
 	
 	def paint(self, dc):
-		w,h = self.screen_size
-		
 		self.drawPlanets(dc)
 				
