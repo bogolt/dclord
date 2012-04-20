@@ -19,7 +19,8 @@ class AsyncLoader(Thread):
 		tmp_args, self.args = self.args, []
 		for arg in tmp_args:
 			self.query(arg)
-		wx.PostEvent(cb, event.DataDownload(attr1=None, attr2=None))
+		if tmp_args:
+			wx.PostEvent(tmp_args[0]['cb'], event.DataDownload(attr1=None, attr2=None))
 		
 	def query(self, args):
 		key = args['key']
