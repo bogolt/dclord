@@ -3,6 +3,7 @@ import math
 import db
 import logging
 import util
+import config
 
 log = logging.getLogger('dclord')
 
@@ -15,9 +16,9 @@ def planeSize(planet):
 class Map(util.BufferedWindow):
 	MaxSize = 1000
 	def __init__(self, parent):
-		self.offset_pos = 200,400
-		self.cell_size = 6
-		self.screen_size = 4,4
+		self.offset_pos = float(config.options['map']['offset_pos_x']), float(config.options['map']['offset_pos_y'])
+		self.cell_size = int(config.options['map']['cell_size'])
+		self.screen_size = 1,1
 		
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
 

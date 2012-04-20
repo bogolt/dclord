@@ -21,7 +21,8 @@ log.setLevel(logging.DEBUG)
 
 class DcFrame(wx.Frame):
 	def __init__(self, parent):
-		wx.Frame.__init__(self, parent, -1, "dcLord (%s): Divide & Conquer client (www.the-game.ru)"%(version.getVersion(),), style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
+		sz = int(config.options['map']['window_size_x']), int(config.options['map']['window_size_y'])
+		wx.Frame.__init__(self, parent, -1, "dcLord (%s): Divide & Conquer client (www.the-game.ru)"%(version.getVersion(),), style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE, size=sz)
 		
 		self.map = map.Map(self)
 		
@@ -79,7 +80,9 @@ class DcFrame(wx.Frame):
 		self._mgr.Update()
 		
 	def onClose(self, event):
-		#self.conf.panes = self._mgr.SavePerspective()
+		self.updateConfig()
+		#print '%s'%(self._mgr.SavePerspective(),)
+		#self.conf.panes = 
 
 		#print 'saving "%s"'%(self.conf.panes,)
 		#self.conf.save()
@@ -87,6 +90,16 @@ class DcFrame(wx.Frame):
 		
 	def closeApp(self, event):
 		self.Close()
+		
+	def updateConfig(self):
+		w,h = self.GetClientSize()
+		config.options['map']['window_size_y'] = h
+		config.options['map']['window_size_x'] = w
+
+		config.options['map']['offset_pos_y'] = self.map.offset_pos[1]
+		config.options['map']['offset_pos_x'] = self.map.offset_pos[0]
+
+		config.saveOptions()
 		
 	def onAbout(self, event):
 		info = wx.AboutDialogInfo()

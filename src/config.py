@@ -3,6 +3,10 @@ import platform
 import os
 import os.path
 import ConfigParser
+import logging
+
+log = logging.getLogger('dclord')
+
 
 def getOptionsDir():
 	conf_dir = 'dclord' if 'Windows' == platform.system() else '.config/dclord'
@@ -22,19 +26,35 @@ options = {
 		  'debug':2
 		 },
 		'map':{
-		 'last_pos':'(3,5)'
+		 'offset_pos_x':3,
+		 'offset_pos_y':3,
+		 'cell_size':6,
+		 'window_size_x':600,
+		 'window_size_y':500
 		 }
 		}
 
+config_file_name = 'dclord.cfg'
 def loadOptions():
 	config = ConfigParser.ConfigParser()
-	config.read(os.path.join(getOptionsDir(), 'dclord.cfg'))
+	config.read(os.path.join(getOptionsDir(), config_file_name))
 	global options
 	for s in config.sections():
 		opt = {}
 		for k,v in config.items(s):
 			opt[k] = v
 		options.setdefault(s, {}).update(opt)
+
+def saveOptions():
+	conf = ConfigParser.RawConfigParser()
+	global options
+	for name, sect in options.items():
+		conf.add_section(name)
+		for k,v in sect.items():
+			conf.set(name, k, v)
+	path = os.path.join(getOptionsDir(), config_file_name)
+	with open(path, 'wb') as configfile:
+		conf.write(configfile)
 
 def loadAccounts():
 	config = ConfigParser.ConfigParser()
