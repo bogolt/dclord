@@ -98,6 +98,8 @@ class DcFrame(wx.Frame):
 
 		config.options['map']['offset_pos_y'] = self.map.offset_pos[1]
 		config.options['map']['offset_pos_x'] = self.map.offset_pos[0]
+		
+		config.options['map']['cell_size'] = self.map.cell_size
 
 		config.saveOptions()
 		

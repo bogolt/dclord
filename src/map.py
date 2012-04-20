@@ -108,9 +108,7 @@ class Map(util.BufferedWindow):
 		return s
 	
 	def drawPlanet(self, dc, planet):
-		pos = objPos(planet)
-		rx,ry = self.relPos(pos)
-		x,y = pos
+		rx,ry = self.relPos(objPos(planet))
 
 		sz = 1
 		if 's' in planet and planet['s']:
@@ -120,17 +118,35 @@ class Map(util.BufferedWindow):
 		else:
 			dc.DrawCircle(rx, ry, self.relSize(sz))
 	
+	def visibleAreaFilter(self, xname='x', yname='y'):
+		f = []
+		f.append('%s>=%d'%(xname, self.offset_pos[0]))
+		f.append('%s>=%d'%(yname, self.offset_pos[1]))
+		f.append('%s<%d'%(xname, self.offset_pos[0]+self.screen_size[0]))
+		f.append('%s<%d'%(yname, self.offset_pos[1]+self.screen_size[1]))
+		return f
+	
 	def drawPlanets(self, dc):
-		self.planet_filter
-		pf = []
-		pf.append('x>=%d'%(self.offset_pos[0]))
-		pf.append('y>=%d'%(self.offset_pos[1]))
-		pf.append('x<%d'%(self.offset_pos[0]+self.screen_size[0]))
-		pf.append('y<%d'%(self.offset_pos[1]+self.screen_size[1]))
-
-		for p in db.planets(self.planet_filter + pf):
+		for p in db.planets(self.planet_filter + self.visibleAreaFilter()):
 			self.drawPlanet(dc, p)
+			
+	def drawFleets(self, dc):
+		dc.SetPen(wx.Pen(colour=config.options['map']['fleet_color'], width=1))
+	
+		self.fleets = {}
+		for p in db.fleets(self.visibleAreaFilter()):
+			self.drawFleet(dc, p)
+	
+	def drawFleet(self, dc, fleet):
+		pos = objPos(fleet)
+		v = self.fleets.setdefault(pos, 0)
+		self.fleets[pos] = v+1
+		rx,ry = self.relPos(pos)
+		rx-=self.cell_size/2
+		diff = min(self.cell_size, 3)
+		dc.DrawLine(rx+v*2, ry-self.cell_size/2, rx+v*2, ry-self.cell_size/2+diff)
 	
 	def paint(self, dc):
 		self.drawPlanets(dc)
+		self.drawFleets(dc)
 				

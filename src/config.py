@@ -30,7 +30,8 @@ options = {
 		 'offset_pos_y':3,
 		 'cell_size':6,
 		 'window_size_x':600,
-		 'window_size_y':500
+		 'window_size_y':500,
+		 'fleet_color':'#dd0000'
 		 }
 		}
 
