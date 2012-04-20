@@ -28,7 +28,7 @@ class Map(util.BufferedWindow):
 		self.Bind(wx.EVT_LEFT_UP, self.onLeftUp)
 		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)		
 		self.Bind(wx.EVT_MOTION, self.onMotion)
-		#self.Bind(wx.EVT_MOUSEWHEEL, self.onScroll)
+		self.Bind(wx.EVT_MOUSEWHEEL, self.onScroll)
 		
 	def resize(self, evt = None):
 		util.BufferedWindow.resize(self, evt)
@@ -59,6 +59,28 @@ class Map(util.BufferedWindow):
 			#self.Refresh()
 			self.prevPos = curPos
 			
+		self.update()
+		
+	def onScroll(self, evt):
+
+		pos = evt.GetPosition()
+		logicPos = util.div(pos, float(self.cell_size))
+
+		diff = 1 if evt.GetWheelRotation()>0 else -1
+		self.cell_size += diff
+		if self.cell_size < 1:
+			self.cell_size = 1
+		elif self.cell_size > 40:
+			self.cell_size = 40
+
+		self.calcScreenSize()
+		
+		#make sure mouse is pointing on the centre  of the scroll area ( just move the pos so that this _is_ the center )
+		newScreenPos   = util.mul(logicPos, self.cell_size)
+		newScreenDiff  = util.sub(newScreenPos, pos)
+		newLogicDiff	 = util.div(newScreenDiff, self.cell_size)
+		self.offset_pos= util.add(self.offset_pos, newLogicDiff)
+
 		self.update()
 	
 	def calcScreenSize(self):
