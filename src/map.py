@@ -95,10 +95,10 @@ class Map(util.BufferedWindow):
 		x,y = pos
 		rx = x - ox
 		ry = y - oy
-		if rx < 0:
-			rx += self.MaxSize
-		if ry < 0:
-			ry += self.MaxSize
+		#if rx < 0:
+		#	rx += self.MaxSize
+		#if ry < 0:
+		#	ry += self.MaxSize
 		return rx*self.cell_size,ry*self.cell_size
 		
 	def relSize(self, sz):
@@ -142,9 +142,14 @@ class Map(util.BufferedWindow):
 		v = self.fleets.setdefault(pos, 0)
 		self.fleets[pos] = v+1
 		rx,ry = self.relPos(pos)
-		rx-=self.cell_size/2
 		diff = min(self.cell_size, 3)
-		dc.DrawLine(rx+v*2, ry-self.cell_size/2, rx+v*2, ry-self.cell_size/2+diff)
+		dc.DrawLine(rx+v*2 - self.cell_size/2, ry-self.cell_size/2, rx+v*2 - self.cell_size/2, ry-self.cell_size/2+diff)
+		
+		fx,fy = fleet['from_x'],fleet['from_y']
+		if fx and fy:
+			frx,fry = self.relPos((int(fx), int(fy)))
+			dc.DrawLine(rx, ry, frx, fry)
+			
 	
 	def paint(self, dc):
 		self.drawPlanets(dc)
