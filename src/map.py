@@ -21,11 +21,45 @@ class Map(util.BufferedWindow):
 		
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
 
-		util.BufferedWindow.__init__(self, parent)		
+		util.BufferedWindow.__init__(self, parent)
+		
+		self.moving = False
+		
+		self.Bind(wx.EVT_LEFT_UP, self.onLeftUp)
+		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)		
+		self.Bind(wx.EVT_MOTION, self.onMotion)
+		#self.Bind(wx.EVT_MOUSEWHEEL, self.onScroll)
 		
 	def resize(self, evt = None):
 		util.BufferedWindow.resize(self, evt)
 		self.calcScreenSize()
+
+	def onLeftDown(self, evt):
+		self.moving = True
+		self.prevPos = evt.GetPosition()
+		
+	def onLeftUp(self, evt):
+		self.moving = False
+		self.update()
+
+	def onMotion(self, evt):
+		#fix for windows focus policy ( after treeCtrl grabs focus it wont let it back )
+		self.SetFocus()
+		if not self.moving:
+			return
+
+		curPos = evt.GetPosition()
+		dx,dy = util.div(util.sub(self.prevPos, curPos), float(self.cell_size))
+
+		if dx != 0 or dy != 0:
+			x,y=self.offset_pos
+			x+=dx
+			y+=dy
+			self.offset_pos=(x,y)
+			#self.Refresh()
+			self.prevPos = curPos
+			
+		self.update()
 	
 	def calcScreenSize(self):
 		w,h = self.GetClientSize()

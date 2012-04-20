@@ -3,6 +3,15 @@ import wx
 import os
 import os.path
 
+def add(c1, c2):
+	return (c1[0]+c2[0], c1[1]+c2[1])
+def sub(c1, c2):
+	return (c1[0]-c2[0], c1[1]-c2[1])
+def div(c1, d):
+	return (c1[0]/d, c1[1]/d)
+def mul(c1, d):
+	return (c1[0]*d, c1[1]*d)
+
 def unpack(path_in, path_out):
 	f = gzip.open(path_in, 'rb')
 	with open(path_out, 'wb') as out:
