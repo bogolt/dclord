@@ -43,6 +43,7 @@ class DcFrame(wx.Frame):
 		
 		serialization.load()
 		#import_raw.processAllUnpacked()
+		#serialization.save()
 		
 		#todo - restore previous state
 		#self.Maximize()

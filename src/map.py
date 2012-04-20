@@ -52,8 +52,8 @@ def planeSize(planet):
 class Map(BufferedWindow):
 	MaxSize = 1000
 	def __init__(self, parent):
-		self.offset_pos = 120,420
-		self.cell_size = 8
+		self.offset_pos = 200,400
+		self.cell_size = 6
 		self.screen_size = 4,4
 		
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
@@ -95,8 +95,10 @@ class Map(BufferedWindow):
 		sz = 1
 		if 's' in planet and planet['s']:
 			sz = int(planet['s'])
-		dc.DrawCircle(rx, ry, self.relSize(sz))
-		#log.info('planet %d %d draw at %d %d'%(x,y,rx,ry))
+		if self.cell_size == 1:
+			dc.DrawPoint(rx, ry)
+		else:
+			dc.DrawCircle(rx, ry, self.relSize(sz))
 	
 	def drawPlanets(self, dc):
 		self.planet_filter
@@ -106,7 +108,7 @@ class Map(BufferedWindow):
 		pf.append('x<%d'%(self.offset_pos[0]+self.screen_size[0]))
 		pf.append('y<%d'%(self.offset_pos[1]+self.screen_size[1]))
 
-		log.debug('get planets with %s'%(pf,))
+		#log.debug('get planets with %s'%(pf,))
 		for p in db.planets(self.planet_filter + pf):
 			self.drawPlanet(dc, p)
 	

@@ -8,11 +8,6 @@ import config
 import util
 
 log = logging.getLogger('dclord')
-#h = logging.StreamHandler()
-#formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-#h.setFormatter(formatter)
-#log.addHandler(h)
-#log.setLevel(logging.DEBUG)
 
 def getAttrs(src, conv):
 	d={}
@@ -29,11 +24,18 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	UserInfo = 'this-player'
 	UserPlanets = 'user-planets'
 	Planet = 'planet'
+	Fleet = 'fleet'
+	AlienFleet = 'allien-fleet'
+	Unit = 'u'
+	AlienUnit = 'allien-ship'
+	Garrison = 'harrison'
 	
 	def __init__(self):
 		xml.sax.handler.ContentHandler.__init__(self)
 		self.user = {}
 		self.read_level = None
+		self.obj_id = None
+		self.pos = None
 
 	def startElement(self, name, attrs):
 		if XmlHandler.NodeDC == name:
@@ -47,12 +49,41 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			if XmlHandler.UserPlanets == self.read_level:
 				data['owner_id'] = self.user['id']
 			db.setData('planet', data)
-
+		elif XmlHandler.Fleet == name or XmlHandler.AlienFleet == name:
+			fleetDict = {'x':'x','y':'y','id':'id','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'hidden':'is_hidden'}
+			data = getAttrs(attrs, fleetDict)
+			self.obj_id = int(data['id'])
+			if 'tta' in data:
+				tta = int(data['tta'])
+				if tta > 0:
+					data['arrival_turn'] = int(self.user['turn'])+tta
+				del data['tta']
+			if name==XmlHandler.Fleet:
+				data['owner_id'] = self.user['id']
+			db.setData('fleet', data)
+		elif XmlHandler.Garrison == name:
+			self.pos = getAttrs(attrs, {'x':'x', 'y':'y'})
+		elif XmlHandler.AlienUnit == name:
+			data = getAttrs(attrs, {'class-id':'class', 'id':'id', 'weight':'weight', 'carapace':'carapace', 'color':'color'})
+			data['fleet_id'] = self.obj_id
+			db.setData('alien_unit', data)
+		elif XmlHandler.Unit == name:
+			data = getAttrs(attrs, {'bc':'class', 'id':'id', 'hp':'hp'})
+			if self.obj_id:
+				data['fleet_id'] = self.obj_id
+				db.setData('unit', data)
+			elif self.pos:
+				data.update(self.pos)
+				db.setData('garrison_unit', data)
 
 	def endElement(self, name):
 		if name==XmlHandler.UserInfo:
 			db.setData('user', self.user)
-
+		elif name==XmlHandler.Fleet or name==XmlHandler.AlienFleet:
+			self.obj_id = None
+		elif XmlHandler.Garrison == name:
+			self.pos = None
+			
 def load_xml(path):
 	p = xml.sax.make_parser()
 	p.setContentHandler(XmlHandler())

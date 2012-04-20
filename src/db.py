@@ -5,6 +5,8 @@ import logging
 def to_pos(a,b):
 	return int(a),int(b)
 
+log = logging.getLogger('dclord')
+
 class Db:
 	def __init__(self, dbpath=":memory:"):
 		self.conn = sqlite3.connect(dbpath)
@@ -65,7 +67,7 @@ class Db:
 				is_hidden integer(1),
 				times_spotted integer(1)
 				)""")
-								
+				
 		cur.execute("""create table if not exists unit(
 				id integer primary key,
 				fleet_id integer not null,
@@ -107,9 +109,12 @@ class Db:
 		
 	def addObject(self, object, data):
 		keys=tuple(data.keys())
-		#print 'insert into %s%s values%s'%(object,keys,tuple(data.values()))
-		self.cur.execute('insert or replace into %s%s values(%s)'%(object,keys,','.join('?'*len(keys))),tuple(data.values()))
-		self.conn.commit()
+		
+		try:
+			self.cur.execute('insert or replace into %s%s values(%s)'%(object,keys,','.join('?'*len(keys))),tuple(data.values()))
+			self.conn.commit()
+		except sqlite3.Error, e:
+			log.error('Error %s, when executing: insert into %s%s values%s'%(e, object,keys,tuple(data.values())))
 			
 	def isCached(self, pos):
 		if not self.preloadArea:
@@ -348,13 +353,22 @@ def users():
 	for r in c:
 		yield r
 
-def planets(flt):
+def items(table_name, flt, keys):
 	global db
 	c = db.conn.cursor()
-	k = ('x','y','owner_id','o','e','m','t','s')
 	ws = ''
 	if flt:
 		ws = 'WHERE %s'%(' AND '.join(flt),)
-	c.execute('select %s from planet %s'%(','.join(k),ws))
+	c.execute('select %s from %s %s'%(','.join(keys), table_name, ws))
 	for r in c:
-		yield dict(zip(k,r))
+		yield dict(zip(keys,r))
+
+def planets(flt, keys = None):
+	k = ('x','y','owner_id','o','e','m','t','s') if not keys else keys
+	for i in items('planet', flt, k):
+		yield i
+
+def fleets(flt, keys = None):
+	k = ('id', 'x','y','owner_id','from_x','from_y', 'is_hidden') if not keys else keys
+	for i in items('fleet', flt, k):
+		yield i
