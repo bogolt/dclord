@@ -71,4 +71,3 @@ def load():
 	loadUnits()
 	loadGarrisonUnits()
 	loadAlienUnits()
-
