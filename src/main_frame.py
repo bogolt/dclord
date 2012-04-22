@@ -138,7 +138,9 @@ class DcFrame(wx.Frame):
 		if not key:
 			log.info('all requested data downloaded')
 			serialization.save()
+			return
 		if not data:
 			log.error('failed to load info for user %s'%(key,))
 			return
 		import_raw.processRawData(data)
+		self.map.update()

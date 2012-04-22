@@ -132,7 +132,7 @@ class Map(util.BufferedWindow):
 		return f
 	
 	def drawPlanets(self, dc):
-		for p in db.planets(self.planet_filter + self.visibleAreaFilter()):
+		for p in db.planets(self.planet_filter + self.visibleAreaFilter() + ['owner_id is not null']):
 			self.drawPlanet(dc, p)
 			
 	def drawFleets(self, dc):
