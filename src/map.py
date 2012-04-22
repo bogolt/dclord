@@ -12,6 +12,11 @@ def objPos(obj):
 	
 def planeSize(planet):
 	return int(planet['s'])
+	
+def is_owned(fleet_id):
+	return False
+#	for user in db.users(['id=%d'%(fleet_id,)])
+#		if user['
 
 class Map(util.BufferedWindow):
 	MaxSize = 1000
@@ -131,11 +136,11 @@ class Map(util.BufferedWindow):
 			self.drawPlanet(dc, p)
 			
 	def drawFleets(self, dc):
-		dc.SetPen(wx.Pen(colour=config.options['map']['fleet_color'], width=1))
-	
 		self.fleets = {}
 		for p in db.fleets(self.visibleAreaFilter()):
 			self.drawFleet(dc, p)
+		for p in db.flyingFleets(self.visibleAreaFilter()):
+			self.drawFlyingFleet(dc, p)
 	
 	def drawFleet(self, dc, fleet):
 		pos = objPos(fleet)
@@ -143,10 +148,24 @@ class Map(util.BufferedWindow):
 		self.fleets[pos] = v+1
 		rx,ry = self.relPos(pos)
 		diff = min(self.cell_size, 3)
+		col_type = 'own_fleet_color' if is_owned(fleet['owner_id']) else 'fleet_color'
+		dc.SetPen(wx.Pen(colour=config.options['map'][col_type], width=1))
 		dc.DrawLine(rx+v*2 - self.cell_size/2, ry-self.cell_size/2, rx+v*2 - self.cell_size/2, ry-self.cell_size/2+diff)
 		
+	def drawFlyingFleet(self, dc, fleet):
+		pos = objPos(fleet)
+		v = self.fleets.setdefault(pos, 0)
+		self.fleets[pos] = v+1
+		rx,ry = self.relPos(pos)
+		diff = min(self.cell_size, 3)
+		col_type = 'own_flying_fleet_color' if is_owned(fleet['owner_id']) else 'flying_fleet_color'
+		dc.SetPen(wx.Pen(colour=config.options['map'][col_type], width=1))
+		dc.DrawLine(rx+v*2 - self.cell_size/2, ry-self.cell_size/2, rx+v*2 - self.cell_size/2, ry-self.cell_size/2+diff)
+
 		fx,fy = fleet['from_x'],fleet['from_y']
 		if fx and fy:
+			col_type = 'own_fleet_route_color' if is_owned(fleet['owner_id']) else 'fleet_route_color'
+			dc.SetPen(wx.Pen(colour=config.options['map'][col_type], width=1, style=wx.SHORT_DASH))
 			frx,fry = self.relPos((int(fx), int(fy)))
 			dc.DrawLine(rx, ry, frx, fry)
 			

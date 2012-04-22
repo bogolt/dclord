@@ -18,6 +18,11 @@ def getAttrs(src, conv):
 
 #<dc user="" id="" turn="" turn-n="" worldsize="1000" 
 
+def safeRemove(array, keys):
+	for key in keys:
+		if key in array:
+			del array[key]
+
 class XmlHandler(xml.sax.handler.ContentHandler):
 	
 	NodeDC = 'dc'
@@ -36,31 +41,50 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		self.read_level = None
 		self.obj_id = None
 		self.pos = None
+		self.turn = None
 
 	def startElement(self, name, attrs):
 		if XmlHandler.NodeDC == name:
 			self.user.update( getAttrs(attrs, {'user':'name', 'id':'id', 'turn-n':'turn'}) )
+			self.turn = int(self.user['turn'])
 		elif XmlHandler.UserInfo == name:
 			self.user.update( getAttrs(attrs, {'homeworldx':'hw_x', 'homeworldy':'hw_y', 'race-id':'race_id', 'login':"login"}) )
 		elif XmlHandler.UserPlanets == name:
 			self.read_level = XmlHandler.UserPlanets
 		elif XmlHandler.Planet == name:
-			data = getAttrs(attrs, {'x':'x', 'open':'is_open', 'owner-id':'owner_id', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s'})
+			data = getAttrs(attrs, {'x':'x', 'open':'is_open', 'owner-id':'owner_id', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s', 'age':'age'})
 			if XmlHandler.UserPlanets == self.read_level:
 				data['owner_id'] = self.user['id']
+			if 'age' in data:
+				data['turn'] = self.turn - int(data['age'])
+				del data['age']
 			db.setData('planet', data)
 		elif XmlHandler.Fleet == name or XmlHandler.AlienFleet == name:
-			fleetDict = {'x':'x','y':'y','id':'id','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'hidden':'is_hidden'}
+			fleetDict = {'x':'x','y':'y','id':'id','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
 			data = getAttrs(attrs, fleetDict)
-			self.obj_id = int(data['id'])
+			if 'id' in data:
+				self.obj_id = int(data['id'])
+			else:
+				self.obj_id = int(db.nextFleetTempId())
+				data['temp_id'] = self.obj_id
+			tta = 0
 			if 'tta' in data:
 				tta = int(data['tta'])
 				if tta > 0:
 					data['arrival_turn'] = int(self.user['turn'])+tta
 				del data['tta']
+			if tta == 0:
+				safeRemove(data, ['from_x', 'from_y', 'tta'])
+			
 			if name==XmlHandler.Fleet:
 				data['owner_id'] = self.user['id']
-			db.setData('fleet', data)
+			else:
+				data['turn'] = self.turn
+				
+			if tta>0:
+				db.setData('incoming_fleet', data)
+			else:
+				db.setData('fleet', data)
 		elif XmlHandler.Garrison == name:
 			self.pos = getAttrs(attrs, {'x':'x', 'y':'y'})
 		elif XmlHandler.AlienUnit == name:

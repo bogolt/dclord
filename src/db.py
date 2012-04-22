@@ -21,8 +21,8 @@ class Db:
 		cur = self.cur
 
 		cur.execute("""create table if not exists planet(
-				x integer not null,
-				y integer not null,
+				x integer(2) not null,
+				y integer(2) not null,
 				o integer(1),
 				e integer(1),
 				m integer(1),
@@ -30,6 +30,7 @@ class Db:
 				s integer(1),
 				owner_id integer,
 				name text,
+				turn integer(2),
 				is_open integer(1)
 				)""")
 		#corruption integer,
@@ -60,12 +61,26 @@ class Db:
 				y integer(2) not null,
 				owner_id integer,
 				name text,
-				from_x integer,
-				from_y integer,
+				weight integer,
+				is_hidden integer(1),
+				times_spotted integer(1),
+				turn integer(2)
+				)""")
+
+		cur.execute("""create table if not exists incoming_fleet(
+				id integer,
+				x integer(2) not null,
+				y integer(2) not null,
+				owner_id integer,
+				name text,
+				from_x integer(2),
+				from_y integer(2),
 				arrival_turn integer(2),
 				weight integer,
 				is_hidden integer(1),
-				times_spotted integer(1)
+				times_spotted integer(1),
+				turn integer(2),
+				temp_id integer
 				)""")
 				
 		cur.execute("""create table if not exists unit(
@@ -346,13 +361,6 @@ def add_player(player):
 	global db
 	db.add_player(player)
 
-def users():
-	global db
-	c = db.conn.cursor()
-	c.execute('select id,name,hw_x,hw_y,race_id from user')
-	for r in c:
-		yield r
-
 def items(table_name, flt, keys):
 	global db
 	c = db.conn.cursor()
@@ -363,12 +371,25 @@ def items(table_name, flt, keys):
 	for r in c:
 		yield dict(zip(keys,r))
 
+def users(flt = None, keys = None):
+	k = ('id','name','hw_x','hw_y','race_id') if not keys else keys
+	for i in items('user', flt, k):
+		yield i
+
 def planets(flt, keys = None):
 	k = ('x','y','owner_id','o','e','m','t','s') if not keys else keys
 	for i in items('planet', flt, k):
 		yield i
 
 def fleets(flt, keys = None):
-	k = ('id', 'x','y','owner_id','from_x','from_y', 'is_hidden') if not keys else keys
+	k = ('id', 'x','y','owner_id', 'is_hidden') if not keys else keys
 	for i in items('fleet', flt, k):
 		yield i
+
+def flyingFleets(flt, keys = None):
+	k = ('id', 'temp_id', 'x','y','owner_id', 'from_x', 'from_y', 'is_hidden') if not keys else keys
+	for i in items('incoming_fleet', flt, k):
+		yield i
+
+def nextFleetTempId():
+	return 0

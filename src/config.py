@@ -31,7 +31,15 @@ options = {
 		 'cell_size':6,
 		 'window_size_x':600,
 		 'window_size_y':500,
-		 'fleet_color':'#dd0000'
+		 'own_fleet_color':'#dd0000',
+		 'own_flying_fleet_color':'#de0000',
+		 'fleet_color':'#dd0000',
+		 'flying_fleet_color':'#de0000',
+		 'own_fleet_route_color':'#0000ff',
+		 'fleet_route_color':'#00ff00',
+		 'own_planet_color':'#bb00dd',
+		 'planet_color':'#0000dd',
+		 
 		 }
 		}
 
