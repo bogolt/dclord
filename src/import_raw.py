@@ -115,7 +115,7 @@ def load_xml(path):
 
 def processRawData(path):
 	log.debug('processing raw data %s'%(path,))
-	xml_dir = os.path.join(config.options['data']['path'], config.options['data']['raw-xml-dir'])
+	xml_dir = os.path.join(util.getTempDir(), config.options['data']['raw-xml-dir'])
 	util.assureDirExist(xml_dir)
 	base = os.path.basename(path)
 	xml_path = os.path.join(xml_dir, base[:-3])

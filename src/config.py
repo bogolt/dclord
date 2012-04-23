@@ -7,11 +7,10 @@ import logging
 
 log = logging.getLogger('dclord')
 
-
 def getOptionsDir():
 	conf_dir = 'dclord' if 'Windows' == platform.system() else '.config/dclord'
 	return os.path.join(wx.StandardPaths.Get().GetUserConfigDir(), conf_dir)
-
+	
 users = {}
 options = {
 		'data':{

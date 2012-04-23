@@ -11,13 +11,6 @@ class Db:
 	def __init__(self, dbpath=":memory:"):
 		self.conn = sqlite3.connect(dbpath)
 		self.cur = self.conn.cursor()
-		
-		self.planet = {}
-		self.fleet = {}
-		self.player = {}
-		self.proto = {}
-		self.preloadArea = None
-		
 		cur = self.cur
 
 		cur.execute("""create table if not exists planet(

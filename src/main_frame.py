@@ -125,7 +125,8 @@ class DcFrame(wx.Frame):
 		'download and process info from server'
 		import loader
 		l = loader.AsyncLoader()
-		out_dir = os.path.join(config.options['data']['path'], 'raw')
+		
+		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirExist(out_dir)
 		for acc in config.accounts():
 			log.info('requesting user %s info'%(acc['login'],))
