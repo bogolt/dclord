@@ -16,7 +16,7 @@ def saveTable(table_name, keys, filters, out_name = None):
 		writer.writeheader()
 		for p in db.items(table_name, filters, keys):
 			try:
-				if 'name' in p:
+				if 'name' in p and p['name']:
 					p['name'] = p['name'].encode('utf-8')
 				writer.writerow(p)
 			except UnicodeEncodeError, e:
@@ -26,6 +26,10 @@ def saveTable(table_name, keys, filters, out_name = None):
 
 def saveGeoPlanets():
 	saveTable('planet', ('x','y','o','e','m','t','s'), None, 'planets_geo')
+
+def saveProto():
+	saveTable('proto', ('fly_speed', 'aim_bomb', 'color', 'build_speed', 'require_people', 'carapace', 'fly_range', 'id', 'class', 'cost_second', 'cost_main', 'cost_money', 'is_transportable', 'require_tech_level', 'support_second', 'name', 'stealth_level', 'bonus_s', 'bonus_m', 'bonus_o', 'max_count', 'bonus_e', 'support_main', 'weight', 'damage_laser', 'is_ground_unit', 'is_serial', 'aim_laser', 'is_spaceship', 'transport_capacity', 'is_offensive', 'detect_range', 'damage_bomb', 'bonus_production', 'description', 'scan_strength', 'hp', 'defence_laser', 'defence_bomb', 'carrier_capacity', 'laser_number', 'is_building', 'cost_people', 'bomb_number', 'is_war'), None, 'prototypes')
+	saveTable('proto_action', ('id', 'max_count', "cost_people", "cost_main", "cost_money", "cost_second", "planet_can_be"), None, 'proto_actions')
 
 def savePlanets():
 	saveTable('planet', ('x','y','owner_id','o','e','m','t','s','turn'), ['owner_id is not null'], 'planets')
@@ -50,6 +54,7 @@ def save():
 	saveUnits()
 	saveGarrisonUnits()
 	saveAlienUnits()
+	saveProto()	
 
 def loadTable(table_name, file_name):
 	try:
@@ -76,6 +81,10 @@ def loadGarrisonUnits():
 
 def loadAlienUnits():
 	loadTable('alien_unit', 'alien_units')
+	
+def loadProto():
+	loadTable('proto', 'prototypes')
+	loadTable('proto_action', 'proto_actions')
 
 def load():
 	loadPlanets()
@@ -83,3 +92,4 @@ def load():
 	loadUnits()
 	loadGarrisonUnits()
 	loadAlienUnits()
+	loadProto()	
