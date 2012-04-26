@@ -40,6 +40,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	AlienUnit = 'allien-ship'
 	Garrison = 'harrison'
 	BuildingClass = 'building_class'
+	BuildingClassActionsList = 'actions'
+	BuildingClassAction = 'act'
 	
 	NotLoggedInError = 'not-logged-in'
 	
@@ -50,6 +52,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		self.obj_id = None
 		self.pos = None
 		self.turn = None
+		self.parent_attrs = {}
 
 	def startElement(self, name, attrs):
 		if XmlHandler.NodeDC == name:
@@ -114,12 +117,26 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.BuildingClass == name:
 			data = getAttrs(attrs, {'name':'name', 'description':'description', 'is-war':"is_war", 'support-second':"support_second", 'bomb-dr':"defence_bomb", 'transport-capacity':"transport_capacity", 'is-transportable':"is_transportable", 'bomb-number':"bomb_number", 'fly-range':"fly_range", 'bonus-m':"bonus_m", 'is-ground-unit':"is_ground_unit", 'weight':"weight", 'scan-strength':"scan_strength", 'laser-dr':"defence_laser", 'laser-ar':"aim_laser", 'serial':"is_serial", 'carapace':"carapace", 'bonus-surface':"bonus_s", 'laser-damage':"damage_laser", 'offensive':"is_offensive", 'is-building':"is_building", 'is-space-ship':"is_spaceship", 'build-speed':"build_speed", 'detect-range':"detect_range", 'maxcount':"max_count", 'class':"class", 'cost-main':"cost_main", 'stealth-lvl':"stealth_level", 'bonus-o':"bonus_o", 'requires-pepl':"require_people", 'bomb-damage':"damage_bomb", 'bomb-ar':"aim_bomb", 'cost-money':"cost_money", 'req-tehn-level':"require_tech_level", 'color':"color", 'fly-speed':"fly_speed", 'support-main':"support_main", 'building-id':"id", 'bonus-e':"bonus_e", 'carrier-capacity':"carrier_capacity", 'bonus-production':"bonus_production", 'laser-number':"laser_number", 'cost-pepl':"cost_people", 'cost-second':"cost_second", 'hit-points':"hp"})
 			data['owner_id'] = self.user['id']
+			self.parent_attrs = data
 			db.setData('proto',data)
+			if 'name' in data:
+				log.info('specific data: %s'%(data,))
+		elif XmlHandler.BuildingClassAction == name:
+			data = getAttrs(attrs, {'action':'id', 'maxcount':'max_count', 'cost-pepl':"cost_people", 'cost-main':"cost_main", 'cost-money':"cost_money", 'cost-second':"cost_second", 'planet-can-be':"planet_can_be"})
+			if not self.parent_attrs:
+				log.error('no parent build class defined')
+			else:
+				data['proto_id'] = self.parent_attrs['id']
+				data['proto_owner_id'] = self.user['id']
+				db.setData('proto_action',data)
+			
 	def endElement(self, name):
 		if name==XmlHandler.UserInfo:
 			db.setData('user', self.user)
 		elif name==XmlHandler.Fleet or name==XmlHandler.AlienFleet:
 			self.obj_id = None
+		elif name == XmlHandler.BuildingClass:
+			self.parent_attrs = {}
 		elif XmlHandler.Garrison == name:
 			self.pos = None
 			

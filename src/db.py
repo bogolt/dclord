@@ -240,7 +240,7 @@ class Db:
 				stealth_level real
 				)""")
 				
-		cur.execute("""create table if not exists proto_actions(
+		cur.execute("""create table if not exists proto_action(
 				id integer,
 				proto_id integer,
 				proto_owner_id integer,
