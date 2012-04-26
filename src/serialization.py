@@ -4,6 +4,7 @@ import config
 import os
 import os.path
 import logging
+import util
 
 log = logging.getLogger('dclord')
 
@@ -11,6 +12,7 @@ unicode_strings = ['name', 'description']
 
 def saveTable(table_name, keys, filters, out_name = None):
 	out_file_path = out_name if out_name else table_name
+	util.assureDirExist(config.options['data']['path'])
 	path = os.path.join(config.options['data']['path'], '%s.csv'%(out_file_path,))
 	try:
 		f = open(path, 'wt')
