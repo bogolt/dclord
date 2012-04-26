@@ -161,12 +161,14 @@ def processAllUnpacked():
 	xml_dir = os.path.join(util.getTempDir(), config.options['data']['raw-xml-dir'])
 	log.debug('processing all found data at %s'%(xml_dir,))
 	at_least_one = False
-	for file in os.listdir(xml_dir):
-		if not file.endswith('.xml'):
-			continue
-		log.debug('loading %s'%(file,))
-		load_xml( os.path.join(xml_dir, file) )
-		at_least_one = True
-	if at_least_one:
-		serialization.save()
-	
+	try:
+		for file in os.listdir(xml_dir):
+			if not file.endswith('.xml'):
+				continue
+			log.debug('loading %s'%(file,))
+			load_xml( os.path.join(xml_dir, file) )
+			at_least_one = True
+		if at_least_one:
+			serialization.save()
+	except OSError, e:
+		log.error('unable to load raw data: %s'%(e,))
