@@ -74,6 +74,18 @@ def loadAccounts():
 			acc[k] = v
 		users[acc['login']] = acc
 
+def saveUsers():
+	conf = ConfigParser.RawConfigParser()
+	global users
+
+	for u,p in users.items():
+		conf.add_section(u)
+		for k,v in p.items():
+			conf.set(u, k, v)
+			
+	with open(os.path.join(getOptionsDir(), 'users.cfg'), 'wt') as configfile:
+		conf.write(configfile)
+
 def loadAll():
 	global options
 	options['data']['path'] = os.path.join(getOptionsDir(), options['data']['dir'])
@@ -84,3 +96,13 @@ def accounts():
 	global users
 	for acc in users.values():
 		yield acc
+
+def setUserId(login, id):
+	global users
+	u = users[login]
+	if 'id' in u and int(u['id']) == int(id):
+		return
+	u['id'] = id
+	log.info('store user id %s for user %s'%(id, login))
+	saveUsers()
+	

@@ -7,6 +7,8 @@ import logging
 
 log = logging.getLogger('dclord')
 
+unicode_strings = ['name', 'description']
+
 def saveTable(table_name, keys, filters, out_name = None):
 	out_file_path = out_name if out_name else table_name
 	path = os.path.join(config.options['data']['path'], '%s.csv'%(out_file_path,))
@@ -16,8 +18,9 @@ def saveTable(table_name, keys, filters, out_name = None):
 		writer.writeheader()
 		for p in db.items(table_name, filters, keys):
 			try:
-				if 'name' in p and p['name']:
-					p['name'] = p['name'].encode('utf-8')
+				for s in unicode_strings:
+					if s in p and p[s]:
+						p[s] = p[s].encode('utf-8')
 				writer.writerow(p)
 			except UnicodeEncodeError, e:
 				log.error('failed convert data %s - %s'%(p, e))
@@ -46,6 +49,9 @@ def saveGarrisonUnits():
 
 def saveAlienUnits():
 	saveTable('alien_unit', ('id', 'carapace','color','weight','fleet_id'), [], 'alien_units')
+	
+def saveUsers():
+	saveTable('user', ('id','name','hw_x','hw_y','race_id'), None, 'users')
 
 def save():
 	saveGeoPlanets()
@@ -54,14 +60,16 @@ def save():
 	saveUnits()
 	saveGarrisonUnits()
 	saveAlienUnits()
-	saveProto()	
+	saveProto()
+	saveUsers()
 
 def loadTable(table_name, file_name):
 	try:
 		path = os.path.join(config.options['data']['path'], '%s.csv'%(file_name,))
 		for p in csv.DictReader(open(path, 'rt')):
-			if 'name' in p:
-				p['name'] = p['name'].decode('utf-8')
+			for s in unicode_strings:
+				if s in p and p[s]:
+					p[s] = p[s].decode('utf-8')
 			db.setData(table_name, p)
 	except IOError, e:
 		log.error('failed to load table %s: %s'%(table_name, e))
@@ -85,7 +93,10 @@ def loadAlienUnits():
 def loadProto():
 	loadTable('proto', 'prototypes')
 	loadTable('proto_action', 'proto_actions')
-
+	
+def loadUsers():
+	loadTable('user', 'users')
+	
 def load():
 	loadPlanets()
 	loadFleets()
@@ -93,3 +104,4 @@ def load():
 	loadGarrisonUnits()
 	loadAlienUnits()
 	loadProto()	
+	loadUsers()

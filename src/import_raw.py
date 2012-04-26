@@ -63,7 +63,10 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.NotLoggedInError == name:
 			log.error('Not logged in - turn in progress')
 		elif XmlHandler.UserInfo == name:
-			self.user.update( getAttrs(attrs, {'homeworldx':'hw_x', 'homeworldy':'hw_y', 'race-id':'race_id', 'login':"login"}) )
+			d = getAttrs(attrs, {'homeworldx':'hw_x', 'homeworldy':'hw_y', 'race-id':'race_id', 'login':"login"})
+			config.setUserId( d['login'], self.user['id'])
+			self.user.update( d )
+			
 		elif XmlHandler.UserPlanets == name:
 			self.read_level = XmlHandler.UserPlanets
 		elif XmlHandler.Planet == name:

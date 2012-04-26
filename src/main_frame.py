@@ -9,7 +9,7 @@ import event
 import config
 import import_raw
 import serialization
-import update
+import object_filter
 
 log = logging.getLogger('dclord')
 
@@ -24,7 +24,11 @@ class DcFrame(wx.Frame):
 		sz = int(config.options['map']['window_size_x']), int(config.options['map']['window_size_y'])
 		wx.Frame.__init__(self, parent, -1, "dcLord (%s): Divide & Conquer client (www.the-game.ru)"%(version.getVersion(),), style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE, size=sz)
 		
+		serialization.load()
+		
 		self.map = map.Map(self)
+		
+		self.object_filter = object_filter.FilterPanel(self)
 		
 		self._mgr = wx.aui.AuiManager(self)
 		
@@ -36,18 +40,18 @@ class DcFrame(wx.Frame):
 		info.CaptionVisible(False)
 		
 		self._mgr.AddPane(self.map, info)
+		self._mgr.AddPane(self.object_filter, wx.LEFT, "Filter")
 
 		self._mgr.Update()
 		
 		self.makeMenu()
 		
 		self.Bind(event.EVT_DATA_DOWNLOAD, self.onDownloadRawData)
-		
-		serialization.load()
+	
 
 		#update.replace( os.getcwd() )
 		
-		#import_raw.processAllUnpacked()
+		import_raw.processAllUnpacked()
 		#serialization.save()
 		
 		#todo - restore previous state

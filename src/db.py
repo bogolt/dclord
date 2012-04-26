@@ -326,13 +326,16 @@ def add_player(player):
 	global db
 	db.add_player(player)
 
-def items(table_name, flt, keys):
+def items(table_name, flt, keys, verbose = False):
 	global db
 	c = db.conn.cursor()
 	ws = ''
 	if flt:
 		ws = 'WHERE %s'%(' AND '.join(flt),)
-	c.execute('select %s from %s %s'%(','.join(keys), table_name, ws))
+	s = 'select %s from %s %s'%(','.join(keys), table_name, ws)
+	if verbose:
+		log.debug('sql: %s'%(s,))
+	c.execute(s)
 	for r in c:
 		yield dict(zip(keys,r))
 
@@ -359,5 +362,8 @@ def flyingFleets(flt, keys = None):
 def nextFleetTempId():
 	return 0
 
-#d = Db()
-#d.prepare('test', 45)
+
+def getUserName(user_id):
+	for name in users(['id=%d'%(int(user_id),)], ('name',)):
+		return name['name']
+	return ''
