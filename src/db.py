@@ -9,7 +9,74 @@ log = logging.getLogger('dclord')
 
 class Db:
 	def __init__(self, dbpath=":memory:"):
-		self.conn = sqlite3.connect(dbpath)
+		self.conn = sqlite3.connect(dbpath)		
+		
+		self.cur = self.conn.cursor()
+		self.cur.execute("""create table if not exists turn(
+				n integer not null,
+				login text not null
+				)""")
+				
+		self.init()
+
+	def prepareTables(user_login, turn_n):
+		self.cur.execute("""create table if not exists planet_%d(
+				x integer(2) not null,
+				y integer(2) not null,
+				owner_id integer,
+				name text,
+				is_open integer(1)
+				)"""%(turn_n,))
+				
+		self.cur.execute("""create table if not exists fleet_%d(
+				id integer primary key,
+				x integer(2) not null,
+				y integer(2) not null
+				)""")
+
+		cur.execute("""create table if not exists flying_fleet(
+				id integer,
+				x integer(2) not null,
+				y integer(2) not null,
+				from_x integer(2),
+				from_y integer(2),
+				arrival_turn integer(2),
+				temp_id integer
+				)""")
+				
+		cur.execute("""create table if not exists unit(
+				id integer primary key,
+				fleet_id integer not null,
+				class integer not null,
+				hp integer not null
+				)""")
+				
+		cur.execute("""create table if not exists alien_unit(
+				id integer primary key,
+				fleet_id integer not null,
+				carapace integer not null,
+				color integer(1),
+				weight integer,
+				class integer
+				)""")
+
+		cur.execute("""create table if not exists garrison_unit(
+				id integer primary key,
+				x integer(2) not null,
+				y integer(2) not null,
+				class integer not null,
+				hp integer not null
+				)""")
+		
+		cur.execute("""create table if not exists garrison_queue_unit(
+				id integer primary key,
+				x integer(2) not null,
+				y integer(2) not null,
+				class integer not null,
+				done integer
+				)""")
+	
+	def init(self):
 		self.cur = self.conn.cursor()
 		cur = self.cur
 
@@ -109,10 +176,80 @@ class Db:
 				)""")
 		
 		cur.execute("""create table if not exists proto(
-				id integer primary key,
+				id integer,
+				owner_id integer,
+				class integer,
 				carapace integer,
 				weight integer,
-				color integer(1) default 0
+				color integer(1) default 0,
+				hp integer,
+				
+				fly_speed real,
+				fly_range real,
+				
+				transport_capacity integer(1),
+				carrier_capacity integer,
+				is_transportable integer(1),
+				
+				aim_bomb real,
+				aim_laser real,
+				
+				bomb_number integer(1),
+				laser_number integer(1),
+				
+				defence_bomb real,
+				defence_laser real,
+				
+				damage_bomb real,
+				damage_laser real,
+				
+				name text,
+				description text,
+				
+				is_war integer(1),
+				
+				support_main real,
+				support_second real,
+				
+				require_tech_level integer(1),
+				require_people integer,
+				
+				cost_main real,
+				cost_second real,
+				cost_money real,
+				cost_people integer,
+				
+				is_ground_unit integer(1),
+				is_spaceship integer(1),
+				is_building integer(1),
+				is_offensive integer(1),
+				is_serial integer(1),
+				
+				build_speed integer,
+				
+				max_count integer,
+				
+				bonus_o integer,
+				bonus_m integer,
+				bonus_e integer,
+				bonus_s integer,
+				bonus_production integer,
+				
+				detect_range real,
+				scan_strength real,
+				stealth_level real
+				)""")
+				
+		cur.execute("""create table if not exists proto_actions(
+				id integer,
+				proto_id integer,
+				proto_owner_id integer,
+				max_count integer,
+				cost_people integer,
+				cost_main integer,
+				cost_second integer,
+				cost_money integer,
+				planet_can_be text
 				)""")
 		
 	def addObject(self, object, data):
@@ -124,171 +261,6 @@ class Db:
 		except sqlite3.Error, e:
 			log.error('Error %s, when executing: insert into %s%s values%s'%(e, object,keys,tuple(data.values())))
 			
-	def isCached(self, pos):
-		if not self.preloadArea:
-			return False
-		lt,rb = self.preloadArea 
-		return pos[0] >= lt[0] and pos[1] >= lt[1] and pos[0] <= rb[0] and pos[1] <= rb[1] 
-	
-	def getPlanet(self, x,y):
-		c = x,y
-		if c in self.planet.keys():
-			return self.planet[c]
-		
-		if self.isCached(c):
-			return None
-
-		self.cur.execute("select x,y,owner_id,name from planet where x=:x and y=:y",(x,y))
-		r = self.cur.fetchone()
-		if not r:
-			return None
-		return Planet((r[0],r[1]), self.getPlayer(r[2]), r[3])
-		
-	def getUserPlanetId(self, x, y):
-		self.cur.execute("select id from user_planet where x=:x and y=:y",(x,y))
-		r = self.cur.fetchone()
-		if not r:
-			return None
-		return r[0]
-	
-	def getFleets(self, x,y):
-		c = x,y
-		if c in self.fleet.keys():
-			return self.fleet[c]
-		
-		if self.isCached(c):
-			return None
-		
-		self.cur.execute("select owner_id,name,from_x,from_y,tta,id from fleet where (x=:x and y=:y)",(x,y))
-		r = self.cur.fetchall()
-		if not r:
-			return {}
-				
-		fleets = []
-		for f in r:
-			posFrom = None
-			if f[2] and f[3]:
-				posFrom = f[2],f[3]
-			fleets.append(Fleet((x,y), f[5], self.getPlayer(f[0]), f[1], posFrom, f[4]))
-		return fleets
-	
-	def getObjects(self, x,y):
-		c = x,y
-		
-		p,f=None,None
-		if c in self.planet.keys():
-			p = self.planet[c]
-		if c in self.fleet.keys():
-			f = self.fleet[c]
-		
-		if p or f:
-			return p,f
-		
-		if self.isCached(c):
-			return None,None
-
-		planet = self.getPlanet(x, y)
-		fleets = self.getFleets(x, y)
-		return planet,fleets
-		
-	def getNotEmptyCoord(self):
-		if self.planet:
-			return self.planet[0]
-		
-		self.cur.execute("select x,y from planet limit 1")
-		r = self.cur.fetchone()
-		if not r:
-			return None
-		return r[0],r[1]
-
-	def getPlayerByLogin(self, login):
-		p = [p for _,p in self.player.iteritems() if p.login==login]
-		if p:
-			return p
-		#look in db
-		self.cur.execute("select id,name,hw_x,hw_y from player where login=:login",(login,))
-		r = self.cur.fetchone()
-		
-		#or should we add empty user to the list ?
-		if not r:
-			log.error('player (login: %s) not found'%(login,))
-			return None
-		p = Player(r[0], r[1], login)
-		if r[2] and r[3]:
-			p.hw = to_pos(r[2],r[3])
-		self.player[p.id] = p	
-		return p		
-			
-	def getAccountsList(self):
-		self.cur.execute("select name,hw_x,hw_y from player")
-		r = self.cur.fetchall()
-		plist = []
-		for name,x,y in r:
-			if x and y:
-				hwx = int(x)
-				hwy = int(y)
-				print 'append %s as %d %d'%(name, hwx, hwy)
-				plist.append( (name,(hwx, hwy)))
-		return plist		
-	
-	def getPlayer(self, id):
-		if id in self.player.keys():
-			return self.player[id] 
-		
-		self.cur.execute("select name,hw_x,hw_y,login from player where id=:id",(id,))
-		r = self.cur.fetchone()
-		if not r:
-			return None
-		p = Player(id, r[0], r[3])
-		if r[1] and r[2]:
-			p.hw = r[1],r[2]
-		
-		self.player[id] = p
-		return p
-
-	#TODO: how will it work for corner coords? -> split into 4 prepares
-	def prepare(self, pos, size):
-		self.planet.update(self.getAreaPlanets(pos, size))
-		self.fleet.update(self.getAreaFleets(pos, size))
-		self.preloadArea = pos,(pos[0]+size[0],pos[1]+size[1])
-
-	def getAreaFleets(self, leftTop=(0,0), size=(1000,1000)):
-		cx,cy=leftTop
-		zx=cx+size[0]
-		zy=cy+size[1]
-		self.cur.execute("select x,y,id,owner_id,name,from_x,from_y,tta from fleet where (x>=:cx and y>=:cy and x<=:zx and y<=:zy) or (from_x>=:cx and from_y>=:cy and from_x<=:zx and from_y<=:zy)", (cx,cy,zx,zy))
-		fl = {}
-		for c in self.cur.fetchall():
-			coord = (c[0], c[1])
-			posFrom = None
-			if c[5] and c[6]:
-				posFrom = c[5],c[6]
-			f = Fleet(coord, c[2], self.getPlayer(c[3]), c[4], posFrom, c[7])
-			if coord in fl.keys():
-				fl[coord].append(f)
-			else:
-				fl[coord] = [f]
-		ids = []
-		for fleet in fl.values():
-			ids += [unit.id for unit in fleet]
-		st = 'select unit.id,class,hp from unit where fleet_id in (%s)'%(','.join([str(id) for id in ids]),)
-		self.cur.execute(st)
-		for u in self.cur.fetchall():
-			f.units.append(Unit(u[0],self.getProto(u[1]),u[2]))
-		
-		return fl
-	
-	def getProto(self, id):
-		if id in self.proto.keys():
-			return self.proto[id]
-		
-		self.cur.execute("select carapace,color,weight from proto where id=:id",(id,))
-		r = self.cur.fetchone()
-		if r:			
-			self.proto[id] = Proto(id, r[0], r[1], r[2])
-		else:
-			self.proto[id] = None
-		return self.proto[id]
 
 	def getAnything(self):
 		self.cur.execute("select hw_x,hw_y from player where hw_x not null and hw_y not null")
@@ -386,3 +358,6 @@ def flyingFleets(flt, keys = None):
 
 def nextFleetTempId():
 	return 0
+
+#d = Db()
+#d.prepare('test', 45)

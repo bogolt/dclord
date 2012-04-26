@@ -9,6 +9,11 @@ import util
 
 log = logging.getLogger('dclord')
 
+def get_attr(attrs, name, value_type=int):
+	if name in attrs.keys():
+		return value_type(attrs[name])
+	return None
+
 def getAttrs(src, conv):
 	d={}
 	for attr in src.keys():
@@ -34,6 +39,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	Unit = 'u'
 	AlienUnit = 'allien-ship'
 	Garrison = 'harrison'
+	BuildingClass = 'building_class'
+	
+	NotLoggedInError = 'not-logged-in'
 	
 	def __init__(self):
 		xml.sax.handler.ContentHandler.__init__(self)
@@ -46,7 +54,11 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	def startElement(self, name, attrs):
 		if XmlHandler.NodeDC == name:
 			self.user.update( getAttrs(attrs, {'user':'name', 'id':'id', 'turn-n':'turn'}) )
-			self.turn = int(self.user['turn'])
+			if 'turn' in self.user:
+				self.turn = int(self.user['turn'])
+				
+		elif XmlHandler.NotLoggedInError == name:
+			log.error('Not logged in - turn in progress')
 		elif XmlHandler.UserInfo == name:
 			self.user.update( getAttrs(attrs, {'homeworldx':'hw_x', 'homeworldy':'hw_y', 'race-id':'race_id', 'login':"login"}) )
 		elif XmlHandler.UserPlanets == name:
@@ -99,7 +111,10 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			elif self.pos:
 				data.update(self.pos)
 				db.setData('garrison_unit', data)
-
+		elif XmlHandler.BuildingClass == name:
+			data = getAttrs(attrs, {'name':'name', 'description':'description', 'is-war':"is_war", 'support-second':"support_second", 'bomb-dr':"defence_bomb", 'transport-capacity':"transport_capacity", 'is-transportable':"is_transportable", 'bomb-number':"bomb_number", 'fly-range':"fly_range", 'bonus-m':"bonus_m", 'is-ground-unit':"is_ground_unit", 'weight':"weight", 'scan-strength':"scan_strength", 'laser-dr':"defence_laser", 'laser-ar':"aim_laser", 'serial':"is_serial", 'carapace':"carapace", 'bonus-surface':"bonus_s", 'laser-damage':"damage_laser", 'offensive':"is_offensive", 'is-building':"is_building", 'is-space-ship':"is_spaceship", 'build-speed':"build_speed", 'detect-range':"detect_range", 'maxcount':"max_count", 'class':"class", 'cost-main':"cost_main", 'stealth-lvl':"stealth_level", 'bonus-o':"bonus_o", 'requires-pepl':"require_people", 'bomb-damage':"damage_bomb", 'bomb-ar':"aim_bomb", 'cost-money':"cost_money", 'req-tehn-level':"require_tech_level", 'color':"color", 'fly-speed':"fly_speed", 'support-main':"support_main", 'building-id':"id", 'bonus-e':"bonus_e", 'carrier-capacity':"carrier_capacity", 'bonus-production':"bonus_production", 'laser-number':"laser_number", 'cost-pepl':"cost_people", 'cost-second':"cost_second", 'hit-points':"hp"})
+			data['owner_id'] = self.user['id']
+			db.setData('proto',data)
 	def endElement(self, name):
 		if name==XmlHandler.UserInfo:
 			db.setData('user', self.user)
@@ -123,7 +138,7 @@ def processRawData(path):
 	load_xml(xml_path)
 
 def processAllUnpacked():
-	xml_dir = os.path.join(config.options['data']['path'], config.options['data']['raw-xml-dir'])
+	xml_dir = os.path.join(util.getTempDir(), config.options['data']['raw-xml-dir'])
 	log.debug('processing all found data at %s'%(xml_dir,))
 	at_least_one = False
 	for file in os.listdir(xml_dir):
