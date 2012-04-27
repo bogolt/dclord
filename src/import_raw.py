@@ -74,7 +74,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			if XmlHandler.UserPlanets == self.read_level:
 				data['owner_id'] = self.user['id']
 			if 'age' in data:
-				data['turn'] = self.turn - int(data['age'])
+				#don't need this for now
+				#data['turn'] = self.turn - int(data['age'])
 				del data['age']
 			db.setData('planet', data)
 		elif XmlHandler.Fleet == name or XmlHandler.AlienFleet == name:

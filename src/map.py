@@ -18,6 +18,16 @@ def is_owned(fleet_id):
 #	for user in db.users(['id=%d'%(fleet_id,)])
 #		if user['
 
+def getOwnerColor(owner_id):
+	if not owner_id:
+		return config.options['map']['planet_uninhabited_color']
+
+	key = 'custom_color_%s'%(owner_id,)
+	if key in config.options['map']:
+		return config.options['map'][key]
+	
+	return config.options['map']['planet_inhabited_color']
+
 class Map(util.BufferedWindow):
 	MaxSize = 1000
 	def __init__(self, parent):
@@ -118,6 +128,14 @@ class Map(util.BufferedWindow):
 		sz = 1
 		if 's' in planet and planet['s']:
 			sz = int(planet['s'])
+
+		col = None
+		if 'owner_id' in planet:
+			col = getOwnerColor(planet['owner_id'])			
+		else:
+			col = getOwnerColor(None)
+		dc.SetPen(wx.Pen(colour=col, width=1))
+		
 		if self.cell_size == 1:
 			dc.DrawPoint(rx, ry)
 		else:
@@ -132,7 +150,9 @@ class Map(util.BufferedWindow):
 		return f
 	
 	def drawPlanets(self, dc):
-		for p in db.planets(self.planet_filter + self.visibleAreaFilter() + ['owner_id is not null']):
+		#for p in db.planets(self.planet_filter + self.visibleAreaFilter() + ['owner_id is not null']):
+		cond = ['owner_id is not null'] if int(config.options['filter']['inhabited_planets'])==1 else []
+		for p in db.planets(self.planet_filter + self.visibleAreaFilter() + cond):
 			self.drawPlanet(dc, p)
 			
 	def drawFleets(self, dc):

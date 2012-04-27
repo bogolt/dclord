@@ -90,8 +90,8 @@ class Db:
 				s integer(1),
 				owner_id integer,
 				name text,
-				turn integer(2),
-				is_open integer(1)
+				is_open integer(1),
+				PRIMARY KEY (x,y)
 				)""")
 		#corruption integer,
 		#population integer
@@ -316,7 +316,7 @@ class Db:
 			yield r
 			
 
-db = Db()
+db = Db()	
 
 def setData(table, data):
 	global db
@@ -367,3 +367,45 @@ def getUserName(user_id):
 	for name in users(['id=%d'%(int(user_id),)], ('name',)):
 		return name['name']
 	return ''
+
+def setSqlValues(data):
+	d = {}
+	for k,v in data.items():
+		print '%s="%s" ( %s )'%(k,v,type(v))
+		if not v:
+			v = 'NULL'		
+		elif isinstance(v, str) or isinstance(v, unicode):
+			if v=='':
+				v='NULL'
+			else:
+				v = "'%s'"%(v,)
+		d[k]=v
+	return d
+			
+def updateRow(table, conditions, data):
+	global db
+	c = db.conn.cursor()
+	#d = setSqlValues(data)
+	keys = []
+	values = []
+	for k,v in data.iteritems():
+		if not v or v=='':
+			continue
+		keys.append(k)
+		values.append(v)
+		
+	s = ', '.join( ['%s=?'%(p,) for p in keys] )
+	tf = 'update %s SET %s WHERE %s'%(table, s, ' AND '.join(conditions))
+	#print '%s'%(tf,)
+	c.execute(tf, tuple(values)) #'update %s SET %s WHERE %s'%(table, , ' AND '.join(conditions))
+
+def setPlanetInfo(data):
+	x,y = data['x'],data['y']
+	conditions = ['x=%s'%(x,),'y=%s'%(y,)]
+	found = False
+	for p in planets(conditions):
+		updateRow('planet', conditions, data)
+		found = True
+	if not found:
+		setData('planet', data)
+	

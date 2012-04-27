@@ -47,11 +47,12 @@ class DcFrame(wx.Frame):
 		self.makeMenu()
 		
 		self.Bind(event.EVT_DATA_DOWNLOAD, self.onDownloadRawData)
+		self.Bind(event.EVT_MAP_UPDATE, self.onMapUpdate)
 	
 
 		#update.replace( os.getcwd() )
 		
-		import_raw.processAllUnpacked()
+		#import_raw.processAllUnpacked()
 		#serialization.save()
 		
 		#todo - restore previous state
@@ -82,6 +83,9 @@ class DcFrame(wx.Frame):
 		else:
 			self._mgr.RestorePane(pane)
 		self._mgr.Update()
+	
+	def onMapUpdate(self, evt):
+		self.map.update()
 		
 	def onClose(self, event):
 		self.updateConfig()

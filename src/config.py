@@ -38,8 +38,14 @@ options = {
 		 'fleet_route_color':'#00ff00',
 		 'own_planet_color':'#bb00dd',
 		 'planet_color':'#0000dd',
+		 'planet_inhabited_color':'#ff00dd',
+		 'planet_uninhabited_color':'#000000'
 		 
-		 }
+		 },
+		 'filter':
+			{
+			'inhabited_planets':1
+			}
 		}
 
 config_file_name = 'dclord.cfg'

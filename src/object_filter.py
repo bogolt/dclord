@@ -1,6 +1,7 @@
 import wx
 import logging
 import db
+import event
 import config
 
 log = logging.getLogger('dclord')
@@ -12,9 +13,13 @@ class FilterPanel(wx.Panel):
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
 		self.SetAutoLayout(True)
+		self.show_known = wx.CheckBox(self, -1, "Inhabited planets")
+		self.show_known.SetValue( int(config.options['filter']['inhabited_planets']))
+		self.sizer.Add(self.show_known)
 		self.accounts = {}
 		self.update()
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
+		self.show_known.Bind(wx.EVT_CHECKBOX, self.onShowKnown)
 		
 	def onSize(self, evt):
 		if self.GetAutoLayout():
@@ -33,3 +38,6 @@ class FilterPanel(wx.Panel):
 				self.sizer.Add(login)
 		self.sizer.Layout()
 	
+	def onShowKnown(self, evt):
+		config.options['filter']['inhabited_planets'] = int(self.show_known.IsChecked())
+		wx.PostEvent(self.GetParent(), event.MapUpdate(attr1=None, attr2=None))

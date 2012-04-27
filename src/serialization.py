@@ -37,7 +37,7 @@ def saveProto():
 	saveTable('proto_action', ('id', 'max_count', "cost_people", "cost_main", "cost_money", "cost_second", "planet_can_be"), None, 'proto_actions')
 
 def savePlanets():
-	saveTable('planet', ('x','y','owner_id','o','e','m','t','s','turn'), ['owner_id is not null'], 'planets')
+	saveTable('planet', ('x','y','owner_id', 'name', 'is_open'), ['owner_id is not null'], 'planets')
 
 def saveFleets():
 	saveTable('fleet', ('id', 'x','y','owner_id', 'is_hidden','turn','name','weight'), None, 'fleets')
@@ -58,6 +58,7 @@ def saveUsers():
 def save():
 	saveGeoPlanets()
 	savePlanets()
+	saveGeoPlanets()
 	saveFleets()
 	saveUnits()
 	saveGarrisonUnits()
@@ -76,8 +77,21 @@ def loadTable(table_name, file_name):
 	except IOError, e:
 		log.error('failed to load table %s: %s'%(table_name, e))
 		
+def loadCsv(file_name, out_func):
+	try:
+		path = os.path.join(config.options['data']['path'], '%s.csv'%(file_name,))
+		for p in csv.DictReader(open(path, 'rt')):
+			for s in unicode_strings:
+				if s in p and p[s]:
+					p[s] = p[s].decode('utf-8')
+			out_func(p)
+	except IOError, e:
+		log.error('failed to load csv %s: %s'%(file_name, e))	
+		
 def loadPlanets():
-	loadTable('planet', 'planets')
+	#loadTable('planet', 'planets')
+	loadTable('planet', 'planets_geo')
+	loadCsv('planets', db.setPlanetInfo)
 
 def loadFleets():
 	loadTable('fleet', 'fleets')
