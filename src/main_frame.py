@@ -21,9 +21,12 @@ log.setLevel(logging.DEBUG)
 
 class DcFrame(wx.Frame):
 	def __init__(self, parent):
-		sz = int(config.options['map']['window_size_x']), int(config.options['map']['window_size_y'])
+		sz = int(config.options['window']['width']), int(config.options['window']['height'])
 		wx.Frame.__init__(self, parent, -1, "dcLord (%s): Divide & Conquer client (www.the-game.ru)"%(version.getVersion(),), style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE, size=sz)
 		
+		if int(config.options['window']['is_maximized'])==1:
+			self.Maximize()
+			
 		serialization.load()
 		
 		self.map = map.Map(self)
@@ -101,8 +104,9 @@ class DcFrame(wx.Frame):
 		
 	def updateConfig(self):
 		w,h = self.GetClientSize()
-		config.options['map']['window_size_y'] = h
-		config.options['map']['window_size_x'] = w
+		config.options['window']['height'] = h
+		config.options['window']['width'] = w
+		config.options['window']['is_maximized'] = int(self.IsMaximized())		
 
 		config.options['map']['offset_pos_y'] = self.map.offset_pos[1]
 		config.options['map']['offset_pos_x'] = self.map.offset_pos[0]

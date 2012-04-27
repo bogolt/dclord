@@ -42,6 +42,11 @@ options = {
 		 'planet_uninhabited_color':'#000000'
 		 
 		 },
+		 'window':
+			{'width':400,
+			'height':500,
+			'is_maximized':0
+			},
 		 'filter':
 			{
 			'inhabited_planets':1
