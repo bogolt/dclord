@@ -89,8 +89,7 @@ def loadCsv(file_name, out_func):
 		log.error('failed to load csv %s: %s'%(file_name, e))	
 		
 def loadPlanets():
-	#loadTable('planet', 'planets')
-	loadTable('planet', 'planets_geo')
+	#loadTable('planet', 'planets_geo')
 	loadCsv('planets', db.setPlanetInfo)
 
 def loadFleets():
@@ -121,3 +120,7 @@ def load():
 	loadAlienUnits()
 	loadProto()	
 	loadUsers()
+
+#def asyncLoad():
+#	import thread
+#	thread.start_new_thread(load, () )

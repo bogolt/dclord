@@ -366,7 +366,10 @@ def nextFleetTempId():
 def getUserName(user_id):
 	for name in users(['id=%d'%(int(user_id),)], ('name',)):
 		return name['name']
-	return ''
+		
+	for name in users():
+		print 'user %s'%(name,)
+	return '<unknown>'
 
 def setSqlValues(data):
 	d = {}

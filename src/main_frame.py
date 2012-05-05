@@ -10,6 +10,7 @@ import config
 import import_raw
 import serialization
 import object_filter
+import unit_list
 
 log = logging.getLogger('dclord')
 
@@ -28,10 +29,10 @@ class DcFrame(wx.Frame):
 			self.Maximize()
 			
 		serialization.load()
-		
 		self.map = map.Map(self)
 		
 		self.object_filter = object_filter.FilterPanel(self)
+		self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
 		
 		self._mgr = wx.aui.AuiManager(self)
 		
@@ -44,6 +45,7 @@ class DcFrame(wx.Frame):
 		
 		self._mgr.AddPane(self.map, info)
 		self._mgr.AddPane(self.object_filter, wx.LEFT, "Filter")
+		self._mgr.AddPane(self.unit_list, wx.RIGHT, "Units")
 
 		self._mgr.Update()
 		
@@ -51,7 +53,6 @@ class DcFrame(wx.Frame):
 		
 		self.Bind(event.EVT_DATA_DOWNLOAD, self.onDownloadRawData)
 		self.Bind(event.EVT_MAP_UPDATE, self.onMapUpdate)
-	
 
 		#update.replace( os.getcwd() )
 		
