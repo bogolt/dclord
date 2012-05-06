@@ -8,6 +8,22 @@ import tempfile
 def getTempDir():
 	return os.path.join(tempfile.gettempdir(), 'dclord')
 
+def run_once(f):
+    def wrapper(*args, **kwargs):
+        if not wrapper.has_run:
+            wrapper.has_run = True
+            return f(*args, **kwargs)
+    wrapper.has_run = False
+    return wrapper
+    	
+def static_var(varname, value):
+	'make a static variable inside a function'
+	#http://stackoverflow.com/questions/279561/what-is-the-python-equivalent-of-static-variables-inside-a-function/279586#279586
+	def decorate(func):
+			setattr(func, varname, value)
+			return func
+	return decorate
+
 def add(c1, c2):
 	return (c1[0]+c2[0], c1[1]+c2[1])
 def sub(c1, c2):

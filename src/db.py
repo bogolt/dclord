@@ -19,63 +19,6 @@ class Db:
 				
 		self.init()
 
-	def prepareTables(user_login, turn_n):
-		self.cur.execute("""create table if not exists planet_%d(
-				x integer(2) not null,
-				y integer(2) not null,
-				owner_id integer,
-				name text,
-				is_open integer(1)
-				)"""%(turn_n,))
-				
-		self.cur.execute("""create table if not exists fleet_%d(
-				id integer primary key,
-				x integer(2) not null,
-				y integer(2) not null
-				)""")
-
-		cur.execute("""create table if not exists flying_fleet(
-				id integer,
-				x integer(2) not null,
-				y integer(2) not null,
-				from_x integer(2),
-				from_y integer(2),
-				arrival_turn integer(2),
-				temp_id integer
-				)""")
-				
-		cur.execute("""create table if not exists unit(
-				id integer primary key,
-				fleet_id integer not null,
-				class integer not null,
-				hp integer not null
-				)""")
-				
-		cur.execute("""create table if not exists alien_unit(
-				id integer primary key,
-				fleet_id integer not null,
-				carapace integer not null,
-				color integer(1),
-				weight integer,
-				class integer
-				)""")
-
-		cur.execute("""create table if not exists garrison_unit(
-				id integer primary key,
-				x integer(2) not null,
-				y integer(2) not null,
-				class integer not null,
-				hp integer not null
-				)""")
-		
-		cur.execute("""create table if not exists garrison_queue_unit(
-				id integer primary key,
-				x integer(2) not null,
-				y integer(2) not null,
-				class integer not null,
-				done integer
-				)""")
-	
 	def init(self):
 		self.cur = self.conn.cursor()
 		cur = self.cur
@@ -346,6 +289,7 @@ def users(flt = None, keys = None):
 
 def planets(flt, keys = None):
 	k = ('x','y','owner_id','o','e','m','t','s') if not keys else keys
+	#log.debug('get planets by %s'%(flt,))
 	for i in items('planet', flt, k):
 		yield i
 
@@ -411,4 +355,11 @@ def setPlanetInfo(data):
 		found = True
 	if not found:
 		setData('planet', data)
+	
+
+def smartUpdate(table, conds, data):
+	for item in items(table, conds, data.keys()):
+		updateRow(table, conds, data)
+		return
+	setData(table, data)
 	

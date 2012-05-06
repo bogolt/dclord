@@ -77,20 +77,26 @@ def loadTable(table_name, file_name):
 	except IOError, e:
 		log.error('failed to load table %s: %s'%(table_name, e))
 		
-def loadCsv(file_name, out_func):
+def loadCsv(file_name):
 	try:
 		path = os.path.join(config.options['data']['path'], '%s.csv'%(file_name,))
 		for p in csv.DictReader(open(path, 'rt')):
 			for s in unicode_strings:
 				if s in p and p[s]:
 					p[s] = p[s].decode('utf-8')
-			out_func(p)
+			yield p
 	except IOError, e:
 		log.error('failed to load csv %s: %s'%(file_name, e))	
-		
+
+@util.run_once
+def loadGeoPlanets():
+	for p in loadCsv('planets_geo'):
+		db.smartUpdate('planet', ['x=%s'%(p['x'],), 'y=%s'%(p['y'],)], p)
+	
 def loadPlanets():
-	#loadTable('planet', 'planets_geo')
-	loadCsv('planets', db.setPlanetInfo)
+	loadTable('planet', 'planets')
+	if int(config.options['filter']['inhabited_planets'])==0:
+		loadGeoPlanets()
 
 def loadFleets():
 	loadTable('fleet', 'fleets')

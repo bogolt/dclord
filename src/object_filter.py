@@ -3,6 +3,7 @@ import logging
 import db
 import event
 import config
+import serialization
 
 log = logging.getLogger('dclord')
 
@@ -40,4 +41,6 @@ class FilterPanel(wx.Panel):
 	
 	def onShowKnown(self, evt):
 		config.options['filter']['inhabited_planets'] = int(self.show_known.IsChecked())
+		if not config.options['filter']['inhabited_planets']:
+			serialization.loadGeoPlanets()
 		wx.PostEvent(self.GetParent(), event.MapUpdate(attr1=None, attr2=None))

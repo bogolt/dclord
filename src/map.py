@@ -123,6 +123,7 @@ class Map(util.BufferedWindow):
 		return s
 	
 	def drawPlanet(self, dc, planet):
+		log.debug('draw planet %s'%(planet,))
 		rx,ry = self.relPos(objPos(planet))
 
 		sz = 1
@@ -150,8 +151,8 @@ class Map(util.BufferedWindow):
 		return f
 	
 	def drawPlanets(self, dc):
-		#for p in db.planets(self.planet_filter + self.visibleAreaFilter() + ['owner_id is not null']):
 		cond = ['owner_id is not null'] if int(config.options['filter']['inhabited_planets'])==1 else []
+		#log.debug('inh opt value is %s, cond is %s'%(config.options['filter']['inhabited_planets'], cond))
 		for p in db.planets(self.planet_filter + self.visibleAreaFilter() + cond):
 			self.drawPlanet(dc, p)
 			
