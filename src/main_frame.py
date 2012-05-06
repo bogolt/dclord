@@ -34,6 +34,8 @@ class DcFrame(wx.Frame):
 		self.object_filter = object_filter.FilterPanel(self)
 		self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
 		
+		#self.unit_list.setPlayer( )
+		
 		self._mgr = wx.aui.AuiManager(self)
 		
 		info = wx.aui.AuiPaneInfo()
@@ -53,9 +55,7 @@ class DcFrame(wx.Frame):
 		
 		self.Bind(event.EVT_DATA_DOWNLOAD, self.onDownloadRawData)
 		self.Bind(event.EVT_MAP_UPDATE, self.onMapUpdate)
-
-		#update.replace( os.getcwd() )
-		
+	
 		#import_raw.processAllUnpacked()
 		#serialization.save()
 		

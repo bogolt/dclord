@@ -302,7 +302,12 @@ def flyingFleets(flt, keys = None):
 	k = ('id', 'temp_id', 'x','y','owner_id', 'from_x', 'from_y', 'is_hidden') if not keys else keys
 	for i in items('incoming_fleet', flt, k):
 		yield i
-
+		
+def prototypes(flt, keys = None):
+	k = ('id', 'class', 'carapace', 'weight', 'color', 'hp') if not keys else keys
+	for i in items('proto', flt, k):
+		yield i
+		
 def nextFleetTempId():
 	return 0
 

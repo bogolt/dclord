@@ -17,7 +17,8 @@ options = {
 			'dir':'data',
 			'path':None,
 			'raw-dir':'raw',
-			'raw-xml-dir':'raw_xml'
+			'raw-xml-dir':'raw_xml',
+			'images':'images/static/img/buildings'
 			
 			},
 		'network':{

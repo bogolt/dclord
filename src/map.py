@@ -123,7 +123,7 @@ class Map(util.BufferedWindow):
 		return s
 	
 	def drawPlanet(self, dc, planet):
-		log.debug('draw planet %s'%(planet,))
+		#log.debug('draw planet %s'%(planet,))
 		rx,ry = self.relPos(objPos(planet))
 
 		sz = 1
