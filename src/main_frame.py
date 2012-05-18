@@ -48,7 +48,7 @@ class DcFrame(wx.Frame):
 		self._mgr.AddPane(self.map, info)
 		self._mgr.AddPane(self.object_filter, wx.LEFT, "Filter")
 		self._mgr.AddPane(self.unit_list, wx.RIGHT, "Units")
-
+		
 		self._mgr.Update()
 		
 		self.makeMenu()

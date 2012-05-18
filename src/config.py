@@ -4,6 +4,7 @@ import os
 import os.path
 import ConfigParser
 import logging
+import util
 
 log = logging.getLogger('dclord')
 
@@ -73,8 +74,12 @@ def saveOptions():
 		for k,v in sect.items():
 			conf.set(name, k, v)
 	path = os.path.join(getOptionsDir(), config_file_name)
-	with open(path, 'wb') as configfile:
-		conf.write(configfile)
+	util.assureDirExist(getOptionsDir())
+	try:
+		with open(path, 'wb') as configfile:
+			conf.write(configfile)
+	except IOError, err:
+		log.error("unable to save config file: %s"%(err,))
 
 def loadAccounts():
 	config = ConfigParser.ConfigParser()
