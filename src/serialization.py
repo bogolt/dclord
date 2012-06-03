@@ -37,7 +37,7 @@ def saveProto():
 	saveTable('proto_action', ('id', 'max_count', "cost_people", "cost_main", "cost_money", "cost_second", "planet_can_be"), None, 'proto_actions')
 
 def savePlanets():
-	saveTable('planet', ('x','y','owner_id', 'name', 'is_open'), ['owner_id is not null'], 'planets')
+	saveTable('planet', ('x','y','o','e','m','t','s','owner_id', 'name', 'is_open'), ['owner_id is not null'], 'planets')
 
 def saveFleets():
 	saveTable('fleet', ('id', 'x','y','owner_id', 'is_hidden','turn','name','weight'), None, 'fleets')
