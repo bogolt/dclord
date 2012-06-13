@@ -5,13 +5,40 @@ import event
 import config
 import serialization
 
+import wx.lib.agw.floatspin
+
 log = logging.getLogger('dclord')
+
+def_color = wx.Colour(0, 0, 0)
+sel_color = wx.Colour(245,3,3)
+
+class RangeFilter(wx.Window):
+	def __init__(self, parent, value_min=0, value_max=-1):
+		wx.Window.__init__(self, parent, wx.ID_ANY)
+		self.value_min = value_min
+		self.value_max = value_max
+		self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+		#self.value_min_ctrl = wx.lib.agw.floatspin.FloatTextCtrl(self, wx.ID_ANY, '')
+		#self.sizer.Add(self.value_min_ctrl)
+		self.SetSizer(self.sizer)
+		self.Layout()
+
+class ProtoFilter(wx.Window):
+	def __init__(self, parent):
+		wx.Window.__init__(self, parent, wx.ID_ANY)
+		self.f = RangeFilter(self)
+		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		sizer.Add(self.f)
+		self.SetSizer(sizer)
+		self.Layout()
 
 class FilterPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(120,200))
 		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		pf = ProtoFilter(self)
+		self.sizer.Add(pf)
 		self.SetSizer(self.sizer)
 		self.SetAutoLayout(True)
 		self.show_known = wx.CheckBox(self, -1, "Inhabited planets")
@@ -50,6 +77,11 @@ class FilterPanel(wx.Panel):
 				self.selectUser(login)
 				
 	def selectUser(self, login):
+		if self.active_user:
+			self.accounts[self.active_user].SetForegroundColour(def_color)
+		self.accounts[login].SetForegroundColour(sel_color)
+		self.active_user = login
+		
 		wx.PostEvent(self.GetParent(), event.UserSelect(attr1=login, attr2=None))
 	
 	def onShowKnown(self, evt):

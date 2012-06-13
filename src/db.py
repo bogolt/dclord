@@ -304,7 +304,7 @@ def flyingFleets(flt, keys = None):
 		yield i
 		
 def prototypes(flt, keys = None):
-	k = ('id', 'class', 'carapace', 'weight', 'color', 'hp') if not keys else keys
+	k = ('id', 'class', 'carapace', 'weight', 'color', 'hp', 'name') if not keys else keys
 	for i in items('proto', flt, k):
 		yield i
 		
