@@ -364,7 +364,7 @@ def setPlanetInfo(data):
 
 def smartUpdate(table, conds, data):
 	for item in items(table, conds, data.keys()):
-		updateRow(table, conds, data)
+		#updateRow(table, conds, data)
 		return
 	setData(table, data)
 	
