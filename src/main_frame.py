@@ -34,8 +34,6 @@ class DcFrame(wx.Frame):
 		self.object_filter = object_filter.FilterPanel(self)
 		self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
 		
-		#self.unit_list.setPlayer( )
-		
 		self._mgr = wx.aui.AuiManager(self)
 		
 		info = wx.aui.AuiPaneInfo()
@@ -55,6 +53,7 @@ class DcFrame(wx.Frame):
 		
 		self.Bind(event.EVT_DATA_DOWNLOAD, self.onDownloadRawData)
 		self.Bind(event.EVT_MAP_UPDATE, self.onMapUpdate)
+		self.Bind(event.EVT_USER_SELECT, self.onSelectUser)
 	
 		#import_raw.processAllUnpacked()
 		#serialization.save()
@@ -158,3 +157,9 @@ class DcFrame(wx.Frame):
 			return
 		import_raw.processRawData(data)
 		self.map.update()
+	
+	def onSelectUser(self, evt):
+		login = evt.attr1
+		print 'select user %s'%(login,)
+		print 'user has id %s'%(config.users[login]['id'],)
+		self.unit_list.setPlayer( int(config.users[login]['id'] ))
