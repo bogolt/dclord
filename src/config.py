@@ -108,6 +108,16 @@ def loadAll():
 	options['data']['path'] = os.path.join(getOptionsDir(), options['data']['dir'])
 	loadAccounts()
 	loadOptions()
+	
+def addAccount(login, password):
+	global users
+	users[login] = {'login':login, 'password':password}
+	saveUsers()
+
+def removeAccount(login):
+	global users
+	del users[login]
+	saveUsers()
 
 def accounts():
 	global users

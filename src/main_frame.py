@@ -11,6 +11,7 @@ import import_raw
 import serialization
 import object_filter
 import unit_list
+import users
 
 log = logging.getLogger('dclord')
 
@@ -69,6 +70,7 @@ class DcFrame(wx.Frame):
 		
 		gameMenu = wx.Menu()
 		self.updateMenu = gameMenu.Append(wx.ID_ANY, "&Update from sever")
+		usersMenu = gameMenu.Append(wx.ID_ANY, "U&sers")
 		
 		panel = wx.MenuBar()
 		panel.Append(fileMenu, "&File")
@@ -76,6 +78,7 @@ class DcFrame(wx.Frame):
 		self.SetMenuBar(panel)
 				
 		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)
+		self.Bind(wx.EVT_MENU, self.onShowUsers, usersMenu)
 	
 		self.Bind(wx.EVT_CLOSE, self.onClose, self)
 		
@@ -86,6 +89,11 @@ class DcFrame(wx.Frame):
 		else:
 			self._mgr.RestorePane(pane)
 		self._mgr.Update()
+	
+	def onShowUsers(self, evt):
+		p = users.UsersPanel(self)
+		p.Show()
+		#p.init()
 	
 	def onMapUpdate(self, evt):
 		self.map.update()

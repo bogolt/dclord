@@ -62,7 +62,7 @@ class FilterPanel(wx.Panel):
 			if 'id' in acc:
 				name = db.getUserName(acc['id'])
 				log.debug("%s => %s"%(acc['id'], name))
-				login = wx.StaticText(self,wx.ID_ANY, '%s'%(name,))				
+				login = wx.StaticText(self,wx.ID_ANY, '%s'%(name,))
 				self.accounts[acc['login']] = login
 				self.sizer.Add(login)
 				if not self.active_user:
