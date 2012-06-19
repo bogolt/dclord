@@ -53,7 +53,7 @@ class BufferedWindow(wx.Window):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(-1,-1), style=wx.NO_FULL_REPAINT_ON_RESIZE)
 
-		self.bg_color = wx.Color(255,255,255)
+		self.bg_color = wx.Colour(255,255,255)
 		self.image = None
 		self.resize()
 		self.Bind(wx.EVT_PAINT, self.onPaint)
