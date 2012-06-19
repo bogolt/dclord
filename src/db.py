@@ -311,7 +311,6 @@ def prototypes(flt, keys = None):
 def nextFleetTempId():
 	return 0
 
-
 def getUserName(user_id):
 	for name in users(['id=%d'%(int(user_id),)], ('name',)):
 		return name['name']
@@ -319,6 +318,11 @@ def getUserName(user_id):
 	for name in users():
 		print 'user %s'%(name,)
 	return '<unknown>'
+
+def getUserHw(user_id):
+	for u in users(['id=%s'%(user_id,)]):
+		return int(u['hw_x']), int(u['hw_y'])
+	return 0,0
 
 def setSqlValues(data):
 	d = {}

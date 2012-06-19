@@ -168,6 +168,6 @@ class DcFrame(wx.Frame):
 	
 	def onSelectUser(self, evt):
 		login = evt.attr1
-		print 'select user %s'%(login,)
-		print 'user has id %s'%(config.users[login]['id'],)
-		self.unit_list.setPlayer( int(config.users[login]['id'] ))
+		user_id = int(config.users[login]['id'])
+		self.unit_list.setPlayer( user_id )
+		self.map.centerAt( db.getUserHw(user_id))

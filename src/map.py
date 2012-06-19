@@ -92,10 +92,10 @@ class Map(util.BufferedWindow):
 		self.calcScreenSize()
 		
 		#make sure mouse is pointing on the centre  of the scroll area ( just move the pos so that this _is_ the center )
-		newScreenPos   = util.mul(logicPos, self.cell_size)
-		newScreenDiff  = util.sub(newScreenPos, pos)
-		newLogicDiff	 = util.div(newScreenDiff, self.cell_size)
-		self.offset_pos= util.add(self.offset_pos, newLogicDiff)
+		newScreenPos = util.mul(logicPos, self.cell_size)
+		newScreenDiff = util.sub(newScreenPos, pos)
+		newLogicDiff = util.div(newScreenDiff, self.cell_size)
+		self.offset_pos = util.add(self.offset_pos, newLogicDiff)
 
 		self.update()
 	
@@ -190,8 +190,10 @@ class Map(util.BufferedWindow):
 			frx,fry = self.relPos((int(fx), int(fy)))
 			dc.DrawLine(rx, ry, frx, fry)
 			
-	
 	def paint(self, dc):
 		self.drawPlanets(dc)
 		self.drawFleets(dc)
-				
+	
+	def centerAt(self, logicPos):
+		self.offset_pos = util.sub(logicPos, util.div(self.screen_size, 2))
+		self.update()

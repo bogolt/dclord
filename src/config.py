@@ -19,8 +19,8 @@ options = {
 			'path':None,
 			'raw-dir':'raw',
 			'raw-xml-dir':'raw_xml',
-			'images':'images/static/img/buildings'
-			
+			'images':'images/static/img/buildings',
+			'known_planets':0
 			},
 		'network':{
 		  'host':'www.the-game.ru',
