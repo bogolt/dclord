@@ -170,4 +170,5 @@ class DcFrame(wx.Frame):
 		login = evt.attr1
 		user_id = int(config.users[login]['id'])
 		self.unit_list.setPlayer( user_id )
+		print 'selecting user %s, while map is %s'%(user_id, config.user_id_dict)
 		self.map.centerAt( db.getUserHw(user_id))

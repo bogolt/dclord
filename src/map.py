@@ -26,6 +26,9 @@ def getOwnerColor(owner_id):
 	if key in config.options['map']:
 		return config.options['map'][key]
 	
+	if int(owner_id) in config.user_id_dict:
+		return config.options['map']['planet_owned_color']
+		
 	return config.options['map']['planet_inhabited_color']
 
 class Map(util.BufferedWindow):
@@ -123,7 +126,7 @@ class Map(util.BufferedWindow):
 		return s
 	
 	def drawPlanet(self, dc, planet):
-		#log.debug('draw planet %s'%(planet,))
+
 		rx,ry = self.relPos(objPos(planet))
 
 		sz = 1
@@ -132,7 +135,7 @@ class Map(util.BufferedWindow):
 
 		col = None
 		if 'owner_id' in planet:
-			col = getOwnerColor(planet['owner_id'])			
+			col = getOwnerColor(int(planet['owner_id']))
 		else:
 			col = getOwnerColor(None)
 		dc.SetPen(wx.Pen(colour=col, width=1))

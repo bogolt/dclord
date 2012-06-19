@@ -33,9 +33,9 @@ class Db:
 				s integer(1),
 				owner_id integer,
 				name text,
-				is_open integer(1),
-				PRIMARY KEY (x,y)
-				)""")
+				is_open integer(1))""")#,
+#				PRIMARY KEY (x,y)
+#				)""")
 		#corruption integer,
 		#population integer
 
@@ -289,7 +289,6 @@ def users(flt = None, keys = None):
 
 def planets(flt, keys = None):
 	k = ('x','y','owner_id','o','e','m','t','s') if not keys else keys
-	#log.debug('get planets by %s'%(flt,))
 	for i in items('planet', flt, k):
 		yield i
 
@@ -368,7 +367,6 @@ def setPlanetInfo(data):
 
 def smartUpdate(table, conds, data):
 	for item in items(table, conds, data.keys()):
-		#updateRow(table, conds, data)
 		return
 	setData(table, data)
 	

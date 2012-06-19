@@ -13,6 +13,7 @@ def getOptionsDir():
 	return os.path.join(wx.StandardPaths.Get().GetUserConfigDir(), conf_dir)
 	
 users = {}
+user_id_dict = {}
 options = {
 		'data':{
 			'dir':'data',
@@ -41,6 +42,7 @@ options = {
 		 'own_planet_color':'#bb00dd',
 		 'planet_color':'#0000dd',
 		 'planet_inhabited_color':'#ff00dd',
+		 'planet_owned_color':'#aadd00',
 		 'planet_uninhabited_color':'#000000'
 		 
 		 },
@@ -85,11 +87,14 @@ def loadAccounts():
 	config = ConfigParser.ConfigParser()
 	config.read(os.path.join(getOptionsDir(), 'users.cfg'))
 	global users
+	global user_id_dict
 	for u in config.sections():
 		acc = {}
 		for k,v in config.items(u):
 			acc[k] = v
 		users[acc['login']] = acc
+		if 'id' in acc and acc['id']:
+			user_id_dict[int(acc['id'])] = acc
 
 def saveUsers():
 	conf = ConfigParser.RawConfigParser()
@@ -126,10 +131,12 @@ def accounts():
 
 def setUserId(login, id):
 	global users
+	global user_id_dict
 	u = users[login]
 	if 'id' in u and int(u['id']) == int(id):
 		return
 	u['id'] = id
+	user_id_dict[int(id)] = users[login]
 	log.info('store user id %s for user %s'%(id, login))
 	saveUsers()
 	

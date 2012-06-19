@@ -73,6 +73,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			data = getAttrs(attrs, {'x':'x', 'open':'is_open', 'owner-id':'owner_id', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s', 'age':'age'})
 			if XmlHandler.UserPlanets == self.read_level:
 				data['owner_id'] = self.user['id']
+				#log.info('load owner planet %s'%(data,))
 			if 'age' in data:
 				#don't need this for now
 				#data['turn'] = self.turn - int(data['age'])
@@ -123,8 +124,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			data['owner_id'] = self.user['id']
 			self.parent_attrs = data
 			db.setData('proto',data)
-			if 'name' in data:
-				log.info('specific data: %s'%(data,))
+			#if 'name' in data:
+				#log.info('specific data: %s'%(data,))
 		elif XmlHandler.BuildingClassAction == name and self.parent_attrs:
 			data = getAttrs(attrs, {'action':'id', 'maxcount':'max_count', 'cost-pepl':"cost_people", 'cost-main':"cost_main", 'cost-money':"cost_money", 'cost-second':"cost_second", 'planet-can-be':"planet_can_be"})
 			data['proto_id'] = self.parent_attrs['id']
