@@ -51,7 +51,7 @@ def assureNotExist(d):
 
 class BufferedWindow(wx.Window):
 	def __init__(self, parent):
-		wx.Window.__init__(self, parent, -1, size=(-1,-1), style=wx.NO_FULL_REPAINT_ON_RESIZE)
+		wx.Window.__init__(self, parent, -1, size=(-1,-1), style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.NO_BORDER)
 
 		self.bg_color = wx.Colour(255,255,255)
 		self.image = None
@@ -63,11 +63,7 @@ class BufferedWindow(wx.Window):
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.image)
 
-		dc.Clear()
-		dc.SetBrush(wx.Brush(self.bg_color))
-		w,h = self.image.GetSize()
-		dc.DrawRectangle(0,0, w,h)
-		
+		dc.Clear()		
 		self.paint(dc)
 
 		del dc # need to get rid of the MemoryDC before Update() is called.
