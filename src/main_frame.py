@@ -72,6 +72,9 @@ class DcFrame(wx.Frame):
 		self.updateMenu = gameMenu.Append(wx.ID_ANY, "&Update from sever")
 		usersMenu = gameMenu.Append(wx.ID_ANY, "U&sers")
 		
+		#actionMenu = wx.Menu()
+		#actionDefineArea = actionMenu.Append(
+		
 		panel = wx.MenuBar()
 		panel.Append(fileMenu, "&File")
 		panel.Append(gameMenu, "G&ame")

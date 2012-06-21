@@ -28,9 +28,9 @@ options = {
 		  'debug':2
 		 },
 		'map':{
-		 'offset_pos_x':3,
-		 'offset_pos_y':3,
-		 'cell_size':6,
+		 'offset_pos_x':1,
+		 'offset_pos_y':1,
+		 'cell_size':1,
 		 'window_size_x':600,
 		 'window_size_y':500,
 		 'own_fleet_color':'#dd0000',
@@ -39,10 +39,9 @@ options = {
 		 'flying_fleet_color':'#de0000',
 		 'own_fleet_route_color':'#0000ff',
 		 'fleet_route_color':'#00ff00',
-		 'own_planet_color':'#bb00dd',
 		 'planet_color':'#0000dd',
-		 'planet_inhabited_color':'#ff00dd',
-		 'planet_owned_color':'#aadd00',
+		 'planet_inhabited_color':'#aadd00',
+		 'planet_owned_color':'#aa2200',
 		 'planet_uninhabited_color':'#000000'
 		 
 		 },
@@ -53,7 +52,8 @@ options = {
 			},
 		 'filter':
 			{
-			'inhabited_planets':1
+			'inhabited_planets':1,
+			'fleets':1
 			}
 		}
 

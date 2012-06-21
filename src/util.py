@@ -48,6 +48,22 @@ def assureDirExist(d):
 def assureNotExist(d):
 	if os.path.exists(d):
 		shutil.rmtree(d)
+		
+import time                                                
+
+def timeit(method):
+
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+
+        print '%r (%r, %r) %2.2f sec' % \
+              (method.__name__, args, kw, te-ts)
+        return result
+
+    return timed
+
 
 class BufferedWindow(wx.Window):
 	def __init__(self, parent):
@@ -59,18 +75,44 @@ class BufferedWindow(wx.Window):
 		self.Bind(wx.EVT_PAINT, self.onPaint)
 		self.Bind(wx.EVT_SIZE, self.resize)
 
+	def shift(self, offset):
+		dc = wx.MemoryDC()
+		dc_src = wx.MemoryDC()
+		dc_src.SelectObject(self.image)
+		w,h = self.image.GetSize()
+		img = wx.EmptyBitmap( w, h)
+		dc.SelectObject(img)
+		dc.Clear()
+		#print 'shift %s'%(offset,)
+		dc.Blit( int(offset[0]), int(offset[1]), self.image.GetWidth()-int(offset[0]), self.image.GetHeight()-int(offset[1]), dc_src, 0, 0)
+		del dc
+		self.image = img
+		
+		#self.updateRect(wx.Rect(0, offset[1], h, offset[1]))
+
+	def updateRect(self, rect):
+		dc = wx.MemoryDC()
+		dc.SelectObject(self.image)
+
+		self.paint(dc, rect)
+
+		del dc # need to get rid of the MemoryDC before Update() is called.
+		self.Refresh()
+		self.Update()
+		
+
 	def update(self):
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.image)
 
-		dc.Clear()		
+		dc.Clear()
 		self.paint(dc)
 
 		del dc # need to get rid of the MemoryDC before Update() is called.
 		self.Refresh()
 		self.Update()
 		
-	def paint(self, dc):
+	def paint(self, dc, rect = None):
 		pass
 	
 	def resize(self, _ = None):

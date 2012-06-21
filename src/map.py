@@ -37,6 +37,7 @@ class Map(util.BufferedWindow):
 		self.offset_pos = float(config.options['map']['offset_pos_x']), float(config.options['map']['offset_pos_y'])
 		self.cell_size = int(config.options['map']['cell_size'])
 		self.screen_size = 1,1
+		self.filterDrawFleets = bool(config.options['filter']['fleets'])
 		
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
 
@@ -62,6 +63,7 @@ class Map(util.BufferedWindow):
 		self.update()
 
 	def onMotion(self, evt):
+		old_offset = self.offset_pos
 		#fix for windows focus policy ( after treeCtrl grabs focus it wont let it back )
 		self.SetFocus()
 		if not self.moving:
@@ -77,8 +79,12 @@ class Map(util.BufferedWindow):
 			self.offset_pos=(x,y)
 			#self.Refresh()
 			self.prevPos = curPos
-			
-		self.update()
+		
+		self.shift(util.mul(util.sub(old_offset, self.offset_pos), self.cell_size))
+		#self.update()
+		self.Refresh()
+		self.Update()
+		#print 'motion %s'%(self.offset_pos,)
 		
 	def onScroll(self, evt):
 
@@ -125,10 +131,13 @@ class Map(util.BufferedWindow):
 			s = 1
 		return s
 	
+	def screenPosToLogic(self, pos):
+		return util.add(self.offset_pos, util.div(pos, self.cell_size))
+		
 	def drawPlanet(self, dc, planet):
 
 		rx,ry = self.relPos(objPos(planet))
-
+		
 		sz = 1
 		if 's' in planet and planet['s']:
 			sz = int(planet['s'])
@@ -152,14 +161,19 @@ class Map(util.BufferedWindow):
 		f.append('%s<%d'%(xname, self.offset_pos[0]+self.screen_size[0]))
 		f.append('%s<%d'%(yname, self.offset_pos[1]+self.screen_size[1]))
 		return f
+		
+	def rectFilter(self, rect):
+		ps = self.screenPosToLogic(rect.GetPosition().Get())
+		sz = util.div(rect.GetSize().Get(), self.cell_size)
+		return ['x>=%d AND y>=%d AND x<=%d AND y<=%d'%(ps[0], ps[1], ps[0]+sz[0], ps[1]+sz[1])]
 	
-	def drawPlanets(self, dc):
+	def drawPlanets(self, dc, rect):
+		flt = self.rectFilter(rect) if rect else self.visibleAreaFilter()
 		cond = ['owner_id is not null'] if int(config.options['filter']['inhabited_planets'])==1 else []
-		#log.debug('inh opt value is %s, cond is %s'%(config.options['filter']['inhabited_planets'], cond))
-		for p in db.planets(self.planet_filter + self.visibleAreaFilter() + cond):
+		for p in db.planets(self.planet_filter + flt + cond):
 			self.drawPlanet(dc, p)
 			
-	def drawFleets(self, dc):
+	def drawFleets(self, dc, rect):
 		self.fleets = {}
 		for p in db.fleets(self.visibleAreaFilter()):
 			self.drawFleet(dc, p)
@@ -193,9 +207,10 @@ class Map(util.BufferedWindow):
 			frx,fry = self.relPos((int(fx), int(fy)))
 			dc.DrawLine(rx, ry, frx, fry)
 			
-	def paint(self, dc):
-		self.drawPlanets(dc)
-		self.drawFleets(dc)
+	def paint(self, dc, rect=None):
+		self.drawPlanets(dc, rect)
+		if self.filterDrawFleets:
+			self.drawFleets(dc, rect)
 	
 	def centerAt(self, logicPos):
 		self.offset_pos = util.sub(logicPos, util.div(self.screen_size, 2))
