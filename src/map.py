@@ -164,7 +164,9 @@ class Map(util.BufferedWindow):
 		
 	def rectFilter(self, rect):
 		ps = self.screenPosToLogic(rect.GetPosition().Get())
+		ps = util.sub(ps, (1,1))
 		sz = util.div(rect.GetSize().Get(), self.cell_size)
+		sz = util.add(sz, (1,1))
 		return ['x>=%d AND y>=%d AND x<=%d AND y<=%d'%(ps[0], ps[1], ps[0]+sz[0], ps[1]+sz[1])]
 	
 	def drawPlanets(self, dc, rect):

@@ -70,6 +70,7 @@ class BufferedWindow(wx.Window):
 		wx.Window.__init__(self, parent, -1, size=(-1,-1), style=wx.NO_FULL_REPAINT_ON_RESIZE | wx.NO_BORDER)
 
 		self.bg_color = wx.Colour(255,255,255)
+		self.shift_rest = 0,0
 		self.image = None
 		self.resize()
 		self.Bind(wx.EVT_PAINT, self.onPaint)
@@ -83,12 +84,25 @@ class BufferedWindow(wx.Window):
 		img = wx.EmptyBitmap( w, h)
 		dc.SelectObject(img)
 		dc.Clear()
-		#print 'shift %s'%(offset,)
-		dc.Blit( int(offset[0]), int(offset[1]), self.image.GetWidth()-int(offset[0]), self.image.GetHeight()-int(offset[1]), dc_src, 0, 0)
+		ofs = add(offset, self.shift_rest)
+		x,y = int(ofs[0]), int(ofs[1])
+		#print 'x y %s %s'%(x,y)
+		self.shift_rest = ofs[0] - x, ofs[1] - y
+		dc.Blit( x, y, self.image.GetWidth()-x, self.image.GetHeight()-y, dc_src, 0, 0)
 		del dc
 		self.image = img
 		
-		#self.updateRect(wx.Rect(0, offset[1], h, offset[1]))
+		return
+		
+		if y > 0:
+			self.updateRect(wx.Rect(0, 0, w, y))
+		if x > 0:
+			self.updateRect(wx.Rect(0, 0, x, h))
+
+		if y < 0:
+			self.updateRect(wx.Rect(0, h-y, w, y))
+		if x < 0:
+			self.updateRect(wx.Rect(w-x, 0, x, h))
 
 	def updateRect(self, rect):
 		dc = wx.MemoryDC()
@@ -111,6 +125,7 @@ class BufferedWindow(wx.Window):
 		del dc # need to get rid of the MemoryDC before Update() is called.
 		self.Refresh()
 		self.Update()
+		self.shift_rest = 0,0
 		
 	def paint(self, dc, rect = None):
 		pass
