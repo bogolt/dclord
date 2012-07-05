@@ -58,6 +58,7 @@ options = {
 		}
 
 config_file_name = 'dclord.cfg'
+users_file_name = 'users.cfg'
 def loadOptions():
 	config = ConfigParser.ConfigParser()
 	config.read(os.path.join(getOptionsDir(), config_file_name))
@@ -85,7 +86,7 @@ def saveOptions():
 
 def loadAccounts():
 	config = ConfigParser.ConfigParser()
-	config.read(os.path.join(getOptionsDir(), 'users.cfg'))
+	config.read(os.path.join(getOptionsDir(), users_file_name))
 	global users
 	global user_id_dict
 	for u in config.sections():
@@ -104,9 +105,14 @@ def saveUsers():
 		conf.add_section(u)
 		for k,v in p.items():
 			conf.set(u, k, v)
-			
-	with open(os.path.join(getOptionsDir(), 'users.cfg'), 'wt') as configfile:
-		conf.write(configfile)
+
+	path = os.path.join(getOptionsDir(), users_file_name)
+	util.assureDirExist(getOptionsDir())
+	try:
+		with open(os.path.join(getOptionsDir(), users_file_name), 'wt') as configfile:
+			conf.write(configfile)
+	except IOError, err:
+		log.error("unable to save users file: %s"%(err,))
 
 def loadAll():
 	global options

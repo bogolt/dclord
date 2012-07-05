@@ -38,6 +38,7 @@ class Map(util.BufferedWindow):
 		self.cell_size = int(config.options['map']['cell_size'])
 		self.screen_size = 1,1
 		self.filterDrawFleets = bool(config.options['filter']['fleets'])
+		#self.filterDrawAreas = bool(config.options['filter']['areas'])
 		
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
 
@@ -213,6 +214,12 @@ class Map(util.BufferedWindow):
 		self.drawPlanets(dc, rect)
 		if self.filterDrawFleets:
 			self.drawFleets(dc, rect)
+		
+		#if self.filterDrawAreas:
+		#	self.drawAreas(dc, rect)
+			
+	def drawAreas(self, dc, rect):
+		ar = [(200,200), (200,300), (300,300), (300, 200)]
 	
 	def centerAt(self, logicPos):
 		self.offset_pos = util.sub(logicPos, util.div(self.screen_size, 2))

@@ -36,7 +36,7 @@ class DcFrame(wx.Frame):
 		self.object_filter = object_filter.FilterPanel(self)
 		self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
 		
-		self.area_list = area_panel.AreaListWindow(self)
+		#self.area_list = area_panel.AreaListWindow(self)
 		
 		self._mgr = wx.aui.AuiManager(self)
 		
@@ -50,7 +50,7 @@ class DcFrame(wx.Frame):
 		self._mgr.AddPane(self.map, info)
 		self._mgr.AddPane(self.object_filter, wx.LEFT, "Filter")
 		self._mgr.AddPane(self.unit_list, wx.RIGHT, "Units")
-		self._mgr.AddPane(self.area_list, wx.RIGHT, "Areas")
+		#self._mgr.AddPane(self.area_list, wx.RIGHT, "Areas")
 		
 		self._mgr.Update()
 		
