@@ -79,6 +79,7 @@ def loadTable(table_name, file_name):
 		log.error('failed to load table %s: %s'%(table_name, e))
 		
 def loadCsv(file_name):
+	log.info('loading %s'%(file_name,))
 	try:
 		path = os.path.join(config.options['data']['path'], '%s.csv'%(file_name,))
 		for p in csv.DictReader(open(path, 'rt')):
@@ -88,6 +89,7 @@ def loadCsv(file_name):
 			yield p
 	except IOError, e:
 		log.error('failed to load csv %s: %s'%(file_name, e))	
+	log.info('loading %s done'%(file_name,))
 
 @util.run_once
 def loadGeoPlanets():

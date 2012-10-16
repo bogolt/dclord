@@ -26,7 +26,7 @@ def getOwnerColor(owner_id):
 	if key in config.options['map']:
 		return config.options['map'][key]
 	
-	if int(owner_id) in config.user_id_dict:
+	if owner_id and int(owner_id) in config.user_id_dict:
 		return config.options['map']['planet_owned_color']
 		
 	return config.options['map']['planet_inhabited_color']
@@ -144,7 +144,7 @@ class Map(util.BufferedWindow):
 			sz = int(planet['s'])
 
 		col = None
-		if 'owner_id' in planet:
+		if 'owner_id' in planet and planet['owner_id']:
 			col = getOwnerColor(int(planet['owner_id']))
 		else:
 			col = getOwnerColor(None)

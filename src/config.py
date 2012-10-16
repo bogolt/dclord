@@ -21,7 +21,8 @@ options = {
 			'raw-dir':'raw',
 			'raw-xml-dir':'raw_xml',
 			'images':'images/static/img/buildings',
-			'known_planets':0
+			'known_planets':0,
+			'load_known_planets':1,
 			},
 		'network':{
 		  'host':'www.the-game.ru',
