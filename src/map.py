@@ -7,6 +7,17 @@ import config
 
 log = logging.getLogger('dclord')
 
+def bestFit(obj, length):
+	if obj < length:
+		return 1
+	val = int(math.ceil(obj / float(length)))
+	if val <= 3:
+		return val
+		
+	if val % 5 != 0:
+		return val + 5 - val % 5
+	return val
+
 def objPos(obj):
 	return int(obj['x']),int(obj['y'])
 	
@@ -33,6 +44,8 @@ def getOwnerColor(owner_id):
 
 class Map(util.BufferedWindow):
 	MaxSize = 1000
+	X = 0
+	Y = 1
 	def __init__(self, parent):
 		self.offset_pos = float(config.options['map']['offset_pos_x']), float(config.options['map']['offset_pos_y'])
 		self.cell_size = int(config.options['map']['cell_size'])
@@ -157,8 +170,8 @@ class Map(util.BufferedWindow):
 	
 	def visibleAreaFilter(self, xname='x', yname='y'):
 		f = []
-		f.append('%s>=%d'%(xname, self.offset_pos[0]))
-		f.append('%s>=%d'%(yname, self.offset_pos[1]))
+		f.append('%s>=%d'%(xname, int(self.offset_pos[0])))
+		f.append('%s>=%d'%(yname, int(self.offset_pos[1])))
 		f.append('%s<%d'%(xname, self.offset_pos[0]+self.screen_size[0]))
 		f.append('%s<%d'%(yname, self.offset_pos[1]+self.screen_size[1]))
 		return f
@@ -214,6 +227,7 @@ class Map(util.BufferedWindow):
 		self.drawPlanets(dc, rect)
 		if self.filterDrawFleets:
 			self.drawFleets(dc, rect)
+		self.drawCoordinates(dc)
 		
 		#if self.filterDrawAreas:
 		#	self.drawAreas(dc, rect)
@@ -224,3 +238,21 @@ class Map(util.BufferedWindow):
 	def centerAt(self, logicPos):
 		self.offset_pos = util.sub(logicPos, util.div(self.screen_size, 2))
 		self.update()
+	
+	def drawCoordinates(self, dc):
+		size = self.GetClientSize()
+		f = dc.GetFont()
+		f.SetPointSize(8)
+		f.SetFamily(wx.FONTFAMILY_SCRIPT)
+		dc.SetFont(f)
+		
+		every_nth = bestFit(dc.GetTextExtent("9999")[0], self.cell_size)
+					
+		dc.SetTextForeground(config.options['map']['coordinate_color'])
+		startx = int(self.offset_pos[self.X])
+		
+		for x in range(startx, startx + self.screen_size[self.X], every_nth):
+			rx,_ = self.relPos((x, 30))
+			dc.DrawText(str(x), rx, 0)
+
+

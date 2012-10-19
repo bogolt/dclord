@@ -29,6 +29,7 @@ options = {
 		  'debug':2
 		 },
 		'map':{
+		 'coordinate_color':'#000000',
 		 'offset_pos_x':1,
 		 'offset_pos_y':1,
 		 'cell_size':1,
