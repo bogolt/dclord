@@ -246,13 +246,23 @@ class Map(util.BufferedWindow):
 		f.SetFamily(wx.FONTFAMILY_SCRIPT)
 		dc.SetFont(f)
 		
-		every_nth = bestFit(dc.GetTextExtent("9999")[0], self.cell_size)
+		max_w,max_h = dc.GetTextExtent("9999")
+		every_nth = bestFit(max_w, self.cell_size)
 					
 		dc.SetTextForeground(config.options['map']['coordinate_color'])
 		startx = int(self.offset_pos[self.X])
 		
+		dc.SetClippingRect(wx.Rect(max_w, 0, size[0], size[1]))
 		for x in range(startx, startx + self.screen_size[self.X], every_nth):
 			rx,_ = self.relPos((x, 30))
-			dc.DrawText(str(x), rx, 0)
+			dc.DrawText(str(x), rx-dc.GetTextExtent(str(x))[0]/2, 0)
+		dc.DestroyClippingRegion()
 
-
+		starty = int(self.offset_pos[self.Y])+1
+		
+		dc.SetClippingRect(wx.Rect(0, max_h, size[0], size[1]))
+		every_nth = bestFit(max_h, self.cell_size)
+		for y in range(starty, starty + self.screen_size[self.Y], every_nth):
+			_,ry = self.relPos((20, y))
+			dc.DrawText(str(y), 0, ry-dc.GetTextExtent(str(x))[1]/2)
+		dc.DestroyClippingRegion()
