@@ -42,6 +42,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	BuildingClass = 'building_class'
 	BuildingClassActionsList = 'actions'
 	BuildingClassAction = 'act'
+	Iframe = 'iframe'
+	PerformAction = 'act'
 	
 	NotLoggedInError = 'not-logged-in'
 	
@@ -52,13 +54,16 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		self.obj_id = None
 		self.pos = None
 		self.turn = None
+		self.iframe = False
 		self.parent_attrs = {}
+		self.actions = []
 
 	def startElement(self, name, attrs):
 		if XmlHandler.NodeDC == name:
 			self.user.update( getAttrs(attrs, {'user':'name', 'id':'id', 'turn-n':'turn'}) )
 			if 'turn' in self.user:
 				self.turn = int(self.user['turn'])
+				db.db.turn = self.turn
 				
 		elif XmlHandler.NotLoggedInError == name:
 			log.error('Not logged in - turn in progress')
@@ -131,6 +136,16 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			data['proto_id'] = self.parent_attrs['id']
 			data['proto_owner_id'] = self.user['id']
 			db.setData('proto_action',data)
+		elif XmlHandler.Iframe == name:
+			self.iframe = True
+		elif XmlHandler.PerformAction == name and self.iframe and False:
+			data = getAttrs(attrs, {'id':'id', 'result':'result', 'return-id':'return-id'})
+			act_id = data['id']
+			result = data['result']=='ok'
+			ret_id = data['return-id']
+			
+			if result:
+				self.actions.append( (act_id, ret_id) )
 			
 	def endElement(self, name):
 		if name==XmlHandler.UserInfo:
@@ -141,6 +156,11 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.parent_attrs = {}
 		elif XmlHandler.Garrison == name:
 			self.pos = None
+		elif XmlHandler.Iframe == name:
+			self.iframe = False
+		elif XmlHandler.NodeDC:
+			if self.actions:
+				wx.PostEvent(cb, event.ActionsReply(attr1=self.user, attr2=self.actions))
 			
 def load_xml(path):
 	p = xml.sax.make_parser()

@@ -10,10 +10,13 @@ log = logging.getLogger('dclord')
 
 unicode_strings = ['name', 'description']
 
-def saveTable(table_name, keys, filters, out_name = None):
+def saveTable(table_name, keys, filters, out_name = None, turn_n = None):
 	out_file_path = out_name if out_name else table_name
-	util.assureDirExist(config.options['data']['path'])
-	path = os.path.join(config.options['data']['path'], '%s.csv'%(out_file_path,))
+	pt = config.options['data']['path']
+	if turn_n:
+		pt = os.path.join(pt, str(turn_n))
+	util.assureDirExist(pt)
+	path = os.path.join(pt, '%s.csv'%(out_file_path,))
 	try:
 		f = open(path, 'wt')
 		writer = csv.DictWriter(f, keys)
@@ -37,24 +40,24 @@ def saveProto():
 	saveTable('proto_action', ('id', 'max_count', "cost_people", "cost_main", "cost_money", "cost_second", "planet_can_be"), None, 'proto_actions')
 
 def savePlanets():
-	saveTable('planet', ('x','y','o','e','m','t','s','owner_id', 'name', 'is_open'), ['owner_id is not null'], 'planets')
+	saveTable('planet', ('x','y','o','e','m','t','s','owner_id', 'name', 'is_open'), ['owner_id is not null'], 'planets', db.getTurn())
 	#saveTable('planet', ('x','y','owner_id', 'name', 'is_open'), ['owner_id is not null'], 'planets')
 
 def saveFleets():
-	saveTable('fleet', ('id', 'x','y','owner_id', 'is_hidden','turn','name','weight'), None, 'fleets')
-	saveTable('incoming_fleet', ('id', 'x','y','owner_id','from_x','from_y','weight', 'arrival_turn','temp_id', 'is_hidden','turn'), None, 'incoming_fleets')
+	saveTable('fleet', ('id', 'x','y','owner_id', 'is_hidden','turn','name','weight'), None, 'fleets', db.getTurn())
+	saveTable('incoming_fleet', ('id', 'x','y','owner_id','from_x','from_y','weight', 'arrival_turn','temp_id', 'is_hidden','turn'), None, 'incoming_fleets', db.getTurn())
 		
 def saveUnits():
-	saveTable('unit', ('id', 'hp','class', 'fleet_id'), [], 'units')
+	saveTable('unit', ('id', 'hp','class', 'fleet_id'), [], 'units', db.getTurn())
 
 def saveGarrisonUnits():
-	saveTable('garrison_unit', ('id', 'hp','class', 'x', 'y'), [], 'garrison_units')
+	saveTable('garrison_unit', ('id', 'hp','class', 'x', 'y'), [], 'garrison_units', db.getTurn())
 
 def saveAlienUnits():
-	saveTable('alien_unit', ('id', 'carapace','color','weight','fleet_id'), [], 'alien_units')
+	saveTable('alien_unit', ('id', 'carapace','color','weight','fleet_id'), [], 'alien_units', db.getTurn())
 	
 def saveUsers():
-	saveTable('user', ('id','name','hw_x','hw_y','race_id'), None, 'users')
+	saveTable('user', ('id','name','hw_x','hw_y','race_id'), None, 'users', db.getTurn())
 
 def save():
 	saveGeoPlanets()
@@ -67,9 +70,12 @@ def save():
 	saveProto()
 	saveUsers()
 
-def loadTable(table_name, file_name):
+def loadTable(table_name, file_name, turn_n = None):
 	try:
-		path = os.path.join(config.options['data']['path'], '%s.csv'%(file_name,))
+		path = config.options['data']['path']
+		if turn_n:
+			path = os.path.join(path, turn_n)
+		path = os.path.join(path, '%s.csv'%(file_name,))
 		for p in csv.DictReader(open(path, 'rt')):
 			for s in unicode_strings:
 				if s in p and p[s]:
@@ -78,10 +84,13 @@ def loadTable(table_name, file_name):
 	except IOError, e:
 		log.error('failed to load table %s: %s'%(table_name, e))
 		
-def loadCsv(file_name):
-	log.info('loading %s'%(file_name,))
+def loadCsv(file_name, turn_n = None):
+	path = config.options['data']['path']
+	if turn_n:
+		path = os.path.join(path, str(turn_n))
+	log.info('loading %s for %s turn'%(file_name, 'current' if turn_n else turn_n))
 	try:
-		path = os.path.join(config.options['data']['path'], '%s.csv'%(file_name,))
+		path = os.path.join(path, '%s.csv'%(file_name,))
 		for p in csv.DictReader(open(path, 'rt')):
 			for s in unicode_strings:
 				if s in p and p[s]:
@@ -96,39 +105,66 @@ def loadGeoPlanets():
 	for p in loadCsv('planets_geo'):
 		db.smartUpdate('planet', ['x=%s'%(p['x'],), 'y=%s'%(p['y'],)], p)
 	
-def loadPlanets():
-	loadTable('planet', 'planets')
+def loadPlanets(turn_n = None):
+	loadTable('planet', 'planets', turn_n)
 	if int(config.options['filter']['inhabited_planets'])==0:
 		loadGeoPlanets()
 
-def loadFleets():
-	loadTable('fleet', 'fleets')
-	loadTable('incoming_fleet', 'incoming_fleets')
+def loadFleets(turn_n = None):
+	loadTable('fleet', 'fleets', turn_n)
+	loadTable('incoming_fleet', 'incoming_fleets', turn_n)
 	
-def loadUnits():
+def loadUnits(turn_n = None):
 	loadTable('unit', 'units')
 
-def loadGarrisonUnits():
+def loadGarrisonUnits(turn_n = None):
 	loadTable('garrison_unit', 'garrison_units')
 
-def loadAlienUnits():
+def loadAlienUnits(turn_n = None):
 	loadTable('alien_unit', 'alien_units')
 	
-def loadProto():
+def loadProto(turn_n = None):
 	loadTable('proto', 'prototypes')
 	loadTable('proto_action', 'proto_actions')
 	
-def loadUsers():
+def loadUsers(turn_n = None):
 	loadTable('user', 'users')
 	
-def load():
-	loadPlanets()
-	loadFleets()
-	loadUnits()
-	loadGarrisonUnits()
-	loadAlienUnits()
-	loadProto()
-	loadUsers()
+
+def get_turn_number(s):
+	try:
+		return int(s)
+	except:
+		return None
+
+def getLastTurn():
+	path = config.options['data']['path']
+	max_turn = 0
+	print 'listdir %s'%(path,)
+	for pt in os.listdir(path):
+		print 'found object %s'%(pt,)
+		if os.path.isdir(os.path.join(path, pt)):
+			turn = get_turn_number(pt)
+			if turn:
+				print 'add turn to db %s'%(pt,)
+				db.setData('turn', {'n':turn, 'login':''})
+				max_turn = max(max_turn, turn)
+			
+	return max_turn
+
+def load(turn_n = None):
+	if not turn_n:
+		turn_n = getLastTurn()
+	print 'loading turn %s'%(turn_n,)
+	if turn_n:
+		turn_n = str(turn_n)
+	loadPlanets(turn_n)
+	loadFleets(turn_n)
+	loadUnits(turn_n)
+	loadGarrisonUnits(turn_n)
+	loadAlienUnits(turn_n)
+	loadProto(turn_n)
+	loadUsers(turn_n)
 
 #def asyncLoad():
 #	import thread

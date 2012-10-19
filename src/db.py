@@ -9,12 +9,13 @@ log = logging.getLogger('dclord')
 
 class Db:
 	def __init__(self, dbpath=":memory:"):
-		self.conn = sqlite3.connect(dbpath)		
+		self.conn = sqlite3.connect(dbpath)
+		self.turn = None
 		
 		self.cur = self.conn.cursor()
 		self.cur.execute("""create table if not exists turn(
-				n integer not null,
-				login text not null
+				n integer primary key,
+				login text
 				)""")
 				
 		self.init()
@@ -260,6 +261,14 @@ class Db:
 			
 
 db = Db()	
+
+def setTurn(turn_n):
+	global db
+	db.turn = turn_n
+
+def getTurn():
+	global db
+	return db.turn
 
 def setData(table, data):
 	global db

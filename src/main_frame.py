@@ -13,6 +13,7 @@ import object_filter
 import unit_list
 import users
 import area_panel
+import request
 
 log = logging.getLogger('dclord')
 
@@ -38,6 +39,8 @@ class DcFrame(wx.Frame):
 		
 		#self.area_list = area_panel.AreaListWindow(self)
 		
+		self.pendingActions = {}
+		
 		self._mgr = wx.aui.AuiManager(self)
 		
 		info = wx.aui.AuiPaneInfo()
@@ -59,6 +62,7 @@ class DcFrame(wx.Frame):
 		self.Bind(event.EVT_DATA_DOWNLOAD, self.onDownloadRawData)
 		self.Bind(event.EVT_MAP_UPDATE, self.onMapUpdate)
 		self.Bind(event.EVT_USER_SELECT, self.onSelectUser)
+		self.Bind(event.EVT_ACTIONS_REPLY, self.onActionsReply)
 	
 		#import_raw.processAllUnpacked()
 		#serialization.save()
@@ -73,7 +77,8 @@ class DcFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.onAbout, fileMenu.Append(wx.ID_ANY, "&About dcLord"))
 		
 		gameMenu = wx.Menu()
-		self.updateMenu = gameMenu.Append(wx.ID_ANY, "&Update from sever")
+		self.updateMenu = gameMenu.Append(wx.ID_ANY, "&Download from sever")
+		#self.uploadMenu = gameMenu.Append(wx.ID_ANY, "&Upload to server")
 		usersMenu = gameMenu.Append(wx.ID_ANY, "U&sers")
 		
 		#actionMenu = wx.Menu()
@@ -85,6 +90,7 @@ class DcFrame(wx.Frame):
 		self.SetMenuBar(panel)
 				
 		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)
+		#self.Bind(wx.EVT_MENU, self.onUpload, self.uploadMenu)
 		self.Bind(wx.EVT_MENU, self.onShowUsers, usersMenu)
 	
 		self.Bind(wx.EVT_CLOSE, self.onClose, self)
@@ -159,6 +165,28 @@ class DcFrame(wx.Frame):
 			log.info('requesting user %s info'%(acc['login'],))
 			l.getUserInfo(self, acc['login'], out_dir)
 		l.start()
+
+	def onUpload(self, event):
+		'upload pending events on server'
+		import loader
+		l = loader.AsyncLoader()
+		
+		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
+		util.assureDirExist(out_dir)
+		for acc in config.accounts():
+			log.info('requesting user %s info'%(acc['login'],))
+			actions = request.RequestMaker()
+			self.pendingActions[int(acc['id'])] = actions
+			hw_planet = db.getUserHw(acc['id'])
+			actions.createNewFleet(hw_planet, 'a_new_shiny_fleet')
+			l.sendActions(self, acc['login'], actions, out_dir)
+		l.start()
+		
+	def onActionsReply(self, event):
+		user = event.attr1
+		actions = event.attr2
+		
+		#self.pendingActions[int(user['id'])]
 			
 	def onDownloadRawData(self, evt):
 		key = evt.attr1
