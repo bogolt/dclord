@@ -64,6 +64,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			if 'turn' in self.user:
 				self.turn = int(self.user['turn'])
 				db.db.turn = self.turn
+				db.prepareTurn(self.turn)
 				
 		elif XmlHandler.NotLoggedInError == name:
 			log.error('Not logged in - turn in progress')
@@ -83,7 +84,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				#don't need this for now
 				#data['turn'] = self.turn - int(data['age'])
 				del data['age']
-			db.setData('planet', data)
+			db.setData('planet', data, self.turn)
 		elif XmlHandler.Fleet == name or XmlHandler.AlienFleet == name:
 			fleetDict = {'x':'x','y':'y','id':'id','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
 			data = getAttrs(attrs, fleetDict)
@@ -107,23 +108,23 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				data['turn'] = self.turn
 				
 			if tta>0:
-				db.setData('incoming_fleet', data)
+				db.setData('incoming_fleet', data, self.turn)
 			else:
-				db.setData('fleet', data)
+				db.setData('fleet', data, self.turn)
 		elif XmlHandler.Garrison == name:
 			self.pos = getAttrs(attrs, {'x':'x', 'y':'y'})
 		elif XmlHandler.AlienUnit == name:
 			data = getAttrs(attrs, {'class-id':'class', 'id':'id', 'weight':'weight', 'carapace':'carapace', 'color':'color'})
 			data['fleet_id'] = self.obj_id
-			db.setData('alien_unit', data)
+			db.setData('alien_unit', data, self.turn)
 		elif XmlHandler.Unit == name:
 			data = getAttrs(attrs, {'bc':'class', 'id':'id', 'hp':'hp'})
 			if self.obj_id:
 				data['fleet_id'] = self.obj_id
-				db.setData('unit', data)
+				db.setData('unit', data, self.turn)
 			elif self.pos:
 				data.update(self.pos)
-				db.setData('garrison_unit', data)
+				db.setData('garrison_unit', data, self.turn)
 		elif XmlHandler.BuildingClass == name:			
 			data = getAttrs(attrs, {'name':'name', 'description':'description', 'is-war':"is_war", 'support-second':"support_second", 'bomb-dr':"defence_bomb", 'transport-capacity':"transport_capacity", 'is-transportable':"is_transportable", 'bomb-number':"bomb_number", 'fly-range':"fly_range", 'bonus-m':"bonus_m", 'is-ground-unit':"is_ground_unit", 'weight':"weight", 'scan-strength':"scan_strength", 'laser-dr':"defence_laser", 'laser-ar':"aim_laser", 'serial':"is_serial", 'carapace':"carapace", 'bonus-surface':"bonus_s", 'laser-damage':"damage_laser", 'offensive':"is_offensive", 'is-building':"is_building", 'is-space-ship':"is_spaceship", 'build-speed':"build_speed", 'detect-range':"detect_range", 'maxcount':"max_count", 'class':"class", 'cost-main':"cost_main", 'stealth-lvl':"stealth_level", 'bonus-o':"bonus_o", 'requires-pepl':"require_people", 'bomb-damage':"damage_bomb", 'bomb-ar':"aim_bomb", 'cost-money':"cost_money", 'req-tehn-level':"require_tech_level", 'color':"color", 'fly-speed':"fly_speed", 'support-main':"support_main", 'building-id':"id", 'bonus-e':"bonus_e", 'carrier-capacity':"carrier_capacity", 'bonus-production':"bonus_production", 'laser-number':"laser_number", 'cost-pepl':"cost_people", 'cost-second':"cost_second", 'hit-points':"hp"})
 			data['owner_id'] = self.user['id']

@@ -33,6 +33,7 @@ class DcFrame(wx.Frame):
 			
 		serialization.load()
 		self.map = map.Map(self)
+		self.map.turn = db.db.max_turn
 		
 		self.object_filter = object_filter.FilterPanel(self)
 		self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
@@ -199,6 +200,7 @@ class DcFrame(wx.Frame):
 			log.error('failed to load info for user %s'%(key,))
 			return
 		import_raw.processRawData(data)
+		self.map.turn = db.db.max_turn
 		self.map.update()
 	
 	def onSelectUser(self, evt):

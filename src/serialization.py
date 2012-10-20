@@ -80,7 +80,7 @@ def loadTable(table_name, file_name, turn_n = None):
 			for s in unicode_strings:
 				if s in p and p[s]:
 					p[s] = p[s].decode('utf-8')
-			db.setData(table_name, p)
+			db.setData(table_name, p, turn_n)
 	except IOError, e:
 		log.error('failed to load table %s: %s'%(table_name, e))
 		
@@ -115,13 +115,13 @@ def loadFleets(turn_n = None):
 	loadTable('incoming_fleet', 'incoming_fleets', turn_n)
 	
 def loadUnits(turn_n = None):
-	loadTable('unit', 'units')
+	loadTable('unit', 'units', turn_n)
 
 def loadGarrisonUnits(turn_n = None):
-	loadTable('garrison_unit', 'garrison_units')
+	loadTable('garrison_unit', 'garrison_units', turn_n)
 
 def loadAlienUnits(turn_n = None):
-	loadTable('alien_unit', 'alien_units')
+	loadTable('alien_unit', 'alien_units', turn_n)
 	
 def loadProto(turn_n = None):
 	loadTable('proto', 'prototypes')
@@ -140,16 +140,13 @@ def get_turn_number(s):
 def getLastTurn():
 	path = config.options['data']['path']
 	max_turn = 0
-	print 'listdir %s'%(path,)
 	for pt in os.listdir(path):
-		print 'found object %s'%(pt,)
 		if os.path.isdir(os.path.join(path, pt)):
 			turn = get_turn_number(pt)
 			if turn:
-				print 'add turn to db %s'%(pt,)
-				db.setData('turn', {'n':turn, 'login':''})
+				db.db.turns[turn] = False
 				max_turn = max(max_turn, turn)
-			
+	print 'loaded %s turns, max turn is %s'%(len(db.db.turns.keys()), max_turn)
 	return max_turn
 
 def load(turn_n = None):
@@ -158,6 +155,7 @@ def load(turn_n = None):
 	print 'loading turn %s'%(turn_n,)
 	if turn_n:
 		turn_n = str(turn_n)
+	db.prepareTurn(turn_n)
 	loadPlanets(turn_n)
 	loadFleets(turn_n)
 	loadUnits(turn_n)

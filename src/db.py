@@ -8,23 +8,42 @@ def to_pos(a,b):
 log = logging.getLogger('dclord')
 
 class Db:
+	PLANET = 'planet'
+	USER = 'user'
+	FLEET = 'fleet'
+	UNIT = 'unit'
+	ALIENT_UNIT = 'alien_unit'
+	INCOMING_FLEET = 'incoming_fleet'
+	GARRISON_UNIT = 'garrison_unit'
+	GARRISON_QUEUE_UNIT = 'garrison_queue_unit'
+	
 	def __init__(self, dbpath=":memory:"):
 		self.conn = sqlite3.connect(dbpath)
-		self.turn = None
-		
-		self.cur = self.conn.cursor()
-		self.cur.execute("""create table if not exists turn(
-				n integer primary key,
-				login text
-				)""")
+		self.turns = {}
+		self.max_turn = 0
 				
+		self.cur = self.conn.cursor()
+
+	
+	def close(self):
+		self.conn.close()
+		self.max_turn = 0
+		
 		self.init()
 
-	def init(self):
+	def init(self, turn_n):
 		self.cur = self.conn.cursor()
 		cur = self.cur
-
-		cur.execute("""create table if not exists planet(
+		
+		# check if turn is known and catched
+		if turn_n in self.turns and self.turns[turn_n]:
+			return
+			
+		# set turn exists
+		self.turns[turn_n] = True
+		self.max_turn = max(self.max_turn, turn_n)
+		
+		cur.execute("""create table if not exists %s_%s(
 				x integer(2) not null,
 				y integer(2) not null,
 				o integer(1),
@@ -34,11 +53,7 @@ class Db:
 				s integer(1),
 				owner_id integer,
 				name text,
-				is_open integer(1))""")#,
-#				PRIMARY KEY (x,y)
-#				)""")
-		#corruption integer,
-		#population integer
+				is_open integer(1))"""%(self.PLANET, turn_n))
 
 		cur.execute("""create table if not exists user(
 				id integer primary key,
@@ -59,7 +74,8 @@ class Db:
 				
 		#what if approaching unknown fleet does not have an id?
 		#id integer primary key,
-		cur.execute("""create table if not exists fleet(
+		
+		cur.execute("""create table if not exists %s_%s(
 				id integer primary key,
 				x integer(2) not null,
 				y integer(2) not null,
@@ -69,9 +85,10 @@ class Db:
 				is_hidden integer(1),
 				times_spotted integer(1),
 				turn integer(2)
-				)""")
+				)"""%(self.FLEET, turn_n))
 
-		cur.execute("""create table if not exists incoming_fleet(
+		
+		cur.execute("""create table if not exists %s_%s(
 				id integer,
 				x integer(2) not null,
 				y integer(2) not null,
@@ -85,39 +102,43 @@ class Db:
 				times_spotted integer(1),
 				turn integer(2),
 				temp_id integer
-				)""")
+				)"""%(self.INCOMING_FLEET, turn_n))
 				
-		cur.execute("""create table if not exists unit(
+		
+		cur.execute("""create table if not exists %s_%s(
 				id integer primary key,
 				fleet_id integer not null,
 				class integer not null,
 				hp integer not null
-				)""")
+				)"""%(self.UNIT, turn_n))
 				
-		cur.execute("""create table if not exists alien_unit(
+		
+		cur.execute("""create table if not exists %s_%s(
 				id integer primary key,
 				fleet_id integer not null,
 				carapace integer not null,
 				color integer(1),
 				weight integer,
 				class integer
-				)""")
+				)"""%(self.ALIENT_UNIT, turn_n))
 
-		cur.execute("""create table if not exists garrison_unit(
+	
+		cur.execute("""create table if not exists %s_%s(
 				id integer primary key,
 				x integer(2) not null,
 				y integer(2) not null,
 				class integer not null,
 				hp integer not null
-				)""")
+				)"""%(self.GARRISON_UNIT, turn_n))
 		
-		cur.execute("""create table if not exists garrison_queue_unit(
+	
+		cur.execute("""create table if not exists %s_%s(
 				id integer primary key,
 				x integer(2) not null,
 				y integer(2) not null,
 				class integer not null,
 				done integer
-				)""")
+				)"""%(self.GARRISON_QUEUE_UNIT, turn_n))
 		
 		cur.execute("""create table if not exists proto(
 				id integer,
@@ -196,14 +217,15 @@ class Db:
 				planet_can_be text
 				)""")
 		
-	def addObject(self, object, data):
+	def addObject(self, table, data, turn_n = None):
 		keys=tuple(data.keys())
 		
+		table_name = '%s_%s'%(table, turn_n) if turn_n else table
 		try:
-			self.cur.execute('insert or replace into %s%s values(%s)'%(object,keys,','.join('?'*len(keys))),tuple(data.values()))
+			self.cur.execute('insert or replace into %s%s values(%s)'%(table_name, keys,','.join('?'*len(keys))),tuple(data.values()))
 			self.conn.commit()
 		except sqlite3.Error, e:
-			log.error('Error %s, when executing: insert into %s%s values%s'%(e, object,keys,tuple(data.values())))
+			log.error('Error %s, when executing: insert into %s%s values%s'%(e, table_name,keys,tuple(data.values())))
 			
 
 	def getAnything(self):
@@ -270,45 +292,56 @@ def getTurn():
 	global db
 	return db.turn
 
-def setData(table, data):
+def setData(table, data, turn_n = None):
 	global db
-	db.addObject(table, data)
+	db.addObject(table, data, turn_n)
+	
+def prepareTurn(turn_n):
+	global db
+	db.init(turn_n)
 
 def add_player(player):
 	global db
 	db.add_player(player)
 
-def items(table_name, flt, keys, verbose = False):
+def items(table, flt, keys, turn_n = None, verbose = False):
 	global db
 	c = db.conn.cursor()
+	table_name = '%s_%s'%(table, turn_n) if turn_n else table
 	ws = ''
 	if flt:
 		ws = 'WHERE %s'%(' AND '.join(flt),)
 	s = 'select %s from %s %s'%(','.join(keys), table_name, ws)
 	if verbose:
 		log.debug('sql: %s'%(s,))
-	c.execute(s)
+	try:
+		c.execute(s)
+	except sqlite3.Error, e:
+		log.error('Error %s, when executing: %s'%(e, s))
 	for r in c:
 		yield dict(zip(keys,r))
+
+def itemsDiff(table_name, flt, keys, turn_start, turn_end):
+	pass
 
 def users(flt = None, keys = None):
 	k = ('id','name','hw_x','hw_y','race_id') if not keys else keys
 	for i in items('user', flt, k):
 		yield i
 
-def planets(flt, keys = None):
+def planets(turn_n, flt, keys = None):
 	k = ('x','y','owner_id','o','e','m','t','s') if not keys else keys
-	for i in items('planet', flt, k):
+	for i in items('planet', flt, k, turn_n):
 		yield i
 
-def fleets(flt, keys = None):
+def fleets(turn_n, flt, keys = None):
 	k = ('id', 'x','y','owner_id', 'is_hidden') if not keys else keys
-	for i in items('fleet', flt, k):
+	for i in items('fleet', flt, k, turn_n):
 		yield i
 
-def flyingFleets(flt, keys = None):
+def flyingFleets(turn_n, flt, keys = None):
 	k = ('id', 'temp_id', 'x','y','owner_id', 'from_x', 'from_y', 'is_hidden') if not keys else keys
-	for i in items('incoming_fleet', flt, k):
+	for i in items('incoming_fleet', flt, k, turn_n):
 		yield i
 		
 def prototypes(flt, keys = None):

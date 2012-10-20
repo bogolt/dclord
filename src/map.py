@@ -51,6 +51,7 @@ class Map(util.BufferedWindow):
 		self.cell_size = int(config.options['map']['cell_size'])
 		self.screen_size = 1,1
 		self.filterDrawFleets = bool(config.options['filter']['fleets'])
+		self.turn = 0
 		#self.filterDrawAreas = bool(config.options['filter']['areas'])
 		
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
@@ -182,18 +183,18 @@ class Map(util.BufferedWindow):
 		sz = util.div(rect.GetSize().Get(), self.cell_size)
 		sz = util.add(sz, (1,1))
 		return ['x>=%d AND y>=%d AND x<=%d AND y<=%d'%(ps[0], ps[1], ps[0]+sz[0], ps[1]+sz[1])]
-	
+		
 	def drawPlanets(self, dc, rect):
 		flt = self.rectFilter(rect) if rect else self.visibleAreaFilter()
 		cond = ['owner_id is not null'] if int(config.options['filter']['inhabited_planets'])==1 else []
-		for p in db.planets(self.planet_filter + flt + cond):
+		for p in db.planets(self.turn, self.planet_filter + flt + cond):
 			self.drawPlanet(dc, p)
 			
 	def drawFleets(self, dc, rect):
 		self.fleets = {}
-		for p in db.fleets(self.visibleAreaFilter()):
+		for p in db.fleets(self.turn, self.visibleAreaFilter()):
 			self.drawFleet(dc, p)
-		for p in db.flyingFleets(self.visibleAreaFilter()):
+		for p in db.flyingFleets(self.turn, self.visibleAreaFilter()):
 			self.drawFlyingFleet(dc, p)
 	
 	def drawFleet(self, dc, fleet):
@@ -224,9 +225,11 @@ class Map(util.BufferedWindow):
 			dc.DrawLine(rx, ry, frx, fry)
 			
 	def paint(self, dc, rect=None):
-		self.drawPlanets(dc, rect)
-		if self.filterDrawFleets:
-			self.drawFleets(dc, rect)
+		
+		if self.turn and self.turn > 0:
+			self.drawPlanets(dc, rect)
+			if self.filterDrawFleets:
+				self.drawFleets(dc, rect)
 		self.drawCoordinates(dc)
 		
 		#if self.filterDrawAreas:
