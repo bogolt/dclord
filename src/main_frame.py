@@ -32,8 +32,15 @@ class DcFrame(wx.Frame):
 			self.Maximize()
 			
 		serialization.load()
+		print 'db max turn is %s'%(db.getTurn(),)
 		self.map = map.Map(self)
-		self.map.turn = db.db.max_turn
+		self.map.turn = db.getTurn()
+		print 'map turn is set to %s'%(self.map.turn,)
+		self.map.update()
+		
+		#import_raw.processAllUnpacked()
+		#self.map.turn = db.db.max_turn
+		
 		
 		self.object_filter = object_filter.FilterPanel(self)
 		self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
@@ -206,6 +213,6 @@ class DcFrame(wx.Frame):
 	def onSelectUser(self, evt):
 		login = evt.attr1
 		user_id = int(config.users[login]['id'])
-		self.unit_list.setPlayer( user_id )
+		#self.unit_list.setPlayer( user_id )
 		print 'selecting user %s, while map is %s'%(user_id, config.user_id_dict)
-		self.map.centerAt( db.getUserHw(user_id))
+		self.map.centerAt( db.getUserHw(user_id, db.getTurn()))

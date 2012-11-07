@@ -13,15 +13,14 @@ unicode_strings = ['name', 'description']
 def saveTable(table_name, keys, filters, out_name = None, turn_n = None):
 	out_file_path = out_name if out_name else table_name
 	pt = config.options['data']['path']
-	if turn_n:
-		pt = os.path.join(pt, str(turn_n))
+	pt = os.path.join(pt, str(db.getTurn()))
 	util.assureDirExist(pt)
 	path = os.path.join(pt, '%s.csv'%(out_file_path,))
 	try:
 		f = open(path, 'wt')
 		writer = csv.DictWriter(f, keys)
 		writer.writeheader()
-		for p in db.items(table_name, filters, keys):
+		for p in db.items(table_name, filters, keys, turn_n):
 			try:
 				for s in unicode_strings:
 					if s in p and p[s]:
@@ -33,7 +32,7 @@ def saveTable(table_name, keys, filters, out_name = None, turn_n = None):
 		log.error('failed writing data to csv file %s: %s'%(path, e))
 
 def saveGeoPlanets():
-	saveTable('planet', ('x','y','o','e','m','t','s'), None, 'planets_geo')
+	saveTable('planet', ('x','y','o','e','m','t','s'), None, 'planets_geo', db.getTurn())
 
 def saveProto():
 	saveTable('proto', ('owner_id', 'fly_speed', 'aim_bomb', 'color', 'build_speed', 'require_people', 'carapace', 'fly_range', 'id', 'class', 'cost_second', 'cost_main', 'cost_money', 'is_transportable', 'require_tech_level', 'support_second', 'name', 'stealth_level', 'bonus_s', 'bonus_m', 'bonus_o', 'max_count', 'bonus_e', 'support_main', 'weight', 'damage_laser', 'is_ground_unit', 'is_serial', 'aim_laser', 'is_spaceship', 'transport_capacity', 'is_offensive', 'detect_range', 'damage_bomb', 'bonus_production', 'description', 'scan_strength', 'hp', 'defence_laser', 'defence_bomb', 'carrier_capacity', 'laser_number', 'is_building', 'cost_people', 'bomb_number', 'is_war'), None, 'prototypes')
@@ -57,7 +56,8 @@ def saveAlienUnits():
 	saveTable('alien_unit', ('id', 'carapace','color','weight','fleet_id'), [], 'alien_units', db.getTurn())
 	
 def saveUsers():
-	saveTable('user', ('id','name','hw_x','hw_y','race_id'), None, 'users', db.getTurn())
+	saveTable('user', ('id', 'name', 'race_id'), None, 'users')
+	saveTable('hw', ('hw_x', 'hw_y', 'player_id'), None, 'hw', db.getTurn())
 
 def save():
 	saveGeoPlanets()
@@ -70,11 +70,13 @@ def save():
 	saveProto()
 	saveUsers()
 
-def loadTable(table_name, file_name, turn_n = None):
+def loadTable(table_name, file_name, turn_n = None, load_turn = None):
 	try:
 		path = config.options['data']['path']
 		if turn_n:
-			path = os.path.join(path, turn_n)
+			load_turn = turn_n
+		if load_turn:
+			path = os.path.join(path, load_turn)
 		path = os.path.join(path, '%s.csv'%(file_name,))
 		for p in csv.DictReader(open(path, 'rt')):
 			for s in unicode_strings:
@@ -101,14 +103,14 @@ def loadCsv(file_name, turn_n = None):
 	log.info('loading %s done'%(file_name,))
 
 @util.run_once
-def loadGeoPlanets():
-	for p in loadCsv('planets_geo'):
+def loadGeoPlanets(turn_n = None):
+	for p in loadCsv('planets_geo', turn_n):
 		db.smartUpdate('planet', ['x=%s'%(p['x'],), 'y=%s'%(p['y'],)], p)
 	
 def loadPlanets(turn_n = None):
 	loadTable('planet', 'planets', turn_n)
 	if int(config.options['filter']['inhabited_planets'])==0:
-		loadGeoPlanets()
+		loadGeoPlanets(turn_n)
 
 def loadFleets(turn_n = None):
 	loadTable('fleet', 'fleets', turn_n)
@@ -124,11 +126,12 @@ def loadAlienUnits(turn_n = None):
 	loadTable('alien_unit', 'alien_units', turn_n)
 	
 def loadProto(turn_n = None):
-	loadTable('proto', 'prototypes')
-	loadTable('proto_action', 'proto_actions')
+	loadTable('proto', 'prototypes', None, turn_n)
+	loadTable('proto_action', 'proto_actions', None, turn_n)
 	
 def loadUsers(turn_n = None):
-	loadTable('user', 'users')
+	loadTable('user', 'users', None, turn_n)
+	loadTable('hw', 'hw', turn_n)
 	
 
 def get_turn_number(s):
@@ -140,6 +143,9 @@ def get_turn_number(s):
 def getLastTurn():
 	path = config.options['data']['path']
 	max_turn = 0
+	if not os.path.exists(path):
+		return 0
+		
 	for pt in os.listdir(path):
 		if os.path.isdir(os.path.join(path, pt)):
 			turn = get_turn_number(pt)
@@ -156,6 +162,7 @@ def load(turn_n = None):
 	if turn_n:
 		turn_n = str(turn_n)
 	db.prepareTurn(turn_n)
+	
 	loadPlanets(turn_n)
 	loadFleets(turn_n)
 	loadUnits(turn_n)

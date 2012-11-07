@@ -61,10 +61,11 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	def startElement(self, name, attrs):
 		if XmlHandler.NodeDC == name:
 			self.user.update( getAttrs(attrs, {'user':'name', 'id':'id', 'turn-n':'turn'}) )
+			print 'loaded user %s'%(self.user,)
 			if 'turn' in self.user:
 				self.turn = int(self.user['turn'])
-				db.db.turn = self.turn
 				db.prepareTurn(self.turn)
+				print 'prepare turn %s'%(self.turn,)
 				
 		elif XmlHandler.NotLoggedInError == name:
 			log.error('Not logged in - turn in progress')
@@ -72,6 +73,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			d = getAttrs(attrs, {'homeworldx':'hw_x', 'homeworldy':'hw_y', 'race-id':'race_id', 'login':"login"})
 			config.setUserId( d['login'], self.user['id'])
 			self.user.update( d )
+			print 'update user %s'%(self.user,)
+			db.setData('hw', {'hw_x':d['hw_x'], 'hw_y':d['hw_y'], 'player_id':self.user['id']}, self.turn)
+			db.setData('user', {'id':self.user['id'], 'login':d['login'], 'race_id':d['race_id'], 'name':self.user['name']})
 			
 		elif XmlHandler.UserPlanets == name:
 			self.read_level = XmlHandler.UserPlanets
@@ -129,14 +133,15 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			data = getAttrs(attrs, {'name':'name', 'description':'description', 'is-war':"is_war", 'support-second':"support_second", 'bomb-dr':"defence_bomb", 'transport-capacity':"transport_capacity", 'is-transportable':"is_transportable", 'bomb-number':"bomb_number", 'fly-range':"fly_range", 'bonus-m':"bonus_m", 'is-ground-unit':"is_ground_unit", 'weight':"weight", 'scan-strength':"scan_strength", 'laser-dr':"defence_laser", 'laser-ar':"aim_laser", 'serial':"is_serial", 'carapace':"carapace", 'bonus-surface':"bonus_s", 'laser-damage':"damage_laser", 'offensive':"is_offensive", 'is-building':"is_building", 'is-space-ship':"is_spaceship", 'build-speed':"build_speed", 'detect-range':"detect_range", 'maxcount':"max_count", 'class':"class", 'cost-main':"cost_main", 'stealth-lvl':"stealth_level", 'bonus-o':"bonus_o", 'requires-pepl':"require_people", 'bomb-damage':"damage_bomb", 'bomb-ar':"aim_bomb", 'cost-money':"cost_money", 'req-tehn-level':"require_tech_level", 'color':"color", 'fly-speed':"fly_speed", 'support-main':"support_main", 'building-id':"id", 'bonus-e':"bonus_e", 'carrier-capacity':"carrier_capacity", 'bonus-production':"bonus_production", 'laser-number':"laser_number", 'cost-pepl':"cost_people", 'cost-second':"cost_second", 'hit-points':"hp"})
 			data['owner_id'] = self.user['id']
 			self.parent_attrs = data
-			db.setData('proto',data)
+			#db.setData('proto',data)
+			
 			#if 'name' in data:
 				#log.info('specific data: %s'%(data,))
 		elif XmlHandler.BuildingClassAction == name and self.parent_attrs:
 			data = getAttrs(attrs, {'action':'id', 'maxcount':'max_count', 'cost-pepl':"cost_people", 'cost-main':"cost_main", 'cost-money':"cost_money", 'cost-second':"cost_second", 'planet-can-be':"planet_can_be"})
 			data['proto_id'] = self.parent_attrs['id']
 			data['proto_owner_id'] = self.user['id']
-			db.setData('proto_action',data)
+			#db.setData('proto_action',data)
 		elif XmlHandler.Iframe == name:
 			self.iframe = True
 		elif XmlHandler.PerformAction == name and self.iframe and False:
@@ -150,7 +155,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			
 	def endElement(self, name):
 		if name==XmlHandler.UserInfo:
-			db.setData('user', self.user)
+			pass
+			#db.setData('user', self.user)
 		elif name==XmlHandler.Fleet or name==XmlHandler.AlienFleet:
 			self.obj_id = None
 		elif name == XmlHandler.BuildingClass:

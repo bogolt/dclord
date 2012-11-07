@@ -187,6 +187,7 @@ class Map(util.BufferedWindow):
 	def drawPlanets(self, dc, rect):
 		flt = self.rectFilter(rect) if rect else self.visibleAreaFilter()
 		cond = ['owner_id is not null'] if int(config.options['filter']['inhabited_planets'])==1 else []
+		#print 'request planets with turn %s'%(self.turn,)
 		for p in db.planets(self.turn, self.planet_filter + flt + cond):
 			self.drawPlanet(dc, p)
 			
@@ -230,6 +231,8 @@ class Map(util.BufferedWindow):
 			self.drawPlanets(dc, rect)
 			if self.filterDrawFleets:
 				self.drawFleets(dc, rect)
+		else:
+			print 'wrong turn %s'%(self.turn,)
 		self.drawCoordinates(dc)
 		
 		#if self.filterDrawAreas:
@@ -239,7 +242,11 @@ class Map(util.BufferedWindow):
 		ar = [(200,200), (200,300), (300,300), (300, 200)]
 	
 	def centerAt(self, logicPos):
+		#print 'before centering offset is %s %s'%(self.offset_pos, logicPos)
+		if logicPos == (0,0):
+			print traceback.format_exc()
 		self.offset_pos = util.sub(logicPos, util.div(self.screen_size, 2))
+		#print 'after centering offset is %s'%(self.offset_pos,)
 		self.update()
 	
 	def drawCoordinates(self, dc):

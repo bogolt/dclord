@@ -1,6 +1,7 @@
 import sqlite3
 #from objects import Planet, Fleet, Unit, Player, Proto
 import logging
+import sys, traceback
 
 def to_pos(a,b):
 	return int(a),int(b)
@@ -59,10 +60,6 @@ class Db:
 				id integer primary key,
 				name text not null,
 				race_id integer not null,
-				
-				hw_x integer(2),
-				hw_y integer(2),
-				turn integer,
 				login text
 				)""")
 
@@ -74,6 +71,12 @@ class Db:
 				
 		#what if approaching unknown fleet does not have an id?
 		#id integer primary key,
+		
+		cur.execute("""create table if not exists hw_%s(
+				player_id integer primary key,
+				hw_x integer(2),
+				hw_y integer(2)
+				)"""%(turn_n,))
 		
 		cur.execute("""create table if not exists %s_%s(
 				id integer primary key,
@@ -225,20 +228,22 @@ class Db:
 			self.cur.execute('insert or replace into %s%s values(%s)'%(table_name, keys,','.join('?'*len(keys))),tuple(data.values()))
 			self.conn.commit()
 		except sqlite3.Error, e:
-			log.error('Error %s, when executing: insert into %s%s values%s'%(e, table_name,keys,tuple(data.values())))
+			log.error('Error "%s", when executing: insert or replace into %s%s values%s'%(e, table_name,keys,tuple(data.values())))
+			print traceback.format_stack()
 			
 
 	def getAnything(self):
-		self.cur.execute("select hw_x,hw_y from player where hw_x not null and hw_y not null")
-		r = self.cur.fetchone()
-		if r:
-			print 'got place %s'%(r,)
-			return int(r[0]),int(r[1])
+		#self.cur.execute("select hw_x,hw_y from player where hw_x not null and hw_y not null")
+		#r = self.cur.fetchone()
+		#if r:
+		#	print 'got place %s'%(r,)
+		#	return int(r[0]),int(r[1])
 		return 1,1
 
 	def accounts(self):
-		self.cur.execute('select login,name,hw_x,hw_y,id from player where login not null')
-		for login,name,x,y,id in self.cur.fetchall():
+		self.cur.execute('select login,name,id from player where login not null')
+		for login,name,id in self.cur.fetchall():
+			x,y = 1,1
 			yield login,name,(int(x),int(y)),int(id)
 	
 	def getAreaPlanets(self, leftTop=(0,0), size=(1000,1000)):
@@ -276,7 +281,7 @@ class Db:
 			yield (int(c[0]),int(c[1])), c[2], c[3], c[4]
 			
 	def iterUsers(self):
-		self.cur.execute('select id,name,hw_x,hw_y,race_id from user')
+		self.cur.execute('select id,name,race_id from user')
 		for r in self.cur:
 			print 'got user %s'%(r,)
 			yield r
@@ -286,14 +291,17 @@ db = Db()
 
 def setTurn(turn_n):
 	global db
-	db.turn = turn_n
+	db.max_turn = turn_n
 
 def getTurn():
 	global db
-	return db.turn
+	return db.max_turn
 
 def setData(table, data, turn_n = None):
 	global db
+	#if not turn_n:
+	#	print 'turnless %s %s'%(table, data)
+	#print 'set data %s %s %s'%(table, data, turn_n)
 	db.addObject(table, data, turn_n)
 	
 def prepareTurn(turn_n):
@@ -317,6 +325,7 @@ def items(table, flt, keys, turn_n = None, verbose = False):
 	try:
 		c.execute(s)
 	except sqlite3.Error, e:
+		print traceback.format_stack()
 		log.error('Error %s, when executing: %s'%(e, s))
 	for r in c:
 		yield dict(zip(keys,r))
@@ -325,7 +334,7 @@ def itemsDiff(table_name, flt, keys, turn_start, turn_end):
 	pass
 
 def users(flt = None, keys = None):
-	k = ('id','name','hw_x','hw_y','race_id') if not keys else keys
+	k = ('id','name','race_id') if not keys else keys
 	for i in items('user', flt, k):
 		yield i
 
@@ -360,10 +369,11 @@ def getUserName(user_id):
 		print 'user %s'%(name,)
 	return '<unknown>'
 
-def getUserHw(user_id):
-	for u in users(['id=%s'%(user_id,)]):
+def getUserHw(user_id, turn_n):
+	for u in items('hw', ['player_id=%s'%(user_id,)], ('hw_x', 'hw_y'), turn_n):
+		print 'got user %s'%(u,)
 		return int(u['hw_x']), int(u['hw_y'])
-	return 0,0
+	return 550,550
 
 def setSqlValues(data):
 	d = {}
@@ -407,8 +417,8 @@ def setPlanetInfo(data):
 		setData('planet', data)
 	
 
-def smartUpdate(table, conds, data):
-	for item in items(table, conds, data.keys()):
+def smartUpdate(table, conds, data, turn_n = None):
+	for item in items(table, conds, data.keys(), turn_n):
 		return
-	setData(table, data)
+	setData(table, data, turn_n)
 	
