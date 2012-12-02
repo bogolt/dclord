@@ -115,7 +115,8 @@ class UsersPanel(wx.Frame):
 	def loadUsers(self):
 		self.user_list.DeleteAllItems()		
 		for acc in config.accounts():
-			self.user_list.Append((acc['login'], acc['password']))
+			if 'password' in acc and 'login' in acc:
+				self.user_list.Append((acc['login'], acc['password']))
 					
 	def onSize(self, evt):
 		if self.GetAutoLayout():

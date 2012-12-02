@@ -48,7 +48,7 @@ class AsyncLoader(Thread):
 	def getDcData(self, cb, login, data_type, out_dir, custom_opts = None):
 		srv_dir = 'perform_x_actions' if custom_opts else 'empire_info'
 		query = '/frames/%s/on/%s/asxml/'%(srv_dir, data_type,)
-		opts = 'login=%s&pwd=%s&action=login'%(urllib.quote(login).encode('utf-8'),urllib.quote(config.users[login]['password']).encode('utf-8')) 
+		opts = 'login=%s&pwd=%s&action=login'%(urllib.quote(login.encode('utf-8')),urllib.quote((config.users[login]['password']).encode('utf-8')))
 		if custom_opts:
 			opts += '&xactions=%s'%(custom_opts,)
 		args = {'host':config.options['network']['host'], 'cb':cb, 'query_type':'POST', 'query':query, 'opts':opts, 'key':login, 'outpath':os.path.join(out_dir, '%s_%s.xml.gz'%(login, data_type))}

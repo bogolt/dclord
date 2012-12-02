@@ -5,8 +5,34 @@ import os.path
 import ConfigParser
 import logging
 import util
+import codecs
 
 log = logging.getLogger('dclord')
+
+class UnicodeConfigParser(ConfigParser.RawConfigParser):
+	'big thanks: http://s-c.me/21655/s   http://habrahabr.ru/post/119405/'
+	def __init__(self, defaults=None, dict_type=dict):
+		ConfigParser.RawConfigParser.__init__(self, defaults, dict_type)
+
+	def write(self, fp):
+		"""Fixed for Unicode output"""
+		if self._defaults:
+			fp.write("[%s]\n" % DEFAULTSECT)
+			for (key, value) in self._defaults.items():
+				fp.write("%s = %s\n" % (key, value.decode('utf8').replace('\n', '\n\t')))
+			fp.write("\n")
+		for section in self._sections:
+			fp.write("[%s]\n" % section)
+			for (key, value) in self._sections[section].items():
+				if key != "__name__":
+					fp.write("%s = %s\n" %(key, value.decode('utf8').replace('\n','\n\t')))
+		fp.write("\n")
+
+	# This function is needed to override default lower-case conversion
+	# of the parameter's names. They will be saved 'as is'.
+	def optionxform(self, strOut):
+		return strOut
+
 
 def getOptionsDir():
 	conf_dir = 'dclord' if 'Windows' == platform.system() else '.config/dclord'
@@ -87,20 +113,28 @@ def saveOptions():
 		log.error("unable to save config file: %s"%(err,))
 
 def loadAccounts():
-	config = ConfigParser.ConfigParser()
-	config.read(os.path.join(getOptionsDir(), users_file_name))
+	config = UnicodeConfigParser()
+	try:
+		config.readfp(codecs.open(os.path.join(getOptionsDir(), users_file_name), 'r', 'utf8'))
+	except IOError:
+		return
+	
 	global users
 	global user_id_dict
 	for u in config.sections():
 		acc = {}
 		for k,v in config.items(u):
 			acc[k] = v
+		if not 'login' in acc:
+			continue
+			
 		users[acc['login']] = acc
 		if 'id' in acc and acc['id']:
 			user_id_dict[int(acc['id'])] = acc
 
 def saveUsers():
-	conf = ConfigParser.RawConfigParser()
+	return
+	conf = UnicodeConfigParser()
 	global users
 
 	for u,p in users.items():
