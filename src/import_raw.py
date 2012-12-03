@@ -172,8 +172,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 def load_xml(path):
 	p = xml.sax.make_parser()
 	p.setContentHandler(XmlHandler())
-	f = open(unicode(path.decode('utf8')))
-	p.parse( f )
+	p.parse( open(path) )
 
 def processRawData(path):
 	log.debug('processing raw data %s'%(path,))

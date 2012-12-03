@@ -174,6 +174,9 @@ def accounts():
 def setUserId(login, id):
 	global users
 	global user_id_dict
+	if not login in users:
+		users[login] = {'login':login}
+		
 	u = users[login]
 	if 'id' in u and int(u['id']) == int(id):
 		return

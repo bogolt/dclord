@@ -6,6 +6,7 @@ import os.path
 import event
 import logging
 import config
+import unicodedata 
 
 log = logging.getLogger('dclord')
 
@@ -51,7 +52,11 @@ class AsyncLoader(Thread):
 		opts = 'login=%s&pwd=%s&action=login'%(urllib.quote(login.encode('utf-8')),urllib.quote((config.users[login]['password']).encode('utf-8')))
 		if custom_opts:
 			opts += '&xactions=%s'%(custom_opts,)
-		args = {'host':config.options['network']['host'], 'cb':cb, 'query_type':'POST', 'query':query, 'opts':opts, 'key':login, 'outpath':os.path.join(out_dir, '%s_%s.xml.gz'%(login, data_type))}
+		
+		# work around sax parser bug with inability to read unicode file names ( cyrillic for example ) 
+		# see http://bugs.python.org/issue11159
+		name = '%s_%s.xml.gz'%(login.encode('ascii', 'ignore'), data_type)	
+		args = {'host':config.options['network']['host'], 'cb':cb, 'query_type':'POST', 'query':query, 'opts':opts, 'key':login, 'outpath':os.path.join(out_dir, name)}
 		
 		self.args.append(args)
 		
