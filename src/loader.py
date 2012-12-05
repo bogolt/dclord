@@ -7,8 +7,20 @@ import event
 import logging
 import config
 import unicodedata 
+import util
 
 log = logging.getLogger('dclord')
+
+def chooseAvailableName(path):
+	p = path
+	for index in range(0, 999):
+		if not os.path.exists(p):
+			return path
+		p = '%s_%d'%(path, index)
+		index += 1
+	log.error("Failed to generate unique file name for path %s"%(path,))
+	return path
+	
 
 class AsyncLoader(Thread):
 	def __init__(self):
@@ -56,7 +68,8 @@ class AsyncLoader(Thread):
 		# work around sax parser bug with inability to read unicode file names ( cyrillic for example ) 
 		# see http://bugs.python.org/issue11159
 		name = '%s_%s.xml.gz'%(login.encode('ascii', 'ignore'), data_type)	
-		args = {'host':config.options['network']['host'], 'cb':cb, 'query_type':'POST', 'query':query, 'opts':opts, 'key':login, 'outpath':os.path.join(out_dir, name)}
+		outpath = chooseAvailableName(os.path.join(out_dir, name))
+		args = {'host':config.options['network']['host'], 'cb':cb, 'query_type':'POST', 'query':query, 'opts':opts, 'key':login, 'outpath':outpath}
 		
 		self.args.append(args)
 		

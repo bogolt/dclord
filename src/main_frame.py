@@ -168,7 +168,7 @@ class DcFrame(wx.Frame):
 		l = loader.AsyncLoader()
 		
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
-		util.assureDirExist(out_dir)
+		util.assureDirClean(out_dir)
 		for acc in config.accounts():
 			log.info('requesting user %s info'%(acc['login'],))
 			l.getUserInfo(self, acc['login'], out_dir)
@@ -180,7 +180,7 @@ class DcFrame(wx.Frame):
 		l = loader.AsyncLoader()
 		
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
-		util.assureDirExist(out_dir)
+		util.assureDirClean(out_dir)
 		for acc in config.accounts():
 			log.info('requesting user %s info'%(acc['login'],))
 			actions = request.RequestMaker()

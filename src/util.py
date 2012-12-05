@@ -8,6 +8,9 @@ import tempfile
 def getTempDir():
 	return os.path.join(tempfile.gettempdir(), 'dclord')
 
+def clearTempDir():
+	shutil.rmtree(getTempDir())
+
 def run_once(f):
     def wrapper(*args, **kwargs):
         if not wrapper.has_run:
@@ -45,6 +48,11 @@ def assureDirExist(d):
 		return
 	os.makedirs(d)
 
+def assureDirClean(d):
+	if os.path.exists(d):
+		shutil.rmtree(d)
+	os.makedirs(d)
+	
 def assureNotExist(d):
 	if os.path.exists(d):
 		shutil.rmtree(d)

@@ -185,6 +185,7 @@ def processRawData(path):
 
 def processAllUnpacked():
 	xml_dir = os.path.join(util.getTempDir(), config.options['data']['raw-xml-dir'])
+	util.assureDirClean(xml_dir)
 	log.debug('processing all found data at %s'%(xml_dir,))
 	at_least_one = False
 	try:
