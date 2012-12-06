@@ -36,13 +36,20 @@ class Db:
 		self.cur = self.conn.cursor()
 		cur = self.cur
 		
+		turn_n = int(turn_n)
+		
+		self.max_turn = max(self.max_turn, turn_n)
+		
+		log.info('db init turn %s'%(turn_n,))
+		
 		# check if turn is known and catched
 		if turn_n in self.turns and self.turns[turn_n]:
+			log.info('turn %s is alredy known to db'%(turn_n,))
 			return
 			
 		# set turn exists
 		self.turns[turn_n] = True
-		self.max_turn = max(self.max_turn, turn_n)
+		log.info('creating tables for turn %s, max turn is %s'%(turn_n, self.max_turn))
 		
 		cur.execute("""create table if not exists %s_%s(
 				x integer(2) not null,

@@ -60,6 +60,7 @@ def saveUsers():
 	saveTable('hw', ('hw_x', 'hw_y', 'player_id'), None, 'hw', db.getTurn())
 
 def save():
+	log.info('saving data for turn %s'%(db.getTurn(),))
 	saveGeoPlanets()
 	savePlanets()
 	saveGeoPlanets()
