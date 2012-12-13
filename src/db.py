@@ -239,13 +239,13 @@ class Db:
 			print traceback.format_stack()
 			
 
-	def getAnything(self):
+	#def getAnything(self):
 		#self.cur.execute("select hw_x,hw_y from player where hw_x not null and hw_y not null")
 		#r = self.cur.fetchone()
 		#if r:
 		#	print 'got place %s'%(r,)
 		#	return int(r[0]),int(r[1])
-		return 1,1
+	#	return 1,1
 
 	def accounts(self):
 		self.cur.execute('select login,name,id from player where login not null')
@@ -377,7 +377,7 @@ def getUserName(user_id):
 	return '<unknown>'
 
 def getUserHw(user_id, turn_n):
-	for u in items('hw', ['player_id=%s'%(user_id,)], ('hw_x', 'hw_y'), turn_n):
+	for u in items('hw', ['player_id=%s'%(user_id,)], ('hw_x', 'hw_y'), turn_n, True):
 		print 'got user %s'%(u,)
 		return int(u['hw_x']), int(u['hw_y'])
 	return 550,550

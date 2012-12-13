@@ -56,18 +56,20 @@ class FilterPanel(wx.Panel):
 		
 	def update(self):
 		log.debug('update tasks %d'%(len(self.accounts),))
-		for acc in config.accounts():
-			if acc['login'] in self.accounts:
+		for r in db.users([], ('id', 'name')):
+			user_id = r['id']
+			name = r['name']
+
+			if user_id in self.accounts:
 				continue
-			if 'id' in acc:
-				name = db.getUserName(acc['id'])
-				log.debug("%s => %s"%(acc['id'], name))
-				login = wx.StaticText(self,wx.ID_ANY, '%s'%(name,))
-				self.accounts[acc['login']] = login
-				self.sizer.Add(login)
-				if not self.active_user:
-					self.selectUser(acc['login'])
-				login.Bind(wx.EVT_LEFT_DCLICK, self.onChangeUser)
+
+			log.debug("%s => %s"%(user_id, name))
+			login = wx.StaticText(self,wx.ID_ANY, '%s'%(name,))
+			self.accounts[user_id] = login
+			self.sizer.Add(login)
+			if not self.active_user:
+				self.selectUser(user_id)
+			login.Bind(wx.EVT_LEFT_DCLICK, self.onChangeUser)
 		self.sizer.Layout()
 	
 	def onChangeUser(self, evt):
@@ -76,13 +78,13 @@ class FilterPanel(wx.Panel):
 				print 'choosing user %s'%(login,)
 				self.selectUser(login)
 				
-	def selectUser(self, login):
+	def selectUser(self, user_id):
 		if self.active_user:
 			self.accounts[self.active_user].SetForegroundColour(def_color)
-		self.accounts[login].SetForegroundColour(sel_color)
-		self.active_user = login
+		self.accounts[user_id].SetForegroundColour(sel_color)
+		self.active_user = user_id
 		
-		wx.PostEvent(self.GetParent(), event.UserSelect(attr1=login, attr2=None))
+		wx.PostEvent(self.GetParent(), event.UserSelect(attr1=user_id, attr2=None))
 	
 	def onShowKnown(self, evt):
 		config.options['filter']['inhabited_planets'] = int(self.show_known.IsChecked())

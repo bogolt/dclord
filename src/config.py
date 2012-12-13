@@ -171,7 +171,7 @@ def accounts():
 	for acc in users.values():
 		yield acc
 
-def setUserId(login, id):
+def not_used_setUserId(login, id):
 	global users
 	global user_id_dict
 	if not login in users:
