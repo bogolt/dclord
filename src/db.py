@@ -377,8 +377,7 @@ def getUserName(user_id):
 	return '<unknown>'
 
 def getUserHw(user_id, turn_n):
-	for u in items('hw', ['player_id=%s'%(user_id,)], ('hw_x', 'hw_y'), turn_n, True):
-		print 'got user %s'%(u,)
+	for u in items('hw', ['player_id=%s'%(user_id,)], ('hw_x', 'hw_y'), turn_n):
 		return int(u['hw_x']), int(u['hw_y'])
 	return 550,550
 
