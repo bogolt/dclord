@@ -57,11 +57,10 @@ class UnitPrototypeListWindow(wx.Window):
 		self.loadProto()
 		
 	def loadProto(self):
-		log.debug('loading protos for user %s '%(self.player_id,))
+		log.info('setting protos for user %s'%(self.player_id,))
 		fly_range=1
 		fly_speed=2
+		self.sizer.Clear()
 		for p in db.prototypes(['fly_range>=%s'%(fly_range,), 'fly_speed>=%s'%(fly_speed,), 'owner_id=%s'%(self.player_id,)]):
-			#log.debug('loading proto %s '%(p,))
 			self.sizer.Add( UnitPrototypeWindow(self, p))
 		self.sizer.Layout()
-		log.debug('protos for user %s loaded'%(self.player_id,))
