@@ -58,13 +58,17 @@ class Map(util.BufferedWindow):
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
 
 		util.BufferedWindow.__init__(self, parent)
-		
+
 		self.moving = False
+		
+		self.click_timer = wx.Timer(self, wx.ID_ANY)
+		self.motionEvent = []
 		
 		self.Bind(wx.EVT_LEFT_UP, self.onLeftUp)
 		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)		
 		self.Bind(wx.EVT_MOTION, self.onMotion)
 		self.Bind(wx.EVT_MOUSEWHEEL, self.onScroll)
+		self.Bind(wx.EVT_TIMER, self.onClickTimer, self.click_timer)
 		
 	def resize(self, evt = None):
 		util.BufferedWindow.resize(self, evt)
@@ -73,13 +77,35 @@ class Map(util.BufferedWindow):
 	def onLeftDown(self, evt):
 		self.moving = True
 		self.prevPos = evt.GetPosition()
+		#self.click_pos = self.prevPos
+		#self.moving_proved = False
+		#self.click_timer.Start( milliseconds=60, oneShot = True)
 		
 	def onLeftUp(self, evt):
 		self.moving = False
 		self.update()
 		
+		#if self.moving_proved:
+		#	return
+			
 		pos = util.add(self.offset_pos, util.div(evt.GetPosition(), float(self.cell_size)))
 		wx.PostEvent(self.GetParent(), event.SelectObject(attr1=(round(pos[0]), round(pos[1])), attr2=None))
+		
+	def onClickTimer(self, evt):
+		if self.moving:
+			self.moving_proved = True
+			self.popMotionEvent()
+		else:
+			self.motionEvent = []
+
+	def pushMotionEvent(self, evt):
+		self.motionEvent.append( evt )
+
+	def popMotionEvent(self):
+		
+		mt_evts, self.motionEvent = self.motionEvent, []
+		for mt in mt_evts:
+			self.onMotion(mt)
 
 	def onMotion(self, evt):
 		old_offset = self.offset_pos
@@ -87,10 +113,14 @@ class Map(util.BufferedWindow):
 		self.SetFocus()
 		if not self.moving:
 			return
+		
+		#if not self.moving_proved:
+		#	self.pushMotionEvent(evt)
+		#	return
 
 		curPos = evt.GetPosition()
 		dx,dy = util.div(util.sub(self.prevPos, curPos), float(self.cell_size))
-
+		
 		if dx != 0 or dy != 0:
 			x,y=self.offset_pos
 			x+=dx
