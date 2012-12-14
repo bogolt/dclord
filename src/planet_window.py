@@ -18,9 +18,10 @@ class PlanetWindow(wx.Window):
 		
 	def set_coord(self, coord):
 		self.coord = coord
-		self.sizer.Clear()
+		self.sizer.DeleteWindows()
 		
 		if not self.coord:
+			self.sizer.Layout()
 			return
 		
 		owner_id = 0
@@ -45,6 +46,6 @@ class InfoPanel(wx.Panel):
 		self.sizer.Layout()
 
 	def selectObject(self, evt):
-		self.sizer.Clear()
+		self.sizer.DeleteWindows()
 		self.sizer.Add( PlanetWindow(self, evt.attr1) )
 		self.sizer.Layout()

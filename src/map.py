@@ -89,7 +89,7 @@ class Map(util.BufferedWindow):
 		#	return
 			
 		pos = util.add(self.offset_pos, util.div(evt.GetPosition(), float(self.cell_size)))
-		wx.PostEvent(self.GetParent(), event.SelectObject(attr1=(round(pos[0]), round(pos[1])), attr2=None))
+		wx.PostEvent(self.GetParent(), event.SelectObject(attr1=(int(round(pos[0])), int(round(pos[1]))), attr2=None))
 		
 	def onClickTimer(self, evt):
 		if self.moving:
