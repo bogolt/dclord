@@ -44,6 +44,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	BuildingClassAction = 'act'
 	Iframe = 'iframe'
 	PerformAction = 'act'
+	Diplomacy = 'diplomacy'
+	DipRelation = 'rel'
 	
 	NotLoggedInError = 'not-logged-in'
 	
@@ -57,6 +59,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		self.iframe = False
 		self.parent_attrs = {}
 		self.actions = []
+		self.dip = False
 
 	def startElement(self, name, attrs):
 		if XmlHandler.NodeDC == name:
@@ -151,6 +154,11 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			
 			if result:
 				self.actions.append( (act_id, ret_id) )
+		elif XmlHandler.Diplomacy == name:
+			self.dip = True
+		elif XmlHandler.DipRelation == name and self.dip:
+			data = getAttrs(attrs, {'player':'player_id', 'name':'name'})
+			db.setData('player', data, self.turn)
 			
 	def endElement(self, name):
 		if name==XmlHandler.UserInfo:
@@ -167,6 +175,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.NodeDC:
 			if self.actions:
 				wx.PostEvent(cb, event.ActionsReply(attr1=self.user, attr2=self.actions))
+		elif XmlHandler.Diplomacy == name:
+			self.dip = False
+
 			
 def load_xml(path):
 	p = xml.sax.make_parser()

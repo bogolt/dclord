@@ -17,7 +17,6 @@ class PlanetWindow(wx.Window):
 		self.set_coord(coord)
 		
 	def set_coord(self, coord):
-		log.info('setting coord %s'%(coord,))
 		self.coord = coord
 		self.sizer.Clear()
 		
@@ -27,7 +26,6 @@ class PlanetWindow(wx.Window):
 		owner = 'unknown'
 		for planet in db.planets(db.getTurn(), ['x=%d'%(coord[0],), 'y=%d'%(coord[1],)]):
 			owner = planet['owner_id']
-			#self.sizer.Add(wx.StaticText(self, wx.ID_ANY, 'owner is %s'%(planet['owner_id'],)))
 		
 		self.sizer.Add(wx.StaticText(self, wx.ID_ANY, 'owner is "%s"'%(owner,)))
 		self.sizer.Layout()
@@ -36,11 +34,8 @@ class PlanetWindow(wx.Window):
 class InfoPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(120,200))
-		
-		#self.planet = PlanetWindow(self)
-		
+			
 		self.sizer = wx.BoxSizer(wx.VERTICAL)	
-		#self.sizer.Add(self.planet)
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
 

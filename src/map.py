@@ -78,7 +78,8 @@ class Map(util.BufferedWindow):
 		self.moving = False
 		self.update()
 		
-		wx.PostEvent(self.GetParent(), event.SelectObject(attr1=(int(self.offset_pos[0]), int(self.offset_pos[1])), attr2=None))
+		pos = util.add(self.offset_pos, util.div(evt.GetPosition(), float(self.cell_size)))
+		wx.PostEvent(self.GetParent(), event.SelectObject(attr1=(round(pos[0]), round(pos[1])), attr2=None))
 
 	def onMotion(self, evt):
 		old_offset = self.offset_pos

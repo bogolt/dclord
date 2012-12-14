@@ -58,6 +58,9 @@ def saveAlienUnits():
 def saveUsers():
 	saveTable('user', ('id', 'name', 'race_id'), None, 'users')
 	saveTable('hw', ('hw_x', 'hw_y', 'player_id'), None, 'hw', db.getTurn())
+	
+def savePlayers():
+	saveTable('player', ('player_id', 'name'), None, 'players', db.getTurn())
 
 def save():
 	log.info('saving data for turn %s'%(db.getTurn(),))
@@ -70,6 +73,7 @@ def save():
 	saveAlienUnits()
 	saveProto()
 	saveUsers()
+	savePlayers()
 
 def loadTable(table_name, file_name, turn_n = None, load_turn = None):
 	try:
@@ -134,6 +138,8 @@ def loadUsers(turn_n = None):
 	loadTable('user', 'users', None, turn_n)
 	loadTable('hw', 'hw', turn_n)
 	
+def loadPlayers(turn_n = None):
+	loadTable('player', 'players', turn_n)
 
 def get_turn_number(s):
 	try:
@@ -171,6 +177,7 @@ def load(turn_n = None):
 	loadAlienUnits(turn_n)
 	loadProto(turn_n)
 	loadUsers(turn_n)
+	loadPlayers(turn_n)
 
 #def asyncLoad():
 #	import thread

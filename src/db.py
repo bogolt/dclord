@@ -69,15 +69,21 @@ class Db:
 				race_id integer not null,
 				login text
 				)""")
-
-		cur.execute("""create table if not exists player(
-				id integer primary key,
-				name text not null,
-				race_id integer not null
-				)""")
 				
 		#what if approaching unknown fleet does not have an id?
 		#id integer primary key,
+
+		cur.execute("""create table if not exists player_%s(
+				player_id integer primary key,
+				name text,
+				race_id integer
+				)"""%(turn_n,))
+		
+		cur.execute("""create table if not exists dip_%s(
+				owner_id integer,
+				player_id integer,
+				status integer(1)				
+				)"""%(turn_n,))
 		
 		cur.execute("""create table if not exists hw_%s(
 				player_id integer primary key,
@@ -343,6 +349,11 @@ def itemsDiff(table_name, flt, keys, turn_start, turn_end):
 def users(flt = None, keys = None):
 	k = ('id','name','race_id') if not keys else keys
 	for i in items('user', flt, k):
+		yield i
+
+def players(turn_n, flt = None, keys = None):
+	k = ('player_id','name') if not keys else keys
+	for i in items('player', flt, k, turn_n):
 		yield i
 
 def planets(turn_n, flt, keys = None):
