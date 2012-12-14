@@ -31,7 +31,7 @@ def is_owned(fleet_id):
 #		if user['
 
 def getOwnerColor(owner_id):
-	if not owner_id:
+	if not owner_id or owner_id == 0:
 		return config.options['map']['planet_uninhabited_color']
 
 	key = 'custom_color_%s'%(owner_id,)
@@ -53,6 +53,7 @@ class Map(util.BufferedWindow):
 		self.screen_size = 1,1
 		self.filterDrawFleets = bool(config.options['filter']['fleets'])
 		self.turn = 0
+		self.selected_user_id = 0
 		#self.filterDrawAreas = bool(config.options['filter']['areas'])
 		
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
@@ -192,10 +193,12 @@ class Map(util.BufferedWindow):
 			sz = int(planet['s'])
 
 		col = None
-		if 'owner_id' in planet and planet['owner_id']:
-			col = getOwnerColor(int(planet['owner_id']))
+		owner_id = int(planet.get('owner_id', 0))
+		if owner_id == self.selected_user_id:
+			col = config.options['map']['planet_selected_user_color']
 		else:
-			col = getOwnerColor(None)
+			col = getOwnerColor(owner_id)
+
 		dc.SetPen(wx.Pen(colour=col, width=1))
 		
 		if self.cell_size == 1:
@@ -310,3 +313,8 @@ class Map(util.BufferedWindow):
 			_,ry = self.relPos((20, y))
 			dc.DrawText(str(y), 0, ry-dc.GetTextExtent(str(x))[1]/2)
 		dc.DestroyClippingRegion()
+
+	def selectUser(self, user_id):
+		#self.centerAt( db.getUserHw(user_id, db.getTurn()) )
+		self.selected_user_id = user_id
+		self.update()
