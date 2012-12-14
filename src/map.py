@@ -4,6 +4,7 @@ import db
 import logging
 import util
 import config
+import event
 
 log = logging.getLogger('dclord')
 
@@ -76,6 +77,8 @@ class Map(util.BufferedWindow):
 	def onLeftUp(self, evt):
 		self.moving = False
 		self.update()
+		
+		wx.PostEvent(self.GetParent(), event.SelectObject(attr1=(int(self.offset_pos[0]), int(self.offset_pos[1])), attr2=None))
 
 	def onMotion(self, evt):
 		old_offset = self.offset_pos
