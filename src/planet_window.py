@@ -25,14 +25,19 @@ class PlanetWindow(wx.Window):
 			return
 		
 		owner_id = 0
-		for planet in db.planets(db.getTurn(), ['x=%d'%(coord[0],), 'y=%d'%(coord[1],)]):
+		planet_name = ''
+		for planet in db.planets(db.getTurn(), ['x=%d'%(coord[0],), 'y=%d'%(coord[1],)], ('x','y','owner_id','o','e','m','t','s', 'name')):
 			owner_id = int(planet['owner_id'])
+			planet_name = planet['name']
 		
 		owner_name = 'unknown'
-		for res in db.players(db.getTurn(), ['player_id=%s'%(owner_id,)]):
-			owner_name = res['name']
+		if owner_id > 0:
+			for res in db.players(db.getTurn(), ['player_id=%s'%(owner_id,)]):
+				owner_name = res['name']
+		else:
+			owner_name = '<empty>'
 		
-		self.sizer.Add(wx.StaticText(self, wx.ID_ANY, '%s:%s'%coord))
+		self.sizer.Add(wx.StaticText(self, wx.ID_ANY, '%s:%s %s'%(coord[0],coord[1], planet_name)))
 		self.sizer.Add(wx.StaticText(self, wx.ID_ANY, owner_name))
 		self.sizer.Layout()
 
