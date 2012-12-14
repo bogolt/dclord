@@ -439,3 +439,17 @@ def smartUpdate(table, conds, data, turn_n = None):
 		return
 	setData(table, data, turn_n)
 	
+
+def setPlanet(data, turn_n = None):
+	conds = ['x=%s'%(data['x'],), 'y=%s'%(data['y'],)]
+	pl = {}
+	for planet in planets(turn_n, conds):
+		pl.update(planet)
+	if not pl:
+		setData('planet', data, turn_n)
+		return
+		
+	pl.update(data)
+	updateRow('planet_%s'%(turn_n,), conds, pl)
+		
+		

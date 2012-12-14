@@ -90,7 +90,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				#don't need this for now
 				#data['turn'] = self.turn - int(data['age'])
 				del data['age']
-			db.setData('planet', data, self.turn)
+			db.setPlanet(data, self.turn)
 		elif XmlHandler.Fleet == name or XmlHandler.AlienFleet == name:
 			fleetDict = {'x':'x','y':'y','id':'id','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
 			data = getAttrs(attrs, fleetDict)
