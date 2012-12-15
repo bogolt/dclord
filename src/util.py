@@ -50,8 +50,10 @@ def assureDirExist(d):
 
 def assureDirClean(d):
 	if os.path.exists(d):
-		shutil.rmtree(d)
-	os.makedirs(d)
+		#shutil.rmtree(d)
+		pass
+	else:
+		os.makedirs(d)
 	
 def assureNotExist(d):
 	if os.path.exists(d):

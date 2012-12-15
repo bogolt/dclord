@@ -83,6 +83,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.read_level = XmlHandler.UserPlanets
 		elif XmlHandler.Planet == name:
 			data = getAttrs(attrs, {'x':'x', 'open':'is_open', 'owner-id':'owner_id', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s', 'age':'age'})
+			#data = getAttrs(attrs, {'x':'x', 'owner-id':'owner_id', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s'})
 			if XmlHandler.UserPlanets == self.read_level:
 				data['owner_id'] = self.user['id']
 				#log.info('load owner planet %s'%(data,))

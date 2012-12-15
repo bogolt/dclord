@@ -27,8 +27,12 @@ class PlanetWindow(wx.Window):
 		owner_id = 0
 		planet_name = ''
 		for planet in db.planets(db.getTurn(), ['x=%d'%(coord[0],), 'y=%d'%(coord[1],)], ('x','y','owner_id','o','e','m','t','s', 'name')):
-			owner_id = int(planet['owner_id'])
-			planet_name = planet['name']
+			planet_name = planet.get('name', '')
+			owner = planet['owner_id']
+			if not owner:
+				break
+			owner_id = int(owner)
+			
 		
 		owner_name = 'unknown'
 		if owner_id > 0:

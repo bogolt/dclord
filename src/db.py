@@ -61,7 +61,8 @@ class Db:
 				s integer(1),
 				owner_id integer,
 				name text,
-				is_open integer(1))"""%(self.PLANET, turn_n))
+				is_open integer(1),
+				PRIMARY KEY (x, y))"""%(self.PLANET, turn_n))
 
 		cur.execute("""create table if not exists user(
 				id integer primary key,
@@ -357,7 +358,7 @@ def players(turn_n, flt = None, keys = None):
 		yield i
 
 def planets(turn_n, flt, keys = None):
-	k = ('x','y','owner_id','o','e','m','t','s') if not keys else keys
+	k = ('x','y','owner_id','name','o','e','m','t','s') if not keys else keys
 	for i in items('planet', flt, k, turn_n):
 		yield i
 
@@ -440,16 +441,32 @@ def smartUpdate(table, conds, data, turn_n = None):
 	setData(table, data, turn_n)
 	
 
+def joinInfo(old, new_info):
+	joined = new_info.copy()
+	for k,v in old.iteritems():
+		if not k in joined:
+			joined[k] = v
+			continue
+		composed_value = joined[k]
+		if not composed_value or composed_value == '':
+			joined[k] = v
+	return joined
+
 def setPlanet(data, turn_n = None):
 	conds = ['x=%s'%(data['x'],), 'y=%s'%(data['y'],)]
 	pl = {}
 	for planet in planets(turn_n, conds):
-		pl.update(planet)
+		pl = planet
+		break
+		
 	if not pl:
 		setData('planet', data, turn_n)
 		return
-		
-	pl.update(data)
-	updateRow('planet_%s'%(turn_n,), conds, pl)
-		
-		
+	
+	if pl == data:
+		return
+	
+	joinedData = joinInfo(data, pl)
+	if joinedData != pl:
+		return updateRow('planet_%s'%(turn_n,), conds, joinedData)
+
