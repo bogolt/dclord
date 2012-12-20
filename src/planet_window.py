@@ -5,6 +5,7 @@ import util
 import event
 import config
 import image
+import unit_list
 
 log = logging.getLogger('dclord')
 
@@ -46,6 +47,25 @@ class PlanetWindow(wx.Window):
 		self.sizer.Layout()
 
 
+class FleetWindow(wx.Window):
+	def __init__(self, parent, coord = None):
+		wx.Window.__init__(self, parent, wx.ID_ANY)
+		
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.SetSizer(self.sizer)
+		
+		
+		#fl = {}
+		#fl_owner = {}
+		print 'looking at coord %s'%(coord,)
+		for fleet,unit in db.all_units(db.getTurn(), coord):
+			for proto in db.prototypes(['id=%d'%(unit['class'],)]):
+				self.sizer.Add( unit_list.UnitPrototypeWindow(self, proto))
+				break
+		
+		#for fl_own in fl_owner.values():
+		self.sizer.Layout()	
+		
 class InfoPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(120,200))
@@ -57,4 +77,5 @@ class InfoPanel(wx.Panel):
 	def selectObject(self, evt):
 		self.sizer.DeleteWindows()
 		self.sizer.Add( PlanetWindow(self, evt.attr1) )
+		self.sizer.Add( FleetWindow(self, evt.attr1) )
 		self.sizer.Layout()

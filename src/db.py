@@ -377,6 +377,11 @@ def prototypes(flt, keys = None):
 	for i in items('proto', flt, k):
 		yield i
 		
+def units(turn_n, flt, keys = None):
+	k = ('id', 'fleet_id', 'class', 'hp') if not keys else keys
+	for unit in items('unit', flt, k, turn_n):
+		yield unit
+		
 def nextFleetTempId():
 	return 0
 
@@ -470,3 +475,8 @@ def setPlanet(data, turn_n = None):
 	if joinedData != pl:
 		return updateRow('planet_%s'%(turn_n,), conds, joinedData)
 
+def all_units(turn_n, coord):
+	conds = ['x=%s'%(coord[0],), 'y=%s'%(coord[1],)]
+	for fl in fleets(turn_n, conds):
+		for unit in units(turn_n, ['fleet_id=%d'%(fl['id'],)]):
+			yield fl,unit

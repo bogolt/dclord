@@ -39,7 +39,7 @@ class DcFrame(wx.Frame):
 		print 'map turn is set to %s'%(self.map.turn,)
 		self.map.update()
 		
-		import_raw.processAllUnpacked()
+		#import_raw.processAllUnpacked()
 		#self.map.turn = db.db.max_turn
 		
 		
