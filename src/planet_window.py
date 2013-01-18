@@ -46,6 +46,26 @@ class PlanetWindow(wx.Window):
 		self.sizer.Add(wx.StaticText(self, wx.ID_ANY, owner_name))
 		self.sizer.Layout()
 
+class UnitStackWindow(wx.Window):
+	def __init__(self, parent, unit):
+		wx.Window.__init__(self, parent, wx.ID_ANY)
+		
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer.Add( unit_list.UnitPrototypeWindow(self, unit) )
+		self.SetSizer(self.sizer)
+		self.sizer.Layout()
+		
+		self.units = {}
+		
+		self.add(unit)
+	
+	def add(self, unit):
+		self.units[unit['id']] = unit
+		
+	def update(self):
+		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, '%d units'%(len(self.units)),))
+		self.sizer.Layout()
+	
 
 class FleetWindow(wx.Window):
 	def __init__(self, parent, coord = None):
@@ -53,18 +73,52 @@ class FleetWindow(wx.Window):
 		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
+		self.setOwnedUnits(coord)
+		self.setAlienUnits(coord)
+	
+	def setOwnedUnits(self, coord):
+		units = {}
+		if not coord:
+			return
 		
+		log.info('requesting fleet info at %s'%(coord,))
+		for fleet,unit in db.all_ownedUnits(db.getTurn(), coord):
+			cl = int(unit['class'])
+			if cl in units:
+				units[cl].add(unit)
+			else:
+				uwindow = UnitStackWindow(self, unit)
+				self.sizer.Add( uwindow)
+				units[cl] = uwindow
+		for u in units.values():
+			u.update()
+	
+	def setAlienUnits(self, coord):
+		units = {}
+		if not coord:
+			return
 		
-		#fl = {}
-		#fl_owner = {}
-		print 'looking at coord %s'%(coord,)
-		for fleet,unit in db.all_units(db.getTurn(), coord):
-			for proto in db.prototypes(['id=%d'%(unit['class'],)]):
-				self.sizer.Add( unit_list.UnitPrototypeWindow(self, proto))
-				break
+		log.info('requesting fleet info at %s'%(coord,))
+		for fleet,unit in db.all_alienUnits(db.getTurn(), coord):
+			#cl = int(unit['class'])
+			#if cl in units:
+			#	units[cl].add(unit)
+			#else:
+			uwindow = UnitStackWindow(self, unit)
+			self.sizer.Add( uwindow)
+			#	units[cl] = uwindow
+		#for u in units.values():
+		#	u.update()
+			#log.info('got fleet %s with units %s'%(fleet, unit))
+			#if not 'carapace' in unit:
+			#	for proto in db.prototypes(['id=%d'%(unit['class'],)]):
+			#		self.sizer.Add( unit_list.UnitPrototypeWindow(self, proto))
+			#		break
+			#else:
+			#	self.sizer.Add( unit_list.UnitPrototypeWindow(self, unit))
 		
 		#for fl_own in fl_owner.values():
-		self.sizer.Layout()	
+		self.sizer.Layout()
 		
 class InfoPanel(wx.Panel):
 	def __init__(self, parent):

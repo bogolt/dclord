@@ -14,10 +14,15 @@ def getProtoName(proto):
 	return 'serial'
 
 class UnitPrototypeWindow(wx.Window):
-	def __init__(self, parent, proto):
-		self.proto = proto
+	def __init__(self, parent, proto_u):
 		wx.Window.__init__(self, parent, wx.ID_ANY)
 		img = wx.StaticBitmap(self, wx.ID_ANY)
+		
+		proto = proto_u
+		if not 'carapace' in proto_u:
+			for pr in db.prototypes(['id=%d'%(proto['class'],)]):
+				proto = pr
+				break
 		
 		bmp = None
 		if proto['carapace']:
@@ -27,7 +32,7 @@ class UnitPrototypeWindow(wx.Window):
 			bmp = image.getBcImage( proto['id'], ) 
 			
 		if not bmp:
-			log.error('bitmap not found for %s'%(self.proto,))
+			log.error('bitmap not found for %s'%(proto,))
 			return
 
 		img.SetBitmap( bmp )
@@ -37,7 +42,7 @@ class UnitPrototypeWindow(wx.Window):
 		
 		usz = wx.BoxSizer(wx.HORIZONTAL)
 		usz.Add(img)
-		usz.Add(wx.StaticText(self, wx.ID_ANY, '[%s]'%(getProtoName(self.proto),)))
+		usz.Add(wx.StaticText(self, wx.ID_ANY, '[%s]'%(getProtoName(proto),)))
 		sizer.Add(usz)
 		sizer.Layout()
 		
