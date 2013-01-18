@@ -10,17 +10,23 @@ log = logging.getLogger('dclord')
 
 class HistoryPanel(wx.Window):
 	def __init__(self, parent, turn = -1):
-		wx.Window.__init__(self, parent, wx.ID_ANY, size=(220,200))
+		wx.Window.__init__(self, parent, wx.ID_ANY, size=(201,201))
 		self.turn = turn
 		self.turns = {}
-		self.sizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.turnList = wx.ListBox(self, size=(200,200))
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.turnList = wx.ListBox(self)
 		self.turnList.Bind(wx.EVT_LISTBOX, self.onTurnSelected)
 		
 		self.pos = 0
-		self.sizer.Add(self.turnList)
+		self.sizer.Add(self.turnList, 1, flag=wx.EXPAND | wx.ALL)
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
+		
+		self.Bind(wx.EVT_SIZE, self.onSize, self)
+		
+	def onSize(self, evt):
+		if self.GetAutoLayout():
+			self.Layout()
 	
 	def onSetActiveTurn(self, event):
 		label = event.GetEventObject()
