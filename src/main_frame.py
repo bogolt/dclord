@@ -229,6 +229,8 @@ class DcFrame(wx.Frame):
  
 	def onTurnSelected(self, evt):
 		turn = evt.attr1
-		serialization.load(turn)
+		#only load if db does not know about this turn
+		if not turn in db.db.turns or not db.db.turns[turn]:
+			serialization.load(turn)
 		self.map.turn = turn
 		self.map.update()
