@@ -15,6 +15,7 @@ import users
 import area_panel
 import request
 import planet_window
+import history
 
 log = logging.getLogger('dclord')
 
@@ -31,14 +32,14 @@ class DcFrame(wx.Frame):
 		
 		if int(config.options['window']['is_maximized'])==1:
 			self.Maximize()
-			
+		
 		serialization.load()
 		print 'db max turn is %s'%(db.getTurn(),)
 		self.map = map.Map(self)
 		self.map.turn = db.getTurn()
 		print 'map turn is set to %s'%(self.map.turn,)
 		self.map.update()
-		
+				
 		#import_raw.processAllUnpacked()
 		#self.map.turn = db.db.max_turn
 		
@@ -46,7 +47,7 @@ class DcFrame(wx.Frame):
 		self.info_panel = planet_window.InfoPanel(self)
 		self.object_filter = object_filter.FilterPanel(self)
 		self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
-		
+		self.history = history.HistoryPanel(self)
 		#self.area_list = area_panel.AreaListWindow(self)
 		
 		self.pendingActions = {}
@@ -61,6 +62,7 @@ class DcFrame(wx.Frame):
 		info.CaptionVisible(False)
 		
 		self._mgr.AddPane(self.map, info)
+		self._mgr.AddPane(self.history, wx.LEFT, "Turn")
 		self._mgr.AddPane(self.info_panel, wx.LEFT, "Info")
 		self._mgr.AddPane(self.object_filter, wx.LEFT, "Filter")
 		self._mgr.AddPane(self.unit_list, wx.RIGHT, "Units")
@@ -75,12 +77,15 @@ class DcFrame(wx.Frame):
 		self.Bind(event.EVT_USER_SELECT, self.onSelectUser)
 		self.Bind(event.EVT_ACTIONS_REPLY, self.onActionsReply)
 		self.Bind(event.EVT_SELECT_OBJECT, self.info_panel.selectObject)
+		self.Bind(event.EVT_TURN_SELECTED, self.onTurnSelected)
 	
 		#import_raw.processAllUnpacked()
 		#serialization.save()
 		
 		#todo - restore previous state
 		#self.Maximize()
+		
+		self.history.updateTurns(self.map.turn)
 		
 	def makeMenu(self):
 		fileMenu = wx.Menu()
@@ -213,6 +218,7 @@ class DcFrame(wx.Frame):
 		import_raw.processRawData(data)
 		self.map.turn = db.db.max_turn
 		self.map.update()
+		
 	
 	def onSelectUser(self, evt):
 		user_id = evt.attr1
@@ -220,3 +226,9 @@ class DcFrame(wx.Frame):
 		self.unit_list.setPlayer( user_id )
 		print 'selecting user %s'%(user_id, )
 		self.map.selectUser( user_id) 
+ 
+	def onTurnSelected(self, evt):
+		turn = evt.attr1
+		serialization.load(turn)
+		self.map.turn = turn
+		self.map.update()
