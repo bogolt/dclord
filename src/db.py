@@ -393,10 +393,11 @@ def nextFleetTempId():
 def getUserName(user_id):
 	for name in users(['id=%d'%(int(user_id),)], ('name',)):
 		return name['name']
+	
+	for name in players(getTurn(), ['player_id=%d'%(int(user_id),)], ('name',)):
+		return name['name']
 		
-	for name in users():
-		print 'user %s'%(name,)
-	return '<unknown>'
+	return '<? %d>'%(user_id,)
 
 def getUserHw(user_id, turn_n):
 	for u in items('hw', ['player_id=%s'%(user_id,)], ('hw_x', 'hw_y'), turn_n):

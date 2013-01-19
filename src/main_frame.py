@@ -218,6 +218,7 @@ class DcFrame(wx.Frame):
 		import_raw.processRawData(data)
 		self.map.turn = db.db.max_turn
 		self.map.update()
+		self.history.updateTurns(self.map.turn)
 		
 	
 	def onSelectUser(self, evt):

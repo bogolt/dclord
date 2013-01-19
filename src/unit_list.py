@@ -11,7 +11,8 @@ log = logging.getLogger('dclord')
 def getProtoName(proto):
 	if 'name' in proto:
 		return proto['name']
-	return 'serial'
+	log.info('proto unkown %s'%(proto,))
+	return '<?>'
 
 class UnitPrototypeWindow(wx.Window):
 	def __init__(self, parent, proto_u):

@@ -47,7 +47,7 @@ class PlanetWindow(wx.Window):
 		self.sizer.Layout()
 
 class UnitStackWindow(wx.Window):
-	def __init__(self, parent, unit):
+	def __init__(self, parent, owner_id, unit):
 		wx.Window.__init__(self, parent, wx.ID_ANY)
 		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -56,6 +56,7 @@ class UnitStackWindow(wx.Window):
 		self.sizer.Layout()
 		
 		self.units = {}
+		self.user_name = db.getUserName(owner_id)
 		
 		self.add(unit)
 	
@@ -63,18 +64,28 @@ class UnitStackWindow(wx.Window):
 		self.units[unit['id']] = unit
 		
 	def update(self):
-		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, '%d units'%(len(self.units)),))
+		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, '%d units, [%s]'%(len(self.units), self.user_name)))
 		self.sizer.Layout()
 	
 
-class FleetWindow(wx.Window):
+import  wx.lib.scrolledpanel as scrolled
+class FleetWindow(scrolled.ScrolledPanel):
 	def __init__(self, parent, coord = None):
-		wx.Window.__init__(self, parent, wx.ID_ANY)
+		scrolled.ScrolledPanel.__init__(self, parent, -1, size=(200,200))
+		self.vbox = wx.BoxSizer(wx.VERTICAL)
 		
-		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		self.SetSizer(self.sizer)
 		self.setOwnedUnits(coord)
 		self.setAlienUnits(coord)
+		
+		self.SetSizer( self.vbox )
+		self.SetAutoLayout( 1 )
+		self.SetupScrolling()
+		
+		self.Bind(wx.EVT_SIZE, self.onSize, self)
+				
+	def onSize(self, evt):
+		if self.GetAutoLayout():
+			self.Layout()
 	
 	def setOwnedUnits(self, coord):
 		units = {}
@@ -83,12 +94,12 @@ class FleetWindow(wx.Window):
 		
 		log.info('requesting fleet info at %s'%(coord,))
 		for fleet,unit in db.all_ownedUnits(db.getTurn(), coord):
-			cl = int(unit['class'])
+			cl = int(fleet['owner_id']), int(unit['class'])
 			if cl in units:
 				units[cl].add(unit)
 			else:
-				uwindow = UnitStackWindow(self, unit)
-				self.sizer.Add( uwindow)
+				uwindow = UnitStackWindow(self, cl[0], unit)
+				self.vbox.Add( uwindow)
 				units[cl] = uwindow
 		for u in units.values():
 			u.update()
@@ -98,27 +109,10 @@ class FleetWindow(wx.Window):
 		if not coord:
 			return
 		
-		log.info('requesting fleet info at %s'%(coord,))
 		for fleet,unit in db.all_alienUnits(db.getTurn(), coord):
-			#cl = int(unit['class'])
-			#if cl in units:
-			#	units[cl].add(unit)
-			#else:
-			uwindow = UnitStackWindow(self, unit)
-			self.sizer.Add( uwindow)
-			#	units[cl] = uwindow
-		#for u in units.values():
-		#	u.update()
-			#log.info('got fleet %s with units %s'%(fleet, unit))
-			#if not 'carapace' in unit:
-			#	for proto in db.prototypes(['id=%d'%(unit['class'],)]):
-			#		self.sizer.Add( unit_list.UnitPrototypeWindow(self, proto))
-			#		break
-			#else:
-			#	self.sizer.Add( unit_list.UnitPrototypeWindow(self, unit))
-		
-		#for fl_own in fl_owner.values():
-		self.sizer.Layout()
+			uwindow = UnitStackWindow(self, fleet['owner_id'], unit)
+			uwindow.update()
+			self.vbox.Add( uwindow)
 		
 class InfoPanel(wx.Panel):
 	def __init__(self, parent):
@@ -127,9 +121,15 @@ class InfoPanel(wx.Panel):
 		self.sizer = wx.BoxSizer(wx.VERTICAL)	
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
+		self.Bind(wx.EVT_SIZE, self.onSize, self)
 
 	def selectObject(self, evt):
 		self.sizer.DeleteWindows()
 		self.sizer.Add( PlanetWindow(self, evt.attr1) )
-		self.sizer.Add( FleetWindow(self, evt.attr1) )
+		self.sizer.Add( FleetWindow(self, evt.attr1), 1, flag=wx.EXPAND | wx.ALL)
 		self.sizer.Layout()
+				
+	def onSize(self, evt):
+		if self.GetAutoLayout():
+			self.Layout()
+			
