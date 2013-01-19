@@ -6,6 +6,7 @@ import os
 import os.path
 import config
 import util
+import shutil
 
 log = logging.getLogger('dclord')
 
@@ -49,7 +50,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	
 	NotLoggedInError = 'not-logged-in'
 	
-	def __init__(self):
+	def __init__(self, path):
 		xml.sax.handler.ContentHandler.__init__(self)
 		self.user = {}
 		self.read_level = None
@@ -60,15 +61,27 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		self.parent_attrs = {}
 		self.actions = []
 		self.dip = False
+		self.path = path
 
+	def storeArchive(self):
+		dest_dir = os.path.join(os.path.join(config.getOptionsDir(), config.options['data']['backup-dir']), str(self.user['turn']))
+		util.assureDirExist(dest_dir)
+		dest = os.path.join(dest_dir, self.user['id']+'_'+os.path.basename(self.path))
+		log.info('saving original archive %s as %s'%(self.path, dest))
+		shutil.move(self.path, dest)
+		
 	def startElement(self, name, attrs):
 		if XmlHandler.NodeDC == name:
 			self.user.update( getAttrs(attrs, {'user':'name', 'id':'id', 'turn-n':'turn'}) )
 			print 'loaded user %s'%(self.user,)
+			
+			self.storeArchive()
+			
 			if 'turn' in self.user:
 				self.turn = int(self.user['turn'])
 				db.prepareTurn(self.turn)
 				print 'prepare turn %s'%(self.turn,)
+				
 				
 		elif XmlHandler.NotLoggedInError == name:
 			log.error('Not logged in - turn in progress')
@@ -180,9 +193,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.dip = False
 
 			
-def load_xml(path):
+def load_xml(path, path_archive):
 	p = xml.sax.make_parser()
-	p.setContentHandler(XmlHandler())
+	p.setContentHandler(XmlHandler(path_archive))
 	p.parse( open(path) )
 
 def processRawData(path):
@@ -192,7 +205,7 @@ def processRawData(path):
 	base = os.path.basename(path)
 	xml_path = os.path.join(xml_dir, base[:-3])
 	util.unpack(path, xml_path)
-	load_xml(xml_path)
+	load_xml(xml_path, path)
 
 def processAllUnpacked():
 	xml_dir = os.path.join(util.getTempDir(), config.options['data']['raw-xml-dir'])

@@ -43,6 +43,7 @@ user_id_dict = {}
 options = {
 		'data':{
 			'dir':'data',
+			'backup-dir':'backup',
 			'path':None,
 			'raw-dir':'raw',
 			'raw-xml-dir':'raw_xml',
