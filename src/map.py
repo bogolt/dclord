@@ -193,7 +193,11 @@ class Map(util.BufferedWindow):
 			sz = int(planet['s'])
 
 		col = None
-		owner_id = int(planet.get('owner_id', 0))
+		owner_id = planet.get('owner_id', 0)
+		if not owner_id:
+			owner_id = 0
+		else:
+			owner_id = int(owner_id)
 		if owner_id == self.selected_user_id:
 			col = config.options['map']['planet_selected_user_color']
 		else:

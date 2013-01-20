@@ -110,7 +110,7 @@ def loadCsv(file_name, turn_n = None):
 @util.run_once
 def loadGeoPlanets(turn_n = None):
 	for p in loadCsv('planets_geo', turn_n):
-		db.smartUpdate('planet', ['x=%s'%(p['x'],), 'y=%s'%(p['y'],)], p)
+		db.smartUpdate('planet', ['x=%s'%(p['x'],), 'y=%s'%(p['y'],)], p, turn_n)
 	
 def loadPlanets(turn_n = None):
 	loadTable('planet', 'planets', turn_n)
