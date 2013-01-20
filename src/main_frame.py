@@ -235,3 +235,4 @@ class DcFrame(wx.Frame):
 			serialization.load(turn)
 		self.map.turn = turn
 		self.map.update()
+		self.info_panel.update(self.map.turn)

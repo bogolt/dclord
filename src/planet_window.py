@@ -10,9 +10,10 @@ import unit_list
 log = logging.getLogger('dclord')
 
 class PlanetWindow(wx.Window):
-	def __init__(self, parent, coord = None):
+	def __init__(self, parent, coord = None, turn = None):
 		wx.Window.__init__(self, parent, wx.ID_ANY)
 		
+		self.turn = turn if turn else db.getTurn()
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
 		self.set_coord(coord)
@@ -27,7 +28,7 @@ class PlanetWindow(wx.Window):
 		
 		owner_id = 0
 		planet_name = ''
-		for planet in db.planets(db.getTurn(), ['x=%d'%(coord[0],), 'y=%d'%(coord[1],)], ('x','y','owner_id','o','e','m','t','s', 'name')):
+		for planet in db.planets(self.turn, ['x=%d'%(coord[0],), 'y=%d'%(coord[1],)], ('x','y','owner_id','o','e','m','t','s', 'name')):
 			planet_name = planet.get('name', '')
 			owner = planet['owner_id']
 			if not owner:
@@ -37,7 +38,7 @@ class PlanetWindow(wx.Window):
 		
 		owner_name = 'unknown'
 		if owner_id > 0:
-			for res in db.players(db.getTurn(), ['player_id=%s'%(owner_id,)]):
+			for res in db.players(self.turn, ['player_id=%s'%(owner_id,)]):
 				owner_name = res['name']
 		else:
 			owner_name = '<empty>'
@@ -74,12 +75,12 @@ class UnitStackWindow(wx.Window):
 
 import  wx.lib.scrolledpanel as scrolled
 class FleetWindow(scrolled.ScrolledPanel):
-	def __init__(self, parent, coord = None):
+	def __init__(self, parent, coord = None, turn = None):
 		scrolled.ScrolledPanel.__init__(self, parent, -1, size=(200,200))
 		self.vbox = wx.BoxSizer(wx.VERTICAL)
 		
-		self.setOwnedUnits(coord)
-		self.setAlienUnits(coord)
+		self.setOwnedUnits(coord, turn)
+		self.setAlienUnits(coord, turn)
 		
 		self.SetSizer( self.vbox )
 		self.SetAutoLayout( 1 )
@@ -91,13 +92,13 @@ class FleetWindow(scrolled.ScrolledPanel):
 		if self.GetAutoLayout():
 			self.Layout()
 	
-	def setOwnedUnits(self, coord):
+	def setOwnedUnits(self, coord, turn):
 		units = {}
 		if not coord:
 			return
 		
 		log.info('requesting fleet info at %s'%(coord,))
-		for fleet,unit in db.all_ownedUnits(db.getTurn(), coord):
+		for fleet,unit in db.all_ownedUnits(turn, coord):
 			cl = int(fleet['owner_id']), int(unit['class'])
 			if cl in units:
 				units[cl].add(unit)
@@ -108,7 +109,7 @@ class FleetWindow(scrolled.ScrolledPanel):
 		for u in units.values():
 			u.update()
 	
-	def setAlienUnits(self, coord):
+	def setAlienUnits(self, coord, turn):
 		units = {}
 		if not coord:
 			return
@@ -120,7 +121,7 @@ class FleetWindow(scrolled.ScrolledPanel):
 		
 		#  some values could be entered manually
 		keys = {}
-		for fleet,unit in db.all_alienUnits(db.getTurn(), coord):
+		for fleet,unit in db.all_alienUnits(turn, coord):
 			key = int(fleet['owner_id']), int(unit['carapace']), int(unit['weight'])
 			if key in keys:
 				keys[key].add(unit)
@@ -137,15 +138,23 @@ class InfoPanel(wx.Panel):
 		self.sizer = wx.BoxSizer(wx.VERTICAL)	
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
+		self.pos = (0,0)
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
+		self.turn = db.getTurn()
 
 	def selectObject(self, evt):
-		self.sizer.DeleteWindows()
-		self.sizer.Add( PlanetWindow(self, evt.attr1) )
-		self.sizer.Add( FleetWindow(self, evt.attr1), 1, flag=wx.EXPAND | wx.ALL)
-		self.sizer.Layout()
-				
+		self.pos = evt.attr1
+		self.update()
+
 	def onSize(self, evt):
 		if self.GetAutoLayout():
 			self.Layout()
 			
+	def update(self, turn = None):
+		if turn:
+			self.turn = turn
+		log.info('updating info panel, pos %s turn %d'%(self.pos, self.turn))
+		self.sizer.DeleteWindows()
+		self.sizer.Add( PlanetWindow(self, self.pos, self.turn) )
+		self.sizer.Add( FleetWindow(self, self.pos, self.turn), 1, flag=wx.EXPAND | wx.ALL)
+		self.sizer.Layout()
