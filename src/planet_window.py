@@ -57,15 +57,19 @@ class UnitStackWindow(wx.Window):
 		
 		self.units = {}
 		self.user_name = db.getUserName(owner_id)
+
+		self.text = wx.StaticText(self, wx.ID_ANY, '%d units, [%s]'%(len(self.units), self.user_name))
+		self.sizer.Add(self.text)
+		self.sizer.Layout()
 		
 		self.add(unit)
 	
 	def add(self, unit):
 		self.units[unit['id']] = unit
+		self.update()
 		
 	def update(self):
-		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, '%d units, [%s]'%(len(self.units), self.user_name)))
-		self.sizer.Layout()
+		self.text.SetLabel('%d units, [%s]'%(len(self.units), self.user_name))
 	
 
 import  wx.lib.scrolledpanel as scrolled
@@ -109,10 +113,22 @@ class FleetWindow(scrolled.ScrolledPanel):
 		if not coord:
 			return
 		
+		#type of alien unit: (carapase, weight)
+		#TODO: develop kind of alien Ship Unit Type, and evristicly fit ships into some of them
+		# based on real unit id it's speed, transport capacity, invisibility ability and war attributes can be determined
+		# it's name can be read when unit destroyed
+		
+		#  some values could be entered manually
+		keys = {}
 		for fleet,unit in db.all_alienUnits(db.getTurn(), coord):
-			uwindow = UnitStackWindow(self, fleet['owner_id'], unit)
-			uwindow.update()
-			self.vbox.Add( uwindow)
+			key = int(fleet['owner_id']), int(unit['carapace']), int(unit['weight'])
+			if key in keys:
+				keys[key].add(unit)
+			else:
+				uwindow = UnitStackWindow(self, fleet['owner_id'], unit)
+				keys[key] = uwindow
+				uwindow.update()
+				self.vbox.Add( uwindow)
 		
 class InfoPanel(wx.Panel):
 	def __init__(self, parent):
