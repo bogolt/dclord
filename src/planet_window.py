@@ -144,6 +144,7 @@ class InfoPanel(wx.Panel):
 
 	def selectObject(self, evt):
 		self.pos = evt.attr1
+		log.info('object select %s, updating'%(self.pos,))
 		self.update()
 
 	def onSize(self, evt):

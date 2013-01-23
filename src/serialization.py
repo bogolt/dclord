@@ -75,7 +75,9 @@ def save():
 	saveUsers()
 	savePlayers()
 
-def loadTable(table_name, file_name, turn_n = None, load_turn = None):
+def loadTable(table_name, file_name, turn_n = None, load_turn = None, cb = None):
+	if cb:
+		util.appendLog(cb, 'loading "%s" from turn %s'%(table_name, turn_n))
 	try:
 		path = config.options['data']['path']
 		if turn_n:
@@ -90,6 +92,12 @@ def loadTable(table_name, file_name, turn_n = None, load_turn = None):
 			db.setData(table_name, p, turn_n)
 	except IOError, e:
 		log.error('failed to load table %s: %s'%(table_name, e))
+		if cb:
+			util.appendLog(cb, 'Error loading "%s" from turn %s'%(table_name, turn_n))
+		return
+	if cb:
+		util.appendLog(cb, '"%s" from turn %s loaded'%(table_name, turn_n))
+
 		
 def loadCsv(file_name, turn_n = None):
 	path = config.options['data']['path']
@@ -108,38 +116,38 @@ def loadCsv(file_name, turn_n = None):
 	log.info('loading %s done'%(file_name,))
 
 @util.run_once
-def loadGeoPlanets(turn_n = None):
+def loadGeoPlanets(turn_n = None, cb = None):
 	for p in loadCsv('planets_geo', turn_n):
 		db.smartUpdate('planet', ['x=%s'%(p['x'],), 'y=%s'%(p['y'],)], p, turn_n)
 	
-def loadPlanets(turn_n = None):
-	loadTable('planet', 'planets', turn_n)
+def loadPlanets(turn_n = None, cb = None):
+	loadTable('planet', 'planets', turn_n, cb=cb)
 	if int(config.options['filter']['inhabited_planets'])==0:
 		loadGeoPlanets(turn_n)
 
-def loadFleets(turn_n = None):
+def loadFleets(turn_n = None, cb = None):
 	loadTable('fleet', 'fleets', turn_n)
 	loadTable('incoming_fleet', 'incoming_fleets', turn_n)
 	
-def loadUnits(turn_n = None):
-	loadTable('unit', 'units', turn_n)
+def loadUnits(turn_n = None, cb = None):
+	loadTable('unit', 'units', turn_n, cb=cb)
 
-def loadGarrisonUnits(turn_n = None):
-	loadTable('garrison_unit', 'garrison_units', turn_n)
+def loadGarrisonUnits(turn_n = None, cb = None):
+	loadTable('garrison_unit', 'garrison_units', turn_n, cb=cb)
 
-def loadAlienUnits(turn_n = None):
-	loadTable('alien_unit', 'alien_units', turn_n)
+def loadAlienUnits(turn_n = None, cb = None):
+	loadTable('alien_unit', 'alien_units', turn_n, cb=cb)
 	
-def loadProto(turn_n = None):
-	loadTable('proto', 'prototypes', None, turn_n)
-	loadTable('proto_action', 'proto_actions', None, turn_n)
+def loadProto(turn_n = None, cb = None):
+	loadTable('proto', 'prototypes', None, turn_n, cb=cb)
+	loadTable('proto_action', 'proto_actions', None, turn_n, cb=cb)
 	
-def loadUsers(turn_n = None):
-	loadTable('user', 'users', None, turn_n)
-	loadTable('hw', 'hw', turn_n)
+def loadUsers(turn_n = None, cb = None):
+	loadTable('user', 'users', None, turn_n, cb=cb)
+	loadTable('hw', 'hw', turn_n, cb=cb)
 	
-def loadPlayers(turn_n = None):
-	loadTable('player', 'players', turn_n)
+def loadPlayers(turn_n = None, cb = None):
+	loadTable('player', 'players', turn_n, cb=cb)
 
 def get_turn_number(s):
 	try:
@@ -147,10 +155,12 @@ def get_turn_number(s):
 	except:
 		return None
 
-def getLastTurn():
+def getLastTurn(cb = None):
 	path = config.options['data']['path']
 	max_turn = 0
 	if not os.path.exists(path):
+		if cb:
+			util.appendLog(cb, 'Data path specified "%s" does not exist'%(path,))
 		return 0
 		
 	for pt in os.listdir(path):
@@ -160,24 +170,30 @@ def getLastTurn():
 				db.db.turns[turn] = False
 				max_turn = max(max_turn, turn)
 	print 'loaded %s turns, max turn is %s'%(len(db.db.turns.keys()), max_turn)
+	if cb:
+		util.appendLog(cb, 'loaded %d turns, max turn is %d'%(len(db.db.turns.keys()), max_turn))
 	return max_turn
 
-def load(turn_n = None):
+def load(turn_n = None, ev_cb = None):
+	#TODO: make async ( other thread )
 	if not turn_n:
-		turn_n = getLastTurn()
+		turn_n = getLastTurn(ev_cb)
 	print 'loading turn %s'%(turn_n,)
 	if turn_n:
 		turn_n = str(turn_n)
+		
+	if ev_cb:
+		util.appendLog(ev_cb, 'loading %s turn'%(turn_n,))
 	db.prepareTurn(turn_n)
-	
-	loadPlanets(turn_n)
-	loadFleets(turn_n)
-	loadUnits(turn_n)
-	loadGarrisonUnits(turn_n)
-	loadAlienUnits(turn_n)
-	loadProto(turn_n)
-	loadUsers(turn_n)
-	loadPlayers(turn_n)
+
+	loadPlanets(turn_n, ev_cb)
+	loadFleets(turn_n, ev_cb)
+	loadUnits(turn_n, ev_cb)
+	loadGarrisonUnits(turn_n, ev_cb)
+	loadAlienUnits(turn_n, ev_cb)
+	loadProto(turn_n, ev_cb)
+	loadUsers(turn_n, ev_cb)
+	loadPlayers(turn_n, ev_cb)
 
 #def asyncLoad():
 #	import thread

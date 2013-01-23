@@ -47,8 +47,15 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	PerformAction = 'act'
 	Diplomacy = 'diplomacy'
 	DipRelation = 'rel'
+	Errors = 'errors'
+	Error = 'error'
 	
 	NotLoggedInError = 'not-logged-in'
+	
+	StatusOk = 0
+	StatusTurnInProgress = 1
+	StatusAuthError = 2
+	StatusError = 3
 	
 	def __init__(self, path):
 		xml.sax.handler.ContentHandler.__init__(self)
@@ -62,6 +69,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		self.actions = []
 		self.dip = False
 		self.path = path
+		self.status = self.StatusOk
+		self.errors = None
 
 	def storeArchive(self):
 		dest_dir = os.path.join(os.path.join(config.getOptionsDir(), config.options['data']['backup-dir']), str(self.user['turn']))
@@ -75,16 +84,33 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.user.update( getAttrs(attrs, {'user':'name', 'id':'id', 'turn-n':'turn'}) )
 			print 'loaded user %s'%(self.user,)
 			
-			self.storeArchive()
+			if 'id' in self.user and 'turn' in self.user:
+				self.storeArchive()
 			
 			if 'turn' in self.user:
 				self.turn = int(self.user['turn'])
 				db.prepareTurn(self.turn)
 				print 'prepare turn %s'%(self.turn,)
 				
-				
-		elif XmlHandler.NotLoggedInError == name:
-			log.error('Not logged in - turn in progress')
+		elif XmlHandler.Errors == name:
+			log.error('Found errors node')
+			self.errors = True
+
+		elif XmlHandler.Error == name and self.errors:
+			log.error('Found error node!')
+			errid = int(attrs['id'])
+			if errid == 10000:
+				self.status = self.StatusAuthError
+				log.error('Error id %s'%(attrs['id'],))
+			elif errid != 10025:
+				self.status = self.StatusError
+				log.error('Error id %s'%(attrs['id'],))
+			
+			
+		#elif XmlHandler.NotLoggedInError == name:
+		#	log.error('Not logged in - turn in progress')
+		#	self.status = self.StatusTurnInProgress
+			
 		elif XmlHandler.UserInfo == name:
 			d = getAttrs(attrs, {'homeworldx':'hw_x', 'homeworldy':'hw_y', 'race-id':'race_id', 'login':"login"})
 			self.user.update( d )
@@ -186,6 +212,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.pos = None
 		elif XmlHandler.Iframe == name:
 			self.iframe = False
+		elif XmlHandler.Errors == name:
+			self.errors = None
 		elif XmlHandler.NodeDC:
 			if self.actions:
 				wx.PostEvent(cb, event.ActionsReply(attr1=self.user, attr2=self.actions))
@@ -195,8 +223,10 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			
 def load_xml(path, path_archive):
 	p = xml.sax.make_parser()
-	p.setContentHandler(XmlHandler(path_archive))
+	handler = XmlHandler(path_archive)
+	p.setContentHandler(handler)
 	p.parse( open(path) )
+	return handler.status
 
 def processRawData(path):
 	log.debug('processing raw data %s'%(path,))
@@ -205,7 +235,7 @@ def processRawData(path):
 	base = os.path.basename(path)
 	xml_path = os.path.join(xml_dir, base[:-3])
 	util.unpack(path, xml_path)
-	load_xml(xml_path, path)
+	return load_xml(xml_path, path)
 
 def processAllUnpacked():
 	xml_dir = os.path.join(util.getTempDir(), config.options['data']['raw-xml-dir'])

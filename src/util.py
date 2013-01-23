@@ -4,6 +4,8 @@ import os
 import os.path
 import shutil
 import tempfile
+import event
+from datetime import datetime
 
 def getTempDir():
 	return os.path.join(tempfile.gettempdir(), 'dclord')
@@ -149,3 +151,7 @@ class BufferedWindow(wx.Window):
 		'paint prerendered image on screen'
 		dc = wx.BufferedPaintDC(self, self.image)
 
+def appendLog(cb, text):
+	print str(datetime.now()) + " " + text + '\n'
+	cb.log(text)
+	#wx.PostEvent(cb, event.LogAppend(attr1=text))

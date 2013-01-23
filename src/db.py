@@ -340,7 +340,7 @@ def items(table, flt, keys, turn_n = None, verbose = False):
 		c.execute(s)
 	except sqlite3.Error, e:
 		print traceback.format_stack()
-		log.error('Error %s, when executing: %s'%(e, s))
+		log.error('Error %s, when executing: %s\ntable %s, filter: %s, turn %s'%(e, s, table, flt, turn_n))
 	for r in c:
 		yield dict(zip(keys,r))
 

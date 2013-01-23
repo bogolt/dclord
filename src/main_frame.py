@@ -16,6 +16,7 @@ import area_panel
 import request
 import planet_window
 import history
+from datetime import datetime
 
 log = logging.getLogger('dclord')
 
@@ -32,14 +33,7 @@ class DcFrame(wx.Frame):
 		
 		if int(config.options['window']['is_maximized'])==1:
 			self.Maximize()
-		
-		serialization.load()
-		print 'db max turn is %s'%(db.getTurn(),)
-		self.map = map.Map(self)
-		self.map.turn = db.getTurn()
-		print 'map turn is set to %s'%(self.map.turn,)
-		self.map.update()
-				
+					
 		#import_raw.processAllUnpacked()
 		#self.map.turn = db.db.max_turn
 		
@@ -48,7 +42,22 @@ class DcFrame(wx.Frame):
 		self.object_filter = object_filter.FilterPanel(self)
 		self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
 		self.history = history.HistoryPanel(self)
+		self.log_dlg = wx.TextCtrl(self, 1, style=wx.TE_MULTILINE)
+		self.log_dlg.Disable()
+		self.log_dlg.SetBackgroundColour('WHITE')
 		#self.area_list = area_panel.AreaListWindow(self)
+		
+		serialization.load(ev_cb = self)
+		self.info_panel.turn = db.getTurn()
+		print 'db max turn is %s'%(db.getTurn(),)
+		self.map = map.Map(self)
+		self.map.turn = db.getTurn()
+		print 'map turn is set to %s'%(self.map.turn,)
+		self.map.update()
+
+		
+		if self.map.turn != 0:
+			self.log('loaded data for turn %d'%(self.map.turn,))
 		
 		self.pendingActions = {}
 		
@@ -66,6 +75,7 @@ class DcFrame(wx.Frame):
 		self._mgr.AddPane(self.info_panel, wx.LEFT, "Info")
 		self._mgr.AddPane(self.object_filter, wx.LEFT, "Filter")
 		self._mgr.AddPane(self.unit_list, wx.RIGHT, "Units")
+		self._mgr.AddPane(self.log_dlg, wx.BOTTOM, "Log")
 		#self._mgr.AddPane(self.area_list, wx.RIGHT, "Areas")
 		
 		self._mgr.Update()
@@ -78,6 +88,7 @@ class DcFrame(wx.Frame):
 		self.Bind(event.EVT_ACTIONS_REPLY, self.onActionsReply)
 		self.Bind(event.EVT_SELECT_OBJECT, self.info_panel.selectObject)
 		self.Bind(event.EVT_TURN_SELECTED, self.onTurnSelected)
+		self.Bind(event.EVT_LOG_APPEND, self.onLog)
 	
 		#import_raw.processAllUnpacked()
 		#serialization.save()
@@ -204,18 +215,31 @@ class DcFrame(wx.Frame):
 		actions = event.attr2
 		
 		#self.pendingActions[int(user['id'])]
-			
+	
+	def log(self, message):
+		self.log_dlg.AppendText('%s %s\n'%(datetime.now(), message))
+
+	def onLog(self, evt):
+		self.log_dlg.AppendText(str(datetime.now()) + " " + evt.attr1 + '\n')
+	
 	def onDownloadRawData(self, evt):
 		key = evt.attr1
 		data = evt.attr2
 		if not key:
 			log.info('all requested data downloaded')
+			self.log('All requested data downloaded')
 			serialization.save()
 			return
 		if not data:
 			log.error('failed to load info for user %s'%(key,))
+			self.log('Error: failed to load info for user %s'%(key,))
 			return
-		import_raw.processRawData(data)
+		
+		self.log('Downloaded %s %s'%(key, data))
+		status = import_raw.processRawData(data)
+		if status != import_raw.XmlHandler.StatusOk:
+			status_text = 'Not authorized' if status == import_raw.XmlHandler.StatusAuthError else 'Turn in progress'
+			self.log('Error processing %s %s'%(key, status_text))
 		self.map.turn = db.db.max_turn
 		self.map.update()
 		self.history.updateTurns(self.map.turn)
@@ -232,7 +256,8 @@ class DcFrame(wx.Frame):
 		turn = evt.attr1
 		#only load if db does not know about this turn
 		if not turn in db.db.turns or not db.db.turns[turn]:
-			serialization.load(turn)
+			serialization.load(turn, self)
 		self.map.turn = turn
 		self.map.update()
+		log.info('update info panel with turn %s'%(self.map.turn,))
 		self.info_panel.update(self.map.turn)
