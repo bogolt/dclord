@@ -37,19 +37,21 @@ class DcFrame(wx.Frame):
 		#import_raw.processAllUnpacked()
 		#self.map.turn = db.db.max_turn
 		
+
+		self.log_dlg = wx.TextCtrl(self, 1, style=wx.TE_MULTILINE)
+		self.log_dlg.Disable()
+		self.log_dlg.SetBackgroundColour('WHITE')
+		serialization.load(ev_cb = self)
 		
 		self.info_panel = planet_window.InfoPanel(self)
 		self.object_filter = object_filter.FilterPanel(self)
 		self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
 		self.history = history.HistoryPanel(self)
-		self.log_dlg = wx.TextCtrl(self, 1, style=wx.TE_MULTILINE)
-		self.log_dlg.Disable()
-		self.log_dlg.SetBackgroundColour('WHITE')
 		#self.area_list = area_panel.AreaListWindow(self)
-		
-		serialization.load(ev_cb = self)
+
 		self.info_panel.turn = db.getTurn()
 		print 'db max turn is %s'%(db.getTurn(),)
+		
 		self.map = map.Map(self)
 		self.map.turn = db.getTurn()
 		print 'map turn is set to %s'%(self.map.turn,)
