@@ -57,6 +57,7 @@ class Map(util.BufferedWindow):
 		#self.filterDrawAreas = bool(config.options['filter']['areas'])
 		
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
+		self.pf = None
 
 		util.BufferedWindow.__init__(self, parent)
 
@@ -64,6 +65,8 @@ class Map(util.BufferedWindow):
 		
 		self.click_timer = wx.Timer(self, wx.ID_ANY)
 		self.motionEvent = []
+		
+		
 		
 		self.Bind(wx.EVT_LEFT_UP, self.onLeftUp)
 		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)		
@@ -186,7 +189,8 @@ class Map(util.BufferedWindow):
 		
 	def drawPlanet(self, dc, planet):
 
-		rx,ry = self.relPos(objPos(planet))
+		planetPos = objPos(planet)
+		rx,ry = self.relPos(planetPos)
 		
 		sz = 1
 		if 's' in planet and planet['s']:
@@ -204,12 +208,12 @@ class Map(util.BufferedWindow):
 			col = getOwnerColor(owner_id)
 
 		dc.SetPen(wx.Pen(colour=col, width=1))
-		
+
 		if self.cell_size == 1:
 			dc.DrawPoint(rx, ry)
 		else:
 			dc.DrawCircle(rx, ry, self.relSize(sz))
-	
+				
 	def visibleAreaFilter(self, xname='x', yname='y'):
 		f = []
 		f.append('%s>=%d'%(xname, int(self.offset_pos[0])))
@@ -276,8 +280,34 @@ class Map(util.BufferedWindow):
 			print 'wrong turn %s'%(self.turn,)
 		self.drawCoordinates(dc)
 		
+		if self.pf:
+			self.drawPathFind(dc)
+		
 		#if self.filterDrawAreas:
 		#	self.drawAreas(dc, rect)
+		
+	def drawPathFind(self, dc):
+		
+		routes = self.pf.routes
+		color = config.options['map']['route_test_color']
+		if self.pf.is_done():
+			color = config.options['map']['route_found_color']
+			routes = self.pf.best_route()
+		
+		for posA, route_info in routes.iteritems():
+			posB = route_info[0]
+			arx,ary = self.relPos(posA)
+			brx,bry = self.relPos(posB)
+			
+			dc.SetPen(wx.Pen(colour=color, width=2))
+			dc.DrawLine(arx, ary, brx, bry)
+		ax,ay = self.relPos( self.pf.start_pos )
+		bx,by = self.relPos( self.pf.end_pos )
+		
+
+		if not self.pf.is_done():
+			dc.SetPen(wx.Pen(colour=config.options['map']['route_direct_color'], width=2))
+			dc.DrawLine(ax, ay, bx, by)
 			
 	def drawAreas(self, dc, rect):
 		ar = [(200,200), (200,300), (300,300), (300, 200)]
@@ -322,3 +352,6 @@ class Map(util.BufferedWindow):
 		#self.centerAt( db.getUserHw(user_id, db.getTurn()) )
 		self.selected_user_id = user_id
 		self.update()
+
+	def show_route(self, pf):
+		self.pf = pf

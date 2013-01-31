@@ -1,5 +1,4 @@
 import sqlite3
-#from objects import Planet, Fleet, Unit, Player, Proto
 import logging
 import sys, traceback
 

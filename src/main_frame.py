@@ -16,6 +16,7 @@ import area_panel
 import request
 import planet_window
 import history
+import algorithm
 from datetime import datetime
 
 log = logging.getLogger('dclord')
@@ -57,6 +58,8 @@ class DcFrame(wx.Frame):
 		print 'map turn is set to %s'%(self.map.turn,)
 		self.map.update()
 
+		
+		self.pf = None
 		
 		if self.map.turn != 0:
 			self.log('loaded data for turn %d'%(self.map.turn,))
@@ -110,6 +113,7 @@ class DcFrame(wx.Frame):
 		self.updateMenu = gameMenu.Append(wx.ID_ANY, "&Download from sever")
 		#self.uploadMenu = gameMenu.Append(wx.ID_ANY, "&Upload to server")
 		usersMenu = gameMenu.Append(wx.ID_ANY, "U&sers")
+		routesMenu = gameMenu.Append(wx.ID_ANY, "&Routes")
 		
 		#actionMenu = wx.Menu()
 		#actionDefineArea = actionMenu.Append(
@@ -122,9 +126,26 @@ class DcFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)
 		#self.Bind(wx.EVT_MENU, self.onUpload, self.uploadMenu)
 		self.Bind(wx.EVT_MENU, self.onShowUsers, usersMenu)
+		self.Bind(wx.EVT_MENU, self.onCalculateRoutes, routesMenu)
 	
 		self.Bind(wx.EVT_CLOSE, self.onClose, self)
+	
+	def onCalculateRoutes(self, evt):
+		planets = []
+		for p in db.planets(self.map.turn, ['owner_id is not null'], ('x', 'y')):
+			planets.append( (int(p['x']), int(p['y'])))
+			
 		
+		self.pf = algorithm.PathFinder(planets[0], planets[1], 1.2, 9, planets)
+		self.map.show_route(self.pf)
+		self.map.update()
+		
+		isdone = False
+		while not isdone:
+			isdone = self.pf.step()
+			self.map.update()
+			wx.Yield()
+	
 	def showHidePane(self, paneObject):
 		pane = self._mgr.GetPane(paneObject)
 		if pane.IsShown():
