@@ -290,7 +290,7 @@ class Map(util.BufferedWindow):
 		
 		routes = self.pf.routes
 		color = config.options['map']['route_test_color']
-		if self.pf.is_done():
+		if self.pf.is_found():
 			color = config.options['map']['route_found_color']
 			routes = self.pf.best_route()
 		
@@ -305,7 +305,7 @@ class Map(util.BufferedWindow):
 		bx,by = self.relPos( self.pf.end_pos )
 		
 
-		if not self.pf.is_done():
+		if not self.pf.is_found():
 			dc.SetPen(wx.Pen(colour=config.options['map']['route_direct_color'], width=2))
 			dc.DrawLine(ax, ay, bx, by)
 			

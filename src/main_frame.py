@@ -136,9 +136,17 @@ class DcFrame(wx.Frame):
 			planets.append( (int(p['x']), int(p['y'])))
 			
 		
-		self.pf = algorithm.PathFinder(planets[0], planets[1], 1.2, 9, planets)
+		self.pf = algorithm.PathFinder(planets[0], planets[1], 1.2, 6, planets)
 		self.map.show_route(self.pf)
 		self.map.update()
+		
+		while self.pf.angle < 120:
+			self.findRoute()
+			if self.pf.is_found():
+				break
+			self.pf.extend()
+		
+	def findRoute(self):
 		
 		isdone = False
 		while not isdone:

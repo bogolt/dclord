@@ -56,12 +56,19 @@ class PathFinder:
 		self.routes = {self.start_pos:(self.start_pos, 0)}
 		self.new_routes = [self.start_pos]
 		
-		self.angle = 9 #biggest possible deflection from direct route
+		self.angle = 5 #biggest possible deflection from direct route
 
-	def is_done(self):
+	def extend(self):
+		self.angle += 5
+		self.new_routes = self.routes.copy()
+		
+	def is_found(self):
 		if self.end_pos in self.routes:
 			return True
 		return False
+		
+	def is_done(self):
+		return len(self.new_routes) == 0
 		
 	def best_route(self):
 		route = {}
@@ -84,7 +91,7 @@ class PathFinder:
 		self.fill_possible()
 		self.calculate_next_step()
 		
-		if self.end_pos in self.routes:
+		if self.is_done():
 			return True
 		return False
 	
@@ -97,7 +104,17 @@ class PathFinder:
 		for pt, l in ijp:
 			dist += l
 		return dist
-			
+	
+	def get_route_length(self, pos):
+		
+		prev = pos
+		l = 0 
+		while prev != self.start_pos:
+			cur = self.routes[prev]
+			l += cur[1]
+			prev = cur[0]
+		return l
+	
 	def best_path(self, point, src_list):
 		if len(src_list) == 1:
 			l = self.get_real_length(point, src_list[0])
