@@ -43,7 +43,7 @@ class PlayerFilter(wx.Window):
 			checkbox = wx.CheckBox(self, label=user['name'])
 			checkbox.Bind(wx.EVT_CHECKBOX, self.userChanged)
 			self.users[int(user['id'])] = checkbox
-			checkbox.SetValue(True)
+			checkbox.SetValue(False)
 			sizer.Add(checkbox)
 			
 		self.SetSizer(sizer)

@@ -9,6 +9,32 @@ import unit_list
 
 log = logging.getLogger('dclord')
 
+class StackedObject(wx.Window):
+	def __init__(self, parent, unit):
+		wx.Window.__init__(self, parent, wx.ID_ANY)
+		
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.units = []
+		
+		sz = wx.BoxSizer(wx.HORIZONTAL)
+		self.text = wx.StaticText(self, wx.ID_ANY, 'x%d'%(len(self.units),))
+		sz.Add( self.text )
+		sz.Add( unit_list.UnitPrototypeWindow(self, unit) )
+		
+		self.sizer.Add(sz)
+		self.SetSizer(self.sizer)
+		self.sizer.Layout()
+
+		self.add(unit)
+	
+	def add(self, unit):
+		self.units.append(unit)
+		self.update()
+		
+	def update(self):
+		self.text.SetLabel('x%d'%(len(self.units),))
+		self.sizer.Layout()
+	
 class PlanetWindow(wx.Window):
 	def __init__(self, parent, coord = None, turn = None):
 		wx.Window.__init__(self, parent, wx.ID_ANY)
@@ -45,6 +71,18 @@ class PlanetWindow(wx.Window):
 		
 		self.sizer.Add(wx.StaticText(self, wx.ID_ANY, '%s:%s %s'%(coord[0],coord[1], planet_name)))
 		self.sizer.Add(wx.StaticText(self, wx.ID_ANY, owner_name))
+		
+		gunits = {}
+		for gu in db.garrison_units(self.turn, ['x=%d'%(coord[0],), 'y=%d'%(coord[1],)]):
+			
+			cl = int(gu['class'])
+			if cl in gunits:
+				gunits[cl].add(gu)
+			else:
+				uwindow = StackedObject(self, gu)
+				gunits[cl] = uwindow
+				self.sizer.Add( uwindow )
+		
 		self.sizer.Layout()
 
 class UnitStackWindow(wx.Window):

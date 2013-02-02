@@ -380,7 +380,12 @@ def units(turn_n, flt, keys = None):
 	k = ('id', 'fleet_id', 'class', 'hp') if not keys else keys
 	for unit in items('unit', flt, k, turn_n):
 		yield unit
-				
+
+def garrison_units(turn_n, flt, keys = None):
+	k = ('id', 'class', 'hp') if not keys else keys
+	for unit in items(Db.GARRISON_UNIT, flt, k, turn_n):
+		yield unit
+						
 def alienUnits(turn_n, flt, keys = None):
 	k = ('id', 'fleet_id', 'class', 'carapace', 'color', 'weight') if not keys else keys
 	for unit in items(Db.ALIENT_UNIT, flt, k, turn_n):
