@@ -46,7 +46,8 @@ class DcFrame(wx.Frame):
 		
 		self.info_panel = planet_window.InfoPanel(self)
 		self.object_filter = object_filter.FilterPanel(self)
-		self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
+		self.planet_filter = object_filter.FilterFrame(self)
+		#self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
 		self.history = history.HistoryPanel(self)
 		#self.area_list = area_panel.AreaListWindow(self)
 
@@ -78,8 +79,9 @@ class DcFrame(wx.Frame):
 		self._mgr.AddPane(self.map, info)
 		self._mgr.AddPane(self.history, wx.LEFT, "Turn")
 		self._mgr.AddPane(self.info_panel, wx.LEFT, "Info")
+		self._mgr.AddPane(self.planet_filter, wx.LEFT, "Planets")
 		self._mgr.AddPane(self.object_filter, wx.LEFT, "Filter")
-		self._mgr.AddPane(self.unit_list, wx.RIGHT, "Units")
+		#self._mgr.AddPane(self.unit_list, wx.RIGHT, "Units")
 		self._mgr.AddPane(self.log_dlg, wx.BOTTOM, "Log")
 		#self._mgr.AddPane(self.area_list, wx.RIGHT, "Areas")
 		
@@ -279,7 +281,7 @@ class DcFrame(wx.Frame):
 	def onSelectUser(self, evt):
 		user_id = evt.attr1
 		#user_id = int(config.users[login]['id'])
-		self.unit_list.setPlayer( user_id )
+		#self.unit_list.setPlayer( user_id )
 		print 'selecting user %s'%(user_id, )
 		self.map.selectUser( user_id) 
  

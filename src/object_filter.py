@@ -4,7 +4,7 @@ import db
 import event
 import config
 import serialization
-
+import planet_window
 import wx.lib.agw.floatspin
 
 log = logging.getLogger('dclord')
@@ -32,13 +32,93 @@ class ProtoFilter(wx.Window):
 		self.SetSizer(sizer)
 		self.Layout()
 
-class FilterPanel(wx.Panel):
+
+class PlayerFilter(wx.Window):
+	def __init__(self, parent, only_my_users = True):
+		wx.Window.__init__(self, parent, wx.ID_ANY)
+		sizer = wx.BoxSizer(wx.VERTICAL)
+		
+		self.users = {}
+		for user in db.users():
+			checkbox = wx.CheckBox(self, label=user['name'])
+			checkbox.Bind(wx.EVT_CHECKBOX, self.userChanged)
+			self.users[int(user['id'])] = checkbox
+			checkbox.SetValue(True)
+			sizer.Add(checkbox)
+			
+		self.SetSizer(sizer)
+		
+		self.Layout()
+		
+	def userChanged(self, evt):
+		self.GetParent().updatePlanets()
+		
+	def player_ids(self):
+		for uid, cb in self.users.iteritems():
+			if cb.IsChecked():
+				yield uid
+
+
+import  wx.lib.scrolledpanel as scrolled
+class PlanetList(scrolled.ScrolledPanel):
 	def __init__(self, parent):
-		wx.Window.__init__(self, parent, -1, size=(120,200))
+		scrolled.ScrolledPanel.__init__(self, parent, -1, size=(200,200))
 		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		pf = ProtoFilter(self)
-		self.sizer.Add(pf)
+		self.SetSizer(self.sizer)
+		
+		self.Bind(wx.EVT_SIZE, self.onSize, self)
+		#self.SetAutoLayout(True)
+		self.SetupScrolling()
+		self.planets = {}
+		
+	def addPlanets(self, players):
+		self.sizer.DeleteWindows()
+		pl = {}
+		
+		for pl_id in players.player_ids():
+			for planet in db.planets(db.getTurn(), ['owner_id=%d'%(pl_id,)] ):
+				coord = (int(planet['x']), int(planet['y']))
+				p = planet_window.PlanetWindow(self, coord, db.getTurn())
+				self.planets[coord] = p
+				self.sizer.Add( p )
+				
+		self.sizer.Layout()
+		
+	def onSize(self, evt):
+		if self.GetAutoLayout():
+			self.Layout()
+			
+
+class FilterFrame(wx.Panel):
+	def __init__(self, parent):
+		wx.Window.__init__(self, parent, -1, size=(90,40))
+
+		self.players = PlayerFilter(self)
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer.Add(self.players)
+		self.pl = PlanetList(self)
+		self.sizer.Add(self.pl)
+		self.SetSizer(self.sizer)
+		self.Bind(wx.EVT_SIZE, self.onSize, self)
+		self.pl.addPlanets(self.players)
+	
+	def updatePlanets(self):
+		self.pl.Destroy()
+		self.pl = PlanetList(self)
+		self.sizer.Add(self.pl)
+		self.pl.addPlanets(self.players)
+		self.sizer.Layout()
+	
+	def onSize(self, evt):
+		if self.GetAutoLayout():
+			self.Layout()
+
+class FilterPanel(wx.Panel):
+	def __init__(self, parent):
+		wx.Window.__init__(self, parent, -1, size=(90,40))
+		
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
 		self.SetAutoLayout(True)
 		self.show_known = wx.CheckBox(self, -1, "Inhabited planets")

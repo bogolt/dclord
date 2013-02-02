@@ -39,6 +39,11 @@ def nearest(dest, points):
 		m = min(m, get_distance(dest, pt))
 	return m
 
+#TODO
+# * jump to/from closed planet
+# * optimize path choosing
+# * get all intermediate jump points
+
 class PathFinder:
 	def __init__(self, start_pos, end_pos, speed, max_distance, jumpable_points):
 		self.start_pos = start_pos
