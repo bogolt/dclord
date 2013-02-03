@@ -106,7 +106,7 @@ class BuildingCheckBox(wx.Window):
 		img.SetBitmap( image.smaller(image.getBcImage( uid ) ) )
 		sizer.Add( img )
 		
-		self.cb = wx.CheckBox(self, label='building' )
+		self.cb = wx.CheckBox(self, label='' )
 		sizer.Add ( self.cb )
 		
 		self.cb.Bind(wx.EVT_CHECKBOX, self.building_filter)
@@ -127,24 +127,36 @@ class BuildingFilter(wx.Window):
 		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		
+		grid = wx.GridSizer(3,4)
+		
 		self.buildings = {}
 		
-		for uid in xrange(1,6):
+		buildings  = [4,5,12,13,14,22,25,28,30,31,32,33,34,36,37,38,41,42]
+		
+		blds = []
+		for uid in buildings:
 			b = BuildingCheckBox(self, uid)
 			self.buildings[uid] = b
-			self.sizer.Add( b )
+			blds.append((b, 0, wx.EXPAND))
+			#self.sizer.Add( b )
+		
+		grid.AddMany( blds )
+		
+		self.sizer.Add(grid)
 		
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
 	
-	def update_filters(self):
+	def get_selected_buildings(self):
 		buildings_id_ids_list = []
 		
 		for bid, bcb in self.buildings.iteritems():
 			if bcb.is_on():
 				buildings_id_ids_list.append( bid )
-				
-		self.GetParent().updatePlanets(buildings_id_ids_list)
+		return buildings_id_ids_list
+	
+	def update_filters(self):
+		self.GetParent().updatePlanets()
 
 class FilterFrame(wx.Panel):
 	def __init__(self, parent):
@@ -161,11 +173,11 @@ class FilterFrame(wx.Panel):
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
 		self.pl.addPlanets(self.players)
 	
-	def updatePlanets(self, buildings = None):
+	def updatePlanets(self):
 		self.pl.Destroy()
 		self.pl = PlanetList(self)
 		self.sizer.Add(self.pl)
-		self.pl.addPlanets(self.players, buildings)
+		self.pl.addPlanets(self.players, self.buildings.get_selected_buildings())
 		self.sizer.Layout()
 		
 		wx.PostEvent(self.GetParent(), event.MapUpdate())
