@@ -36,3 +36,11 @@ def loadBcImage(bc):
 def getBcImage(bc):
 	global image_bc_cache
 	return image_bc_cache.setdefault(bc, loadBcImage(bc))
+
+def smaller(bitmap, ratio = 2):
+	img = bitmap.ConvertToImage()
+	w = img.GetWidth()
+	h = img.GetHeight()
+		
+	scaled = img.Scale( w / ratio, h / ratio )
+	return wx.BitmapFromImage(scaled)
