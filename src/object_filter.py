@@ -94,6 +94,11 @@ class PlanetList(scrolled.ScrolledPanel):
 			self.Layout()
 			
 
+class BuildingFilter(wx.Window):
+	def __init__(self, parent):
+		wx.Window.__init__(self, parent)
+		
+
 class FilterFrame(wx.Panel):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(90,40))

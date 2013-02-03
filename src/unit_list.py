@@ -8,8 +8,18 @@ import image
 
 log = logging.getLogger('dclord')
 
+def getStandardName(proto):
+	if 'id' in proto:
+		pid = int(proto['id'])
+		if pid == 1:
+			return 'Factory'
+	return 'standard'
+		
+
 def getProtoName(proto):
 	if 'name' in proto:
+		if not proto['name']:
+			return getStandardName(proto)
 		return proto['name']
 	log.info('proto unkown %s'%(proto,))
 	return '<?>'
