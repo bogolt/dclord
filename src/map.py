@@ -54,6 +54,7 @@ class Map(util.BufferedWindow):
 		self.filterDrawFleets = bool(config.options['filter']['fleets'])
 		self.turn = 0
 		self.selected_user_id = 0
+		self.planet_filter_ptr = None
 		#self.filterDrawAreas = bool(config.options['filter']['areas'])
 		
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
@@ -212,7 +213,12 @@ class Map(util.BufferedWindow):
 		if self.cell_size == 1:
 			dc.DrawPoint(rx, ry)
 		else:
+			if self.planet_filter_ptr and self.planet_filter_ptr.is_planet_shown(planetPos):
+				dc.SetBrush(wx.Brush('red'))
 			dc.DrawCircle(rx, ry, self.relSize(sz))
+			dc.SetBrush(wx.Brush('white'))
+				#dc.SetPen(wx.Pen(colour=col, width=2))
+				#dc.DrawCircle(rx, ry, self.relSize(sz))
 				
 	def visibleAreaFilter(self, xname='x', yname='y'):
 		f = []
@@ -355,3 +361,6 @@ class Map(util.BufferedWindow):
 
 	def show_route(self, pf):
 		self.pf = pf
+	
+	def set_planet_filter(self, pf):
+		self.planet_filter_ptr = pf

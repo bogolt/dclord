@@ -56,6 +56,7 @@ class DcFrame(wx.Frame):
 		
 		self.map = map.Map(self)
 		self.map.turn = db.getTurn()
+		self.map.set_planet_filter(self.planet_filter)
 		print 'map turn is set to %s'%(self.map.turn,)
 		self.map.update()
 
@@ -84,6 +85,8 @@ class DcFrame(wx.Frame):
 		#self._mgr.AddPane(self.unit_list, wx.RIGHT, "Units")
 		self._mgr.AddPane(self.log_dlg, wx.BOTTOM, "Log")
 		#self._mgr.AddPane(self.area_list, wx.RIGHT, "Areas")
+		
+		#self.map.set_planet_fileter(self.planet_filter)
 		
 		self._mgr.Update()
 		

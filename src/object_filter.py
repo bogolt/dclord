@@ -72,9 +72,13 @@ class PlanetList(scrolled.ScrolledPanel):
 		self.SetupScrolling()
 		self.planets = {}
 		
+	def has_planet(self, coord):
+		if coord in self.planets:
+			return True
+		return False
+		
 	def addPlanets(self, players):
 		self.sizer.DeleteWindows()
-		pl = {}
 		
 		for pl_id in players.player_ids():
 			for planet in db.planets(db.getTurn(), ['owner_id=%d'%(pl_id,)] ):
@@ -109,6 +113,11 @@ class FilterFrame(wx.Panel):
 		self.sizer.Add(self.pl)
 		self.pl.addPlanets(self.players)
 		self.sizer.Layout()
+		
+		wx.PostEvent(self.GetParent(), event.MapUpdate())
+		
+	def is_planet_shown(self, coord):
+		return self.pl.has_planet(coord)
 	
 	def onSize(self, evt):
 		if self.GetAutoLayout():

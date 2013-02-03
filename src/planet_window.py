@@ -36,17 +36,14 @@ class StackedObject(wx.Window):
 		self.sizer.Layout()
 	
 class PlanetWindow(wx.Window):
-	def __init__(self, parent, coord = None, turn = None):
+	def __init__(self, parent, coord = None, turn = None, show_units = False):
 		wx.Window.__init__(self, parent, wx.ID_ANY)
 		
 		self.turn = turn if turn else db.getTurn()
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
-		self.set_coord(coord)
-		
-	def set_coord(self, coord):
+
 		self.coord = coord
-		self.sizer.DeleteWindows()
 		
 		if not self.coord:
 			self.sizer.Layout()
@@ -72,7 +69,13 @@ class PlanetWindow(wx.Window):
 		self.sizer.Add(wx.StaticText(self, wx.ID_ANY, '%s:%s %s'%(coord[0],coord[1], planet_name)))
 		self.sizer.Add(wx.StaticText(self, wx.ID_ANY, owner_name))
 		
+		if show_units:
+			self.addUnits()
+		self.sizer.Layout()
+		
+	def addUnits(self):
 		gunits = {}
+		coord = self.coord
 		for gu in db.garrison_units(self.turn, ['x=%d'%(coord[0],), 'y=%d'%(coord[1],)]):
 			
 			cl = int(gu['class'])
@@ -83,7 +86,7 @@ class PlanetWindow(wx.Window):
 				gunits[cl] = uwindow
 				self.sizer.Add( uwindow )
 		
-		self.sizer.Layout()
+		
 
 class UnitStackWindow(wx.Window):
 	def __init__(self, parent, owner_id, unit):
@@ -194,6 +197,6 @@ class InfoPanel(wx.Panel):
 			self.turn = turn
 		log.info('updating info panel, pos %s turn %d'%(self.pos, self.turn))
 		self.sizer.DeleteWindows()
-		self.sizer.Add( PlanetWindow(self, self.pos, self.turn) )
+		self.sizer.Add( PlanetWindow(self, self.pos, self.turn, True) )
 		self.sizer.Add( FleetWindow(self, self.pos, self.turn), 1, flag=wx.EXPAND | wx.ALL)
 		self.sizer.Layout()
