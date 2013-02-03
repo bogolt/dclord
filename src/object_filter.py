@@ -131,7 +131,7 @@ class BuildingFilter(wx.Window):
 		
 		self.buildings = {}
 		
-		buildings  = [4,5,12,13,14,22,25,28,30,31,32,33,34,36,37,38,41,42]
+		buildings  = [4,5,12,13,14,22,25,28,30,32,34,36,41,42]
 		
 		blds = []
 		for uid in buildings:

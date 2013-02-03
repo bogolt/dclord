@@ -70,6 +70,7 @@ class DcFrame(wx.Frame):
 		
 		self._mgr = wx.aui.AuiManager(self)
 		
+		
 		info = wx.aui.AuiPaneInfo()
 		info.CenterPane()
 		info.Fixed()
@@ -78,8 +79,8 @@ class DcFrame(wx.Frame):
 		info.CaptionVisible(False)
 		
 		self._mgr.AddPane(self.map, info)
-		self._mgr.AddPane(self.history, wx.LEFT, "Turn")
-		self._mgr.AddPane(self.info_panel, wx.LEFT, "Info")
+		self._mgr.AddPane(self.history, wx.RIGHT, "Turn")
+		self._mgr.AddPane(self.info_panel, wx.RIGHT, "Info")
 		self._mgr.AddPane(self.planet_filter, wx.LEFT, "Planets")
 		self._mgr.AddPane(self.object_filter, wx.LEFT, "Filter")
 		#self._mgr.AddPane(self.unit_list, wx.RIGHT, "Units")
@@ -87,8 +88,12 @@ class DcFrame(wx.Frame):
 		#self._mgr.AddPane(self.area_list, wx.RIGHT, "Areas")
 		
 		#self.map.set_planet_fileter(self.planet_filter)
-		
 		self._mgr.Update()
+
+		#p = config.options['window']['pane-info']
+		#if p:
+		#	print 'load p %s'%(p,)
+		#	self._mgr.LoadPerspective( p )
 		
 		self.makeMenu()
 		
@@ -176,6 +181,7 @@ class DcFrame(wx.Frame):
 		self.map.update()
 		
 	def onClose(self, event):
+		#config.options['window']['pane-info'] = self._mgr.SavePerspective()
 		self.updateConfig()
 		#print '%s'%(self._mgr.SavePerspective(),)
 		#self.conf.panes = 

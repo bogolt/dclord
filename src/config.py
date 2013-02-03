@@ -84,7 +84,9 @@ options = {
 		 'window':
 			{'width':400,
 			'height':500,
-			'is_maximized':0
+			'is_maximized':0,
+			'pane-info':'',
+			'last':0
 			},
 		 'filter':
 			{
