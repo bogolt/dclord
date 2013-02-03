@@ -6,6 +6,7 @@ import config
 import serialization
 import planet_window
 import wx.lib.agw.floatspin
+import image
 
 log = logging.getLogger('dclord')
 
@@ -77,12 +78,14 @@ class PlanetList(scrolled.ScrolledPanel):
 			return True
 		return False
 		
-	def addPlanets(self, players):
+	def addPlanets(self, players, buildings = None):
 		self.sizer.DeleteWindows()
 		
 		for pl_id in players.player_ids():
 			for planet in db.planets(db.getTurn(), ['owner_id=%d'%(pl_id,)] ):
 				coord = (int(planet['x']), int(planet['y']))
+				if buildings and not db.has_all_buildings(db.getTurn(), coord, buildings):
+					continue
 				p = planet_window.PlanetWindow(self, coord, db.getTurn())
 				self.planets[coord] = p
 				self.sizer.Add( p )
@@ -94,29 +97,75 @@ class PlanetList(scrolled.ScrolledPanel):
 			self.Layout()
 			
 
+class BuildingCheckBox(wx.Window):
+	def __init__(self, parent, uid):
+		wx.Window.__init__(self, parent)
+		
+		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		img = wx.StaticBitmap(self, wx.ID_ANY)
+		img.SetBitmap( image.smaller(image.getBcImage( uid ) ) )
+		sizer.Add( img )
+		
+		self.cb = wx.CheckBox(self, label='building' )
+		sizer.Add ( self.cb )
+		
+		self.cb.Bind(wx.EVT_CHECKBOX, self.building_filter)
+		
+		self.SetSizer(sizer)
+		sizer.Layout()
+		
+	def building_filter(self, evt):
+		self.GetParent().update_filters()
+		
+	def is_on(self):
+		return self.cb.IsChecked()
+			
+
 class BuildingFilter(wx.Window):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent)
 		
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		
+		self.buildings = {}
+		
+		for uid in xrange(1,6):
+			b = BuildingCheckBox(self, uid)
+			self.buildings[uid] = b
+			self.sizer.Add( b )
+		
+		self.SetSizer(self.sizer)
+		self.sizer.Layout()
+	
+	def update_filters(self):
+		buildings_id_ids_list = []
+		
+		for bid, bcb in self.buildings.iteritems():
+			if bcb.is_on():
+				buildings_id_ids_list.append( bid )
+				
+		self.GetParent().updatePlanets(buildings_id_ids_list)
 
 class FilterFrame(wx.Panel):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(90,40))
 
 		self.players = PlayerFilter(self)
+		self.buildings = BuildingFilter(self)
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.sizer.Add(self.players)
+		self.sizer.Add(self.buildings)
 		self.pl = PlanetList(self)
 		self.sizer.Add(self.pl)
 		self.SetSizer(self.sizer)
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
 		self.pl.addPlanets(self.players)
 	
-	def updatePlanets(self):
+	def updatePlanets(self, buildings = None):
 		self.pl.Destroy()
 		self.pl = PlanetList(self)
 		self.sizer.Add(self.pl)
-		self.pl.addPlanets(self.players)
+		self.pl.addPlanets(self.players, buildings)
 		self.sizer.Layout()
 		
 		wx.PostEvent(self.GetParent(), event.MapUpdate())

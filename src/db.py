@@ -496,3 +496,18 @@ def all_alienUnits(turn_n, coord):
 	for fl in fleets(turn_n, conds):
 		for unit in alienUnits(turn_n, ['fleet_id=%d'%(fl['id'],)]):
 			yield fl,unit
+
+def has_any_buildings(turn_n, coord, buildings):
+	for gu in garrison_units(turn_n, ['x=%s'%(coord[0],), 'y=%s'%(coord[1],), 'class in (%s)'%(','.join([str(bid) for bid in buildings]),)]):
+		return True
+	return False
+
+def has_all_buildings(turn_n, coord, buildings):
+	for bid in buildings:
+		is_found = False
+		for gu in garrison_units(turn_n, ['x=%s'%(coord[0],), 'y=%s'%(coord[1],), 'class=%s'%(bid,)]):
+			is_found = True
+			break
+		if not is_found:
+			return False
+	return True
