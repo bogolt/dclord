@@ -7,6 +7,7 @@ def val(name, value):
 class RequestMaker:
 	GEO_EXPLORE = 1
 	OFFER_VASSALAGE = 102
+	ARC_COLONISE=6
 	def __init__(self):
 		self.id = 0
 		self.req = ''
@@ -44,6 +45,10 @@ class RequestMaker:
 		
 	def cancelJump(self, fleetId):
 		return self.act('cancel_jump', val('fleet_id', fleetId))
+		
+	def add_building_to_que(self, planet, buildig_id):
+		plId = pos('planetid', planet)
+		return self.act('add_building_to_que', plId +val('building_id', building_id))
 
 class RequestList:
 	def __init__(self):
