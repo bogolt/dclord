@@ -18,6 +18,7 @@ import planet_window
 import history
 import algorithm
 import math
+import loader
 from datetime import datetime
 
 def get_coord(obj):
@@ -250,8 +251,12 @@ class DcFrame(wx.Frame):
 
 	def onUpload(self, event):
 		'upload pending events on server'
-		import loader
-		l = loader.AsyncLoader()
+		
+		# epxlore, send back
+		self.explore_all()
+		self.send_back()
+		
+	def send_back(self):
 		turn = db.getTurn()
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
@@ -307,8 +312,9 @@ class DcFrame(wx.Frame):
 				print 'Jump (%s) %s'%(closest_planet, fleet)
 				actions.fleetMove( fleet['id'], closest_planet )
 			
+			l = loader.AsyncLoader()
 			l.sendActions(self, acc['login'], actions, out_dir)
-		l.start()
+			l.start()
 		
 	# geo explore
 	# load known planets
@@ -316,10 +322,8 @@ class DcFrame(wx.Frame):
 	# 2. fly somewhere ( closest jumpable )
 	# 
 
-	def cmdGeoExplore(self, event):
+	def explore_all(self):
 		'upload pending events on server'
-		import loader
-		l = loader.AsyncLoader()
 		
 		turn = db.getTurn()
 		
@@ -372,11 +376,12 @@ class DcFrame(wx.Frame):
 			#hw_planet = db.getUserHw(acc['id'])
 			#actions.createNewFleet(hw_planet, 'a_new_shiny_fleet')
 			
+			l = loader.AsyncLoader()
 			for coord, unit_id in acts.iteritems():
 				print 'explore (%s) %s'%(coord, unit_id)
 				actions.explore_planet( coord, unit_id )
 			l.sendActions(self, acc['login'], actions, out_dir)
-		l.start()
+			l.start()
 		
 	def onActionsReply(self, event):
 		user = event.attr1
