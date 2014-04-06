@@ -17,7 +17,20 @@ import request
 import planet_window
 import history
 import algorithm
+import math
 from datetime import datetime
+
+def get_coord(obj):
+	x = obj['x']
+	y = obj['y']
+	if type(x) is int:
+		return x,y
+	return int(x), int(y)
+	
+def distance(a, b):
+	dx = a[0]-b[0]
+	dy = a[1]-b[1]
+	return math.sqrt( dx * dx + dy * dy ) 
 
 log = logging.getLogger('dclord')
 
@@ -37,7 +50,6 @@ class DcFrame(wx.Frame):
 					
 		#import_raw.processAllUnpacked()
 		#self.map.turn = db.db.max_turn
-		
 
 		self.log_dlg = wx.TextCtrl(self, 1, style=wx.TE_MULTILINE)
 		self.log_dlg.Disable()
@@ -121,7 +133,7 @@ class DcFrame(wx.Frame):
 		
 		gameMenu = wx.Menu()
 		self.updateMenu = gameMenu.Append(wx.ID_ANY, "&Download from sever")
-		#self.uploadMenu = gameMenu.Append(wx.ID_ANY, "&Upload to server")
+		self.uploadMenu = gameMenu.Append(wx.ID_ANY, "&Upload to server")
 		usersMenu = gameMenu.Append(wx.ID_ANY, "U&sers")
 		routesMenu = gameMenu.Append(wx.ID_ANY, "&Routes")
 		
@@ -134,7 +146,7 @@ class DcFrame(wx.Frame):
 		self.SetMenuBar(panel)
 				
 		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)
-		#self.Bind(wx.EVT_MENU, self.onUpload, self.uploadMenu)
+		self.Bind(wx.EVT_MENU, self.onUpload, self.uploadMenu)
 		self.Bind(wx.EVT_MENU, self.onShowUsers, usersMenu)
 		self.Bind(wx.EVT_MENU, self.onCalculateRoutes, routesMenu)
 	
@@ -240,15 +252,129 @@ class DcFrame(wx.Frame):
 		'upload pending events on server'
 		import loader
 		l = loader.AsyncLoader()
+		turn = db.getTurn()
+		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
+		util.assureDirClean(out_dir)
+		
+		for acc in config.accounts():
+			user_id = int(acc['id'])
+			# fly scouts back to base
+			# check by name [Fleet, scout ]
+			fleet_name = unicode('Fleet')
+			fleets = []
+			for fleet in db.fleets(turn, ['owner_id=%s'%(user_id,), 'name="%s"'%(fleet_name,)]):
+				
+				if fleet['name'] != fleet_name:
+					continue
+				print fleet['name']
+				# if fleet over empty planet - jump back home
+				coord = get_coord(fleet)
+				planet = db.get_planet( coord )
+				if not planet or not planet['owner_id'] or int(planet['owner_id']) != user_id:
+					#jump back
+					print 'fleet %s %s needs to get home'%(coord, fleet)
+					fleets.append( (coord, fleet) )
+				else:
+					print 'fleet %s ok, on %s'%(fleet, planet)
+					
+
+			user_id = int(acc['id'])
+			
+			coords = []
+			for planet in db.planets(turn, ['owner_id=%s'%(user_id,)]):
+				coord = get_coord(planet)
+				coords.append( coord )
+				print 'possible home planet %s'%(coord,)
+				
+			if coords == None or fleets == []:
+				print 'oops %s %s'%(coords, fleets)
+				continue
+
+			actions = request.RequestMaker()
+			self.pendingActions[user_id] = actions
+			
+			print 'looking for best route for %s fleets' %(len(fleets,),)
+			for coord, fleet in fleets:
+				#find closest planet
+				closest_planet = coords[0]
+				min_distance = distance(coords[0], coord)
+				for c in coords:
+					if distance(coord, c) < min_distance:
+						min_distance = distance(coord, c)
+						closest_planet = c
+				
+				# ok, found then jump
+				print 'Jump (%s) %s'%(closest_planet, fleet)
+				actions.fleetMove( fleet['id'], closest_planet )
+			
+			l.sendActions(self, acc['login'], actions, out_dir)
+		l.start()
+		
+	# geo explore
+	# load known planets
+	# 1. rename ( baken )
+	# 2. fly somewhere ( closest jumpable )
+	# 
+
+	def cmdGeoExplore(self, event):
+		'upload pending events on server'
+		import loader
+		l = loader.AsyncLoader()
+		
+		turn = db.getTurn()
 		
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
 		for acc in config.accounts():
 			log.info('requesting user %s info'%(acc['login'],))
+			# find if there is any explore-capable fleets over unexplored planets
+			# or simply tell explore to every unit =))) game server will do the rest
+			
+			#1. find all fleets above empty planets			
+			
+			# get fleet position, check if planet geo is unknown
+			fleet_planet = {}
+			pl = {}
+			
+			for fleet in db.fleets(turn, ['owner_id=%s'%(acc['id'],)] ):
+				print 'got fleet %s'%(fleet,)
+				coord = get_coord(fleet)
+				for planet in db.planets(turn, ['x=%s'%(fleet['x'],), 'y=%s'%(fleet['y'],)]):
+					# skip if occupied
+					if planet['owner_id']:
+						continue
+					if not planet['o'] or not planet['e'] or not planet['m'] or not planet['t']:
+						if not coord in pl:
+							pl[coord] = set()
+						pl[ coord ].add(fleet['id'])
+						print 'planet unexplored %s'%(planet,)
+			
+			acts = {}
+			
+			# get all fleet units, check if explore capable
+			for coord, planet_fleets in pl.iteritems():
+				for fleet_id in planet_fleets:
+					for unit in db.units(turn, ['fleet_id=%s'%(fleet_id,)]):
+						print '%s %s unit %s'%(coord, fleet_id, unit)
+						# ok unit
+						bc = unit['class']
+						
+						#for proto in db.prototypes(['id=%s'%(bc,)]):
+						#	print 'proto %s'%(proto,)
+
+						#type 1 probably geo explore
+						for act in db.proto_actions(['proto_id=%s'%(bc,), 'type=1']):
+							#print 'ACTION: %s %s %s'%(coord, bc, act)
+							acts[coord] = unit['id']
+
 			actions = request.RequestMaker()
 			self.pendingActions[int(acc['id'])] = actions
-			hw_planet = db.getUserHw(acc['id'])
-			actions.createNewFleet(hw_planet, 'a_new_shiny_fleet')
+			#hw_planet = db.getUserHw(acc['id'])
+			#actions.createNewFleet(hw_planet, 'a_new_shiny_fleet')
+			
+			for coord, unit_id in acts.iteritems():
+				print 'explore (%s) %s'%(coord, unit_id)
+				actions.explore_planet( coord, unit_id )
 			l.sendActions(self, acc['login'], actions, out_dir)
 		l.start()
 		

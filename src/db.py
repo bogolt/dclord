@@ -222,9 +222,10 @@ class Db:
 				)""")
 				
 		cur.execute("""create table if not exists proto_action(
-				id integer,
-				proto_id integer,
-				proto_owner_id integer,
+				id integer primary key,
+				type integer not null,
+				proto_id integer not null,
+				proto_owner_id integer not null,
 				max_count integer,
 				cost_people integer,
 				cost_main integer,
@@ -360,9 +361,14 @@ def planets(turn_n, flt, keys = None):
 	k = ('x','y','owner_id','name','o','e','m','t','s') if not keys else keys
 	for i in items('planet', flt, k, turn_n):
 		yield i
+	
+def get_planet(coord):
+	for pl in planets(getTurn(), ['x=%s'%(coord[0],), 'y=%s'%(coord[1],)]):
+		return pl
+	return None
 
 def fleets(turn_n, flt, keys = None):
-	k = ('id', 'x','y','owner_id', 'is_hidden') if not keys else keys
+	k = ('id', 'name', 'x','y','owner_id', 'is_hidden') if not keys else keys
 	for i in items('fleet', flt, k, turn_n):
 		yield i
 
@@ -377,7 +383,7 @@ def prototypes(flt, keys = None):
 		yield i
 
 def proto_actions(flt, keys = None):
-	k = ('id', 'proto_id', 'proto_owner_id', 'max_count', 'cost_people', 'cost_main', 'cost_second', 'cost_money', 'planet_can_be') if not keys else keys
+	k = ('id', 'type', 'proto_id', 'proto_owner_id', 'max_count', 'cost_people', 'cost_main', 'cost_second', 'cost_money', 'planet_can_be') if not keys else keys
 	for i in items('proto_action', flt, k):
 		yield i
 		

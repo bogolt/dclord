@@ -182,7 +182,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			#if 'name' in data:
 			#	#log.info('specific data: %s'%(data,))
 		elif XmlHandler.BuildingClassAction == name and self.parent_attrs:
-			data = getAttrs(attrs, {'action':'id', 'maxcount':'max_count', 'cost-pepl':"cost_people", 'cost-main':"cost_main", 'cost-money':"cost_money", 'cost-second':"cost_second", 'planet-can-be':"planet_can_be"})
+			data = getAttrs(attrs, {'action':'type', 'maxcount':'max_count', 'cost-pepl':"cost_people", 'cost-main':"cost_main", 'cost-money':"cost_money", 'cost-second':"cost_second", 'planet-can-be':"planet_can_be"})
 			data['proto_id'] = self.parent_attrs['id']
 			data['proto_owner_id'] = self.user['id']
 			db.setData('proto_action',data)
