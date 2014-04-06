@@ -255,7 +255,8 @@ class DcFrame(wx.Frame):
 		'upload pending events on server'
 		
 		# epxlore, send back
-		self.explore_all()
+		
+		#self.explore_all()
 		self.send_back()
 		
 	def send_back(self):
@@ -265,6 +266,7 @@ class DcFrame(wx.Frame):
 		
 		for acc in config.accounts():
 			user_id = int(acc['id'])
+							
 			# fly scouts back to base
 			
 			fleets = []
@@ -276,20 +278,31 @@ class DcFrame(wx.Frame):
 			if fleet_name:
 				fleet_flt.append( 'name="%s"'%(fleet_name,) ) 
 			for fleet in db.fleets(turn, fleet_flt):
-				
-				if fleet['name'] != fleet_name:
-					continue
-				print fleet['name']
+				print 'found fleet %s'%(fleet,)
 				# if fleet over empty planet - jump back home
 				coord = get_coord(fleet)
 				planet = db.get_planet( coord )
 				if not planet or not planet['owner_id'] or int(planet['owner_id']) != user_id:
+					print 'fleet %s not at home'%(fleet['id'],)
+					units = []
+					for unit in db.units(turn, ['fleet_id=%s'%(fleet['id'],)]):
+						print 'fleet %s has unit %s'%(fleet['id'], unit)
+						units.append(unit)
+					
+					# not a scout fleet if more then one unit in fleet
+					# if zero units - don't care about empty fleet as well
+					if len(units) != 1:
+						print 'fleet %s has %s units, while required 1'%(fleet['id'], len(units))
+						continue
+
+					proto = db.get_prototype(units[0]['class'])
+					if proto['carapace'] != CARAPACE_PROBE:
+						print 'fleet %s unit %s is not a probe'%(fleet['id'], units[0])
+						continue
+
 					#jump back
 					print 'fleet %s %s needs to get home'%(coord, fleet)
-					fleets.append( (coord, fleet) )
-				else:
-					print 'fleet %s ok, on %s'%(fleet, planet)
-					
+					fleets.append( (coord, fleet) )					
 
 			user_id = int(acc['id'])
 			

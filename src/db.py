@@ -402,6 +402,15 @@ def alienUnits(turn_n, flt, keys = None):
 	for unit in items(Db.ALIENT_UNIT, flt, k, turn_n):
 		yield unit
 		
+
+def get_unit_prototype(turn_n, unit_id):
+	for unit in units(turn_n, ['id=%s'%(unit_id,)]):
+		return get_prototype(unit['class'])
+			
+def get_prototype(bc):
+	for proto in prototypes(['id=%s'%(bc,)]):
+		return proto
+		
 def nextFleetTempId():
 	return 0
 
