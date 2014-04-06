@@ -117,6 +117,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			print 'update user %s'%(self.user,)
 			db.setData('hw', {'hw_x':d['hw_x'], 'hw_y':d['hw_y'], 'player_id':self.user['id']}, self.turn)
 			db.setData('user', {'id':self.user['id'], 'login':d['login'], 'race_id':d['race_id'], 'name':self.user['name']})
+			config.set_user_id(d['login'], self.user['id'])
+			config.saveUsers()
 			
 		elif XmlHandler.UserPlanets == name:
 			self.read_level = XmlHandler.UserPlanets
@@ -183,10 +185,10 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			data = getAttrs(attrs, {'action':'id', 'maxcount':'max_count', 'cost-pepl':"cost_people", 'cost-main':"cost_main", 'cost-money':"cost_money", 'cost-second':"cost_second", 'planet-can-be':"planet_can_be"})
 			data['proto_id'] = self.parent_attrs['id']
 			data['proto_owner_id'] = self.user['id']
-			#db.setData('proto_action',data)
+			db.setData('proto_action',data)
 		elif XmlHandler.Iframe == name:
 			self.iframe = True
-		elif XmlHandler.PerformAction == name and self.iframe and False:
+		elif XmlHandler.PerformAction == name and self.iframe:
 			data = getAttrs(attrs, {'id':'id', 'result':'result', 'return-id':'return-id'})
 			act_id = data['id']
 			result = data['result']=='ok'
@@ -215,13 +217,15 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.Errors == name:
 			self.errors = None
 		elif XmlHandler.NodeDC:
-			if self.actions:
-				wx.PostEvent(cb, event.ActionsReply(attr1=self.user, attr2=self.actions))
+			pass
+			#if self.actions:
+			#	wx.PostEvent(cb, event.ActionsReply(attr1=self.user, attr2=self.actions))
 		elif XmlHandler.Diplomacy == name:
 			self.dip = False
 
 			
 def load_xml(path, path_archive):
+	print 'load xml %s %s'%(path, path_archive)
 	p = xml.sax.make_parser()
 	handler = XmlHandler(path_archive)
 	p.setContentHandler(handler)
@@ -247,7 +251,8 @@ def processAllUnpacked():
 			if not file.endswith('.xml'):
 				continue
 			log.debug('loading %s'%(file,))
-			load_xml( os.path.join(xml_dir, file) )
+			p = os.path.join(xml_dir, file)
+			load_xml( p, p )
 			at_least_one = True
 		if at_least_one:
 			serialization.save()
