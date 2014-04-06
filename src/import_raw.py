@@ -134,7 +134,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				del data['age']
 			db.setPlanet(data, self.turn)
 		elif XmlHandler.Fleet == name or XmlHandler.AlienFleet == name:
-			fleetDict = {'x':'x','y':'y','id':'id','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
+			fleetDict = {'x':'x','y':'y','id':'id','in-transit':'in_transit','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
 			data = getAttrs(attrs, fleetDict)
 			if 'id' in data:
 				self.obj_id = int(data['id'])
@@ -158,6 +158,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			if tta>0:
 				db.setData('incoming_fleet', data, self.turn)
 			else:
+				del data['in_transit']
 				db.setData('fleet', data, self.turn)
 		elif XmlHandler.Garrison == name:
 			self.pos = getAttrs(attrs, {'x':'x', 'y':'y'})

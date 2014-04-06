@@ -309,9 +309,47 @@ class DcFrame(wx.Frame):
 		'upload pending events on server'
 		
 		# epxlore, send back
-		
+		self.cancel_jump()
 		#self.explore_all()
-		self.send_back()
+		#self.send_back()
+		
+	
+	def perform_actions(self, actions):
+		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
+		util.assureDirClean(out_dir)
+			
+	
+	def cancel_jump(self):
+
+		turn = db.getTurn()
+		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
+		util.assureDirClean(out_dir)
+
+		for acc in config.accounts():
+			user_id = int(acc['id'])
+			
+			actions = request.RequestMaker()
+			self.pendingActions[user_id] = actions
+
+			fleets = []
+			fleet_flt = ['owner_id=%s'%(user_id,)]
+			
+			fleet_name = None #unicode('Fleet')
+			# can also filter fleets by names
+			#TODO: beware escapes
+			if fleet_name:
+				fleet_flt.append( 'name="%s"'%(fleet_name,) ) 
+			for fleet in db.flyingFleets(turn, fleet_flt):
+				#print 'found fleet %s'%(fleet,)
+				if fleet['in_transit'] != 0:
+					continue
+				print 'fleet %s can be stopped'%(fleet,)
+			
+				actions.cancelJump(user_id, fleet['id'])
+			
+			l = loader.AsyncLoader()
+			l.sendActions(self, acc['login'], actions, out_dir)
+			l.start()	
 		
 	def send_back(self):
 		turn = db.getTurn()

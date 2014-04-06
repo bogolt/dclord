@@ -117,7 +117,8 @@ class Db:
 				is_hidden integer(1),
 				times_spotted integer(1),
 				turn integer(2),
-				temp_id integer
+				temp_id integer,
+				in_transit integer(1)
 				)"""%(self.INCOMING_FLEET, turn_n))
 				
 		
@@ -373,7 +374,7 @@ def fleets(turn_n, flt, keys = None):
 		yield i
 
 def flyingFleets(turn_n, flt, keys = None):
-	k = ('id', 'temp_id', 'x','y','owner_id', 'from_x', 'from_y', 'is_hidden') if not keys else keys
+	k = ('id', 'temp_id', 'x','y','owner_id', 'in_transit', 'from_x', 'from_y', 'is_hidden') if not keys else keys
 	for i in items('incoming_fleet', flt, k, turn_n):
 		yield i
 		
