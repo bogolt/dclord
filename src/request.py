@@ -49,6 +49,9 @@ class RequestMaker:
 	def add_building_to_que(self, planet, buildig_id):
 		plId = pos('planetid', planet)
 		return self.act('add_building_to_que', plId +val('building_id', building_id))
+		
+	def explore_planet(self, planet, unit_id):
+		return self.act('store_action', val('unit_id', unit_id) + pos('planetid', planet) + val('action_id', self.GEO_EXPLORE))
 
 class RequestList:
 	def __init__(self):
@@ -76,6 +79,9 @@ class RequestList:
 		
 	def cancelJump(self, player, fleet):
 		return self.req[player].cancelJump(fleet.id)
+	
+	def explorePlanet(self, player, planet, unit_id):
+		return self.req[player].explore_planet(planet, unit_id)
 		
 #	def req(self):
 #		al = AsyncLoader()
