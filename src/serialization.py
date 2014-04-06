@@ -115,8 +115,25 @@ def loadCsv(file_name, turn_n = None):
 		log.error('failed to load csv %s: %s'%(file_name, e))	
 	log.info('loading %s done'%(file_name,))
 
+	
+def load_all_visible_geo(path ):
+	for f in os.listdir(path):
+		print 'loading %s'%(f,)
+		try:
+			for p in csv.DictReader(open(os.path.join(path,f), 'rt')):
+				for s in unicode_strings:
+					if s in p and p[s]:
+						p[s] = p[s].decode('utf-8')
+				#db.setData('planet', p, None)
+				yield p
+		except IOError, e:
+			log.error('failed to load csv %s: %s'%(path, e))	
+
 @util.run_once
 def loadGeoPlanets(turn_n = None, cb = None):
+	#for p in load_all_visible_geo(os.path.join(config.options['data']['path'], 'geo_size')):
+	#	db.smartUpdate('planet', ['x=%s'%(p['x'],), 'y=%s'%(p['y'],)], p, turn_n)
+	
 	for p in loadCsv('planets_geo', turn_n):
 		db.smartUpdate('planet', ['x=%s'%(p['x'],), 'y=%s'%(p['y'],)], p, turn_n)
 	
