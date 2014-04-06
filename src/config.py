@@ -37,7 +37,7 @@ class UnicodeConfigParser(ConfigParser.RawConfigParser):
 def getOptionsDir():
 	conf_dir = 'dclord' if 'Windows' == platform.system() else '.config/dclord'
 	return os.path.join(wx.StandardPaths.Get().GetUserConfigDir(), conf_dir)
-	
+
 users = {}
 user_id_dict = {}
 options = {
@@ -55,6 +55,7 @@ options = {
 		  'host':'www.the-game.ru',
 		  'debug':2
 		 },
+		 'user':{'nick':''},
 		'map':{
 		 'coordinate_color':'#000000',
 		 'offset_pos_x':1,

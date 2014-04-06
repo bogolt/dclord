@@ -75,6 +75,19 @@ def save():
 	saveUsers()
 	savePlayers()
 
+def loadExternalTable(path, turn_n ):
+	try:
+		table = os.path.basename(path)
+		for p in csv.DictReader(open(path, 'rt')):
+			for s in unicode_strings:
+				if s in p and p[s]:
+					p[s] = p[s].decode('utf-8')
+			db.setData(table, p, turn_n)
+	except IOError, e:
+		log.error('failed to load table %s: %s'%(table_name, e))
+		if cb:
+			util.appendLog(cb, 'Error loading "%s" from turn %s'%(table_name, turn_n))	
+
 def loadTable(table_name, file_name, turn_n = None, load_turn = None, cb = None):
 	if cb:
 		util.appendLog(cb, 'loading "%s" from turn %s'%(table_name, turn_n))

@@ -44,6 +44,13 @@ def unpack(path_in, path_out):
 		out.write(f.read())
 	f.close()
 
+def pack(path_in, path_out):
+	f = gzip.open(path_out, 'wb')
+	with open(path_in, 'rb') as in_file:
+		f.write(in_file.read())
+	f.close()
+	
+
 
 def assureDirExist(d):
 	if os.path.exists(d):

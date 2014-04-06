@@ -140,21 +140,69 @@ class DcFrame(wx.Frame):
 		usersMenu = gameMenu.Append(wx.ID_ANY, "U&sers")
 		routesMenu = gameMenu.Append(wx.ID_ANY, "&Routes")
 		
+		syncMenu = wx.Menu()
+		set_sync_dir = syncMenu.Append(wx.ID_ANY, "Set sync path")
+		
 		#actionMenu = wx.Menu()
 		#actionDefineArea = actionMenu.Append(
 		
 		panel = wx.MenuBar()
 		panel.Append(fileMenu, "&File")
 		panel.Append(gameMenu, "G&ame")
+		panel.Append(syncMenu, "Sync")
 		self.SetMenuBar(panel)
 				
 		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)
 		self.Bind(wx.EVT_MENU, self.onUpload, self.uploadMenu)
 		self.Bind(wx.EVT_MENU, self.onShowUsers, usersMenu)
 		self.Bind(wx.EVT_MENU, self.onCalculateRoutes, routesMenu)
+		self.Bind(wx.EVT_MENU, self.onSetSyncPath, set_sync_dir)
 	
 		self.Bind(wx.EVT_CLOSE, self.onClose, self)
+		
+		self.sync_path = None
 	
+	def onSetSyncPath(self, evt):
+		dlg = wx.DirDialog(self, 'Set sync directory path', os.path.join('/home/xar/Dropbox', 'the-game-sync'))
+		if dlg.ShowModal() == wx.ID_OK:
+			self.sync_path = dlg.GetPath()
+			self.sync_data()
+			
+	def sync_data(self):
+		if not self.sync_path:
+			return
+		
+		#pt = os.path.join(config.options['data']['path'], str(db.getTurn()))
+		#if not os.path.exists(pt):
+		#	print 'directory %s does not exist, nothing to sync'%(pt,)
+		#	return
+		
+		acc_path = os.path.join(self.sync_path, 'users')
+		if not os.path.exists(acc_path):
+			util.assureDirExist(acc_path)
+		
+		nick = config['user']['nick']
+			
+		# read data we don't have
+		for acc in os.listdir(acc_path):
+			if acc == nick:
+				continue
+			
+			# copy back to us new data
+			path = os.path.join(acc_path, acc)
+			
+			turn = max( [int(d) for d in os.listdir(path) ] )
+			turn_path = os.path.join(path, str(turn) )
+			out_dir = os.path.join( wx.GetTempDir(), os.path.join('unpack_sync', acc) )
+			for gz_file in os.listdir(turn_path):
+				outf = os.path.join(out_dir, gz_file)
+				unpack(os.path.join(turn_path, gz_file), outf)
+				serialization.loadExternalTable(outf, turn)
+			
+		
+		# ok now save our data
+		
+		
 	def onCalculateRoutes(self, evt):
 		planets = []
 		for p in db.planets(self.map.turn, ['owner_id is not null'], ('x', 'y')):
