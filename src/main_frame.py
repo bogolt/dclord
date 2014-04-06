@@ -136,7 +136,7 @@ class DcFrame(wx.Frame):
 		
 		gameMenu = wx.Menu()
 		self.updateMenu = gameMenu.Append(wx.ID_ANY, "&Download from sever")
-		self.uploadMenu = gameMenu.Append(wx.ID_ANY, "&Upload to server")
+		self.uploadMenu = gameMenu.Append(wx.ID_ANY, "&Geo Explore and fly back")
 		usersMenu = gameMenu.Append(wx.ID_ANY, "U&sers")
 		routesMenu = gameMenu.Append(wx.ID_ANY, "&Routes")
 		
