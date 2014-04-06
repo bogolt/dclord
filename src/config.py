@@ -142,8 +142,14 @@ def loadAccounts():
 		if 'id' in acc and acc['id']:
 			user_id_dict[int(acc['id'])] = acc
 
+def set_user_id(login, user_id):
+	global users
+	global user_id_dict
+	acc = users[login]
+	acc['id'] = user_id
+	user_id_dict[user_id] = acc
+
 def saveUsers():
-	return
 	conf = UnicodeConfigParser()
 	global users
 
