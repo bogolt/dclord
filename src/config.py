@@ -50,6 +50,7 @@ options = {
 			'images':'images/static/img/buildings',
 			'known_planets':0,
 			'load_known_planets':1,
+			'sync_path':''
 			},
 		'network':{
 		  'host':'www.the-game.ru',

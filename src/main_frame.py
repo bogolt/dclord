@@ -66,6 +66,7 @@ class DcFrame(wx.Frame):
 		self.history = history.HistoryPanel(self)
 		#self.area_list = area_panel.AreaListWindow(self)
 
+		self.sync_path = config.options['data']['sync_path']
 		self.info_panel.turn = db.getTurn()
 		print 'db max turn is %s'%(db.getTurn(),)
 		
@@ -159,30 +160,35 @@ class DcFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.onSetSyncPath, set_sync_dir)
 	
 		self.Bind(wx.EVT_CLOSE, self.onClose, self)
-		
-		self.sync_path = None
+
 	
 	def onSetSyncPath(self, evt):
 		dlg = wx.DirDialog(self, 'Set sync directory path', os.path.join('/home/xar/Dropbox', 'the-game-sync'))
 		if dlg.ShowModal() == wx.ID_OK:
 			self.sync_path = dlg.GetPath()
+			config.options['data']['sync_path'] = self.sync_path
 			self.sync_data()
 			
 	def sync_data(self):
-		if not self.sync_path:
+		self.sync_path = config.options['data']['sync_path']
+		if not self.sync_path or self.sync_path == '':
 			return
-		
-		#pt = os.path.join(config.options['data']['path'], str(db.getTurn()))
-		#if not os.path.exists(pt):
-		#	print 'directory %s does not exist, nothing to sync'%(pt,)
-		#	return
-		
+
+		nick = config.options['user']['nick']
+		if not nick:
+			nick = str(min(config.user_id_dict.keys()))
+
 		acc_path = os.path.join(self.sync_path, 'users')
 		if not os.path.exists(acc_path):
 			util.assureDirExist(acc_path)
 		
-		nick = config['user']['nick']
-			
+		out_acc_p = os.path.join(acc_path, nick)
+		outp = os.path.join(out_acc_p, str(db.getTurn()))
+		util.assureDirExist(outp)
+		pt = os.path.join(config.options['data']['path'], str(db.getTurn()))
+		for f in os.listdir(pt):
+			util.pack(os.path.join(pt, f), os.path.join(outp, f) )
+		
 		# read data we don't have
 		for acc in os.listdir(acc_path):
 			if acc == nick:
@@ -196,7 +202,7 @@ class DcFrame(wx.Frame):
 			out_dir = os.path.join( wx.GetTempDir(), os.path.join('unpack_sync', acc) )
 			for gz_file in os.listdir(turn_path):
 				outf = os.path.join(out_dir, gz_file)
-				unpack(os.path.join(turn_path, gz_file), outf)
+				util.unpack(os.path.join(turn_path, gz_file), outf)
 				serialization.loadExternalTable(outf, turn)
 			
 		
