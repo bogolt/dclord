@@ -375,6 +375,11 @@ def prototypes(flt, keys = None):
 	k = ('id', 'class', 'carapace', 'weight', 'color', 'hp', 'name') if not keys else keys
 	for i in items('proto', flt, k):
 		yield i
+
+def proto_actions(flt, keys = None):
+	k = ('id', 'proto_id', 'proto_owner_id', 'max_count', 'cost_people', 'cost_main', 'cost_second', 'cost_money', 'planet_can_be') if not keys else keys
+	for i in items('proto_action', flt, k):
+		yield i
 		
 def units(turn_n, flt, keys = None):
 	k = ('id', 'fleet_id', 'class', 'hp') if not keys else keys
@@ -403,9 +408,11 @@ def getUserName(user_id):
 		
 	return '<? %d>'%(user_id,)
 
-def getUserHw(user_id, turn_n):
-	for u in items('hw', ['player_id=%s'%(user_id,)], ('hw_x', 'hw_y'), turn_n):
+def getUserHw(user_id, turn_n = None):
+	t = turn_n if turn_n else getTurn()
+	for u in items('hw', ['player_id=%s'%(user_id,)], ('hw_x', 'hw_y'), t):
 		return int(u['hw_x']), int(u['hw_y'])
+	print 'hw for user %s turn %s not found'%(user_id, t)
 	return 550,550
 
 def setSqlValues(data):
