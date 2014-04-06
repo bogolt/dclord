@@ -33,6 +33,8 @@ def distance(a, b):
 	dy = a[1]-b[1]
 	return math.sqrt( dx * dx + dy * dy ) 
 
+CARAPACE_PROBE = 11
+
 log = logging.getLogger('dclord')
 
 h = logging.StreamHandler()
@@ -264,10 +266,16 @@ class DcFrame(wx.Frame):
 		for acc in config.accounts():
 			user_id = int(acc['id'])
 			# fly scouts back to base
-			# check by name [Fleet, scout ]
-			fleet_name = unicode('Fleet')
+			
 			fleets = []
-			for fleet in db.fleets(turn, ['owner_id=%s'%(user_id,), 'name="%s"'%(fleet_name,)]):
+			fleet_flt = ['owner_id=%s'%(user_id,)]
+			
+			fleet_name = None #unicode('Fleet')
+			# can also filter fleets by names
+			#TODO: beware escapes
+			if fleet_name:
+				fleet_flt.append( 'name="%s"'%(fleet_name,) ) 
+			for fleet in db.fleets(turn, fleet_flt):
 				
 				if fleet['name'] != fleet_name:
 					continue
