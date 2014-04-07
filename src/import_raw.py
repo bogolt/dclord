@@ -193,7 +193,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			data = getAttrs(attrs, {'id':'id', 'result':'result', 'return-id':'return-id'})
 			act_id = data['id']
 			result = data['result']=='ok'
-			ret_id = data['return-id']
+			ret_id = 0
+			if 'return-id' in data:
+				ret_id = data['return-id']
 			
 			if result:
 				self.actions.append( (act_id, ret_id) )

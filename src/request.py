@@ -14,6 +14,9 @@ class RequestMaker:
 
 	def __str__(self):
 		return val('x-dc-perform', self.req)
+		
+	def is_empty(self):
+		return len(self.req) == 0
 
 	def act(self, name, value):
 		self.id+=1
@@ -32,8 +35,8 @@ class RequestMaker:
 		nm = val('new_fleet_name', name)
 		return self.act('create_new_fleet', plId + nm)
 		
-	#def createFleetFromChosen(self, coord, units, name):
-		#return self.act('create_fleet_from_choosen', val('planetid', '%d:%d'%(coord[0], coord[1])) + val('new_fleet_name', name)+ val('fleetx', coord[0])+ val('fleety',coord[1]) + ''.join(val('
+#	def createFleetFromChosen(self, coord, units, name):
+#		return self.act('create_fleet_from_choosen', val('planetid', '%d:%d'%(coord[0], coord[1])) + val('new_fleet_name', name)+ val('fleetx', coord[0])+ val('fleety',coord[1]) + ''.join(val('
 	
 	# id==1 - get planet geo
 	# id==102 - offer becoming vassal

@@ -80,6 +80,8 @@ class AsyncLoader(Thread):
 			self.getDcData(cb, login, 'known_planets', d)
 		
 	def sendActions(self, cb, login, actions, out_dir):
+		if actions.is_empty():
+			return
 		d = os.path.join(wx.GetTempDir(), 'raw_data') if not out_dir else out_dir
 		self.getDcData(cb, login, data_type='1', out_dir=d, custom_opts = actions)
 	

@@ -309,15 +309,30 @@ class DcFrame(wx.Frame):
 		'upload pending events on server'
 		
 		# epxlore, send back
-		self.cancel_jump()
-		#self.explore_all()
+		#self.cancel_jump()
+		self.explore_all()
 		#self.send_back()
 		
 	
-	def perform_actions(self, actions):
+	def perform_actions(self, login, actions):
+		if actions.is_empty():
+			return
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
-			
+		
+		l = loader.AsyncLoader()
+		l.sendActions(self, login, actions, out_dir)
+		l.start()
+		
+	def create_fleet(self, user_id, fleet_name, planet_coord, count = 1):
+		
+		actions = request.RequestMaker()
+		
+		#action.
+		
+		
+		self.perform_actions( actions, config.user_id_dict[user_id]['login'] )
+	
 	
 	def cancel_jump(self):
 
@@ -345,11 +360,11 @@ class DcFrame(wx.Frame):
 					continue
 				print 'fleet %s can be stopped'%(fleet,)
 			
-				actions.cancelJump(user_id, fleet['id'])
+				actions.cancelJump(fleet['id'])
 			
 			l = loader.AsyncLoader()
 			l.sendActions(self, acc['login'], actions, out_dir)
-			l.start()	
+			l.start()
 		
 	def send_back(self):
 		turn = db.getTurn()

@@ -70,6 +70,12 @@ class Db:
 				login text
 				)""")
 				
+		cur.execute("""create table if not exists requested_action(
+				id integer primary key,
+				return_id integer default null,
+				is_ok integer default null
+				)""")
+				
 		#what if approaching unknown fleet does not have an id?
 		#id integer primary key,
 
