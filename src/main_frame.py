@@ -328,10 +328,33 @@ class DcFrame(wx.Frame):
 		
 		actions = request.RequestMaker()
 		
-		#action.
-		
+		for _ in range(0, count):
+			actions.createNewFleet(coord, fleet_name)
 		
 		self.perform_actions( actions, config.user_id_dict[user_id]['login'] )
+		
+	def harrison_units_to_fleets(self, user_id, coord, unit_type, fleets_ids):
+		#TODO: check if fleet empty
+		#add fleet new info to local-db
+		
+		turn = self.db.getTurn()
+		
+		actions = request.RequestMaker()
+		
+		i = 0
+		if len(fleet_ids) < 1:
+			return
+		
+		for unit in self.db.garrison_units(turn, ['x=%s'%(coord[0],), 'y=%s'%(coord[1],), 'class=%s'%(unit_type,)]):
+			actions.moveUnitToFleet(fleet_ids[i], unit['id'])
+			i += 1
+			if i >= len(fleet_ids):
+				break
+
+		self.perform_actions( actions, config.user_id_dict[user_id]['login'] )		
+		
+#	def get_planet_fleets(self, coord, fleet_name):
+#		for fleet in self.db.fleets(
 	
 	
 	def cancel_jump(self):
