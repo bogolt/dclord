@@ -5,9 +5,9 @@ import config
 log = logging.getLogger('dclord')
 
 class UserLoginInfo(wx.Frame):
-	def __init__(self, parent, t, cb, size=(120, 100)):
+	def __init__(self, parent, t, cb):
 		self.cb = cb
-		wx.Frame.__init__(self, parent, title=t)
+		wx.Frame.__init__(self, parent, title=t, size=(220,140))
 		sz = wx.BoxSizer(wx.VERTICAL)
 		
 		lname = wx.StaticText(self, label='login')
@@ -19,7 +19,7 @@ class UserLoginInfo(wx.Frame):
 		lpass = wx.StaticText(self, label='password')
 		sz.Add(lpass)
 
-		self.epass = wx.TextCtrl(self)
+		self.epass = wx.TextCtrl(self, size=(90, -1))
 		sz.Add(self.epass)
 		
 		hb = wx.BoxSizer(wx.HORIZONTAL)
