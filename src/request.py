@@ -1,3 +1,5 @@
+import db
+
 def pos(name, coord):
 	return val(name, '%s:%s'%(coord[0],coord[1]))
 
@@ -8,21 +10,26 @@ class RequestMaker:
 	GEO_EXPLORE = 1
 	OFFER_VASSALAGE = 102
 	ARC_COLONISE=6
-	def __init__(self):
-		self.id = 0
+	def __init__(self, user_id = 0):
+		self.act_id = 0
 		self.req = ''
+		self.user_id = user_id
 
 	def __str__(self):
 		return val('x-dc-perform', self.req)
 		
 	def is_empty(self):
 		return len(self.req) == 0
+		
+	def clear(self):
+		self.req = ''
 
 	def act(self, name, value):
-		self.id+=1
-		self.req+='<act id="%s" name="%s">%s</act>'%(self.id, name, value)
+		self.act_id+=1
+		self.req+='<act id="%s" name="%s">%s</act>'%(self.act_id, name, value)
 		#self.req+='<action name="%s">%s</action>'%(name, value)
-		return self.id
+		
+		return self.act_id
 	
 	def planetSetName(self, coord, name):
 		return self.act("change_planet_name", pos('planetid', coord)+val('newname', name))
@@ -31,9 +38,12 @@ class RequestMaker:
 		return self.act('move_fleet', pos('move_to', to)+val('fleet_id',fleetId))
 	
 	def createNewFleet(self, planet, name):
+		
 		plId = pos('planetid', planet)
 		nm = val('new_fleet_name', name)
-		return self.act('create_new_fleet', plId + nm)
+		act = self.act('create_new_fleet', plId + nm)
+		db.add_pending_action(self.act_id, 'fleet', {'name':name, 'x':planet[0], 'y':planet[1], 'owner_id':self.user_id})
+		return act
 		
 #	def createFleetFromChosen(self, coord, units, name):
 #		return self.act('create_fleet_from_choosen', val('planetid', '%d:%d'%(coord[0], coord[1])) + val('new_fleet_name', name)+ val('fleetx', coord[0])+ val('fleety',coord[1]) + ''.join(val('

@@ -82,7 +82,7 @@ class DcFrame(wx.Frame):
 		if self.map.turn != 0:
 			self.log('loaded data for turn %d'%(self.map.turn,))
 		
-		self.pendingActions = {}
+		self.pending_actions = request.RequestMaker()
 		
 		self._mgr = wx.aui.AuiManager(self)
 		
@@ -314,44 +314,45 @@ class DcFrame(wx.Frame):
 		#self.send_back()
 		
 	
-	def perform_actions(self, login, actions):
-		if actions.is_empty():
+	def perform_actions(self):
+		if self.pending_actions.is_empty():
 			return
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
 		
 		l = loader.AsyncLoader()
-		l.sendActions(self, login, actions, out_dir)
+		l.sendActions(self, config.user_id_dict[self.pending_actions.user_id]['login'], self.pending_actions, out_dir)
 		l.start()
+		
+		self.pending_actions.clear()
 		
 	def create_fleet(self, user_id, fleet_name, planet_coord, count = 1):
 		
-		actions = request.RequestMaker()
+		self.pending_actions.user_id = user_id
 		
 		for _ in range(0, count):
-			actions.createNewFleet(coord, fleet_name)
+			self.pending_actions.createNewFleet(coord, fleet_name)
 		
-		self.perform_actions( actions, config.user_id_dict[user_id]['login'] )
+		self.perform_actions()
 		
 	def harrison_units_to_fleets(self, user_id, coord, unit_type, fleets_ids):
 		#TODO: check if fleet empty
 		#add fleet new info to local-db
 		
 		turn = self.db.getTurn()
-		
-		actions = request.RequestMaker()
+		self.pending_actions.user_id = user_id
 		
 		i = 0
 		if len(fleet_ids) < 1:
 			return
 		
 		for unit in self.db.garrison_units(turn, ['x=%s'%(coord[0],), 'y=%s'%(coord[1],), 'class=%s'%(unit_type,)]):
-			actions.moveUnitToFleet(fleet_ids[i], unit['id'])
+			self.pending_actions.moveUnitToFleet(fleet_ids[i], unit['id'])
 			i += 1
 			if i >= len(fleet_ids):
 				break
 
-		self.perform_actions( actions, config.user_id_dict[user_id]['login'] )		
+		self.perform_actions( )		
 		
 #	def get_planet_fleets(self, coord, fleet_name):
 #		for fleet in self.db.fleets(
@@ -365,10 +366,8 @@ class DcFrame(wx.Frame):
 
 		for acc in config.accounts():
 			user_id = int(acc['id'])
+			self.pending_actions.user_id = user_id
 			
-			actions = request.RequestMaker()
-			self.pendingActions[user_id] = actions
-
 			fleets = []
 			fleet_flt = ['owner_id=%s'%(user_id,)]
 			
@@ -383,11 +382,9 @@ class DcFrame(wx.Frame):
 					continue
 				print 'fleet %s can be stopped'%(fleet,)
 			
-				actions.cancelJump(fleet['id'])
+				self.pending_actions.cancelJump(fleet['id'])
 			
-			l = loader.AsyncLoader()
-			l.sendActions(self, acc['login'], actions, out_dir)
-			l.start()
+			self.perform_actions()
 		
 	def send_back(self):
 		turn = db.getTurn()
@@ -396,6 +393,7 @@ class DcFrame(wx.Frame):
 		
 		for acc in config.accounts():
 			user_id = int(acc['id'])
+			self.pending_actions.user_id = user_id
 							
 			# fly scouts back to base
 			
@@ -445,9 +443,6 @@ class DcFrame(wx.Frame):
 			if coords == None or fleets == []:
 				print 'oops %s %s'%(coords, fleets)
 				continue
-
-			actions = request.RequestMaker()
-			self.pendingActions[user_id] = actions
 			
 			print 'looking for best route for %s fleets' %(len(fleets,),)
 			for coord, fleet in fleets:
@@ -461,11 +456,9 @@ class DcFrame(wx.Frame):
 				
 				# ok, found then jump
 				print 'Jump (%s) %s'%(closest_planet, fleet)
-				actions.fleetMove( fleet['id'], closest_planet )
+				self.pending_actions.fleetMove( fleet['id'], closest_planet )
 			
-			l = loader.AsyncLoader()
-			l.sendActions(self, acc['login'], actions, out_dir)
-			l.start()
+			self.perform_actions()
 		
 	# geo explore
 	# load known planets
@@ -522,17 +515,15 @@ class DcFrame(wx.Frame):
 							#print 'ACTION: %s %s %s'%(coord, bc, act)
 							acts[coord] = unit['id']
 
-			actions = request.RequestMaker()
-			self.pendingActions[int(acc['id'])] = actions
+			self.pending_actions.user_id = int(acc['id'])
+			#self.pendingActions[int(acc['id'])] = actions
 			#hw_planet = db.getUserHw(acc['id'])
 			#actions.createNewFleet(hw_planet, 'a_new_shiny_fleet')
 			
-			l = loader.AsyncLoader()
 			for coord, unit_id in acts.iteritems():
 				print 'explore (%s) %s'%(coord, unit_id)
-				actions.explore_planet( coord, unit_id )
-			l.sendActions(self, acc['login'], actions, out_dir)
-			l.start()
+				self.pending_actions.explore_planet( coord, unit_id )
+			self.perform_actions()
 		
 	def onActionsReply(self, event):
 		user = event.attr1

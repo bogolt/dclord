@@ -251,7 +251,15 @@ class Db:
 		except sqlite3.Error, e:
 			log.error('Error "%s", when executing: insert or replace into %s%s values%s'%(e, table_name,keys,tuple(data.values())))
 			print traceback.format_stack()
-			
+
+	def eraseObject(self, table, data, turn_n = None):
+		table_name = '%s_%s'%(table, turn_n) if turn_n else table
+		try:
+			self.cur.execute('delete %s WHERE %s'%(table_name, ','.join('?'*len(data))),tuple(data.values()))
+			self.conn.commit()
+		except sqlite3.Error, e:
+			log.error('Error "%s", when executing: delete %s WHERE %s'%(e, table_name,tuple(data.values())))
+			print traceback.format_stack()		
 
 	#def getAnything(self):
 		#self.cur.execute("select hw_x,hw_y from player where hw_x not null and hw_y not null")
@@ -306,10 +314,37 @@ class Db:
 		for r in self.cur:
 			print 'got user %s'%(r,)
 			yield r
-			
+	
+	def add_pending_action(self, act_id, table, action_type, data):
+		self.pending_actions.setdefault(act_id, []).append((table, action_type, data))
+		
+	def perform_pending_action(self, act_id, return_id = None):
+		actions = self.pending_actions[act_id]
+		for table, action_type, data in actions:
+			if return_id and 'id' in data:
+				data['id'] = return_id
+				
+			if action_type == 'insert':
+				self.addObject(table, data, db.max_turn)
+			elif action_type == 'erase':
+				self.eraseObject(table, data, db.max_turn)
+		
+		del self.pending_actions[act_id]
+	
+	def cancel_pending_action(self, act_id):
+		del self.pending_actions[act_id]
 
 db = Db()	
 
+def add_pending_action(act_id, table, data):
+	db.add_pending_action(act_id, table, data)
+
+def perform_pending_action(self, act_id, return_id = None):
+	db.perform_pending_action(act_id, return_id)
+
+def cancel_pending_action(self, act_id):
+	db.cancel_pending_action(act_id)
+	
 def setTurn(turn_n):
 	global db
 	db.max_turn = turn_n
