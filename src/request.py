@@ -38,7 +38,7 @@ class RequestMaker:
 		act = self.act('move_fleet', pos('move_to', to)+val('fleet_id',fleetId))
 		
 		# save fleet info
-		db.add_pending_action(self.act_id, 'fleet', 'erase', {'name':name, 'x':planet[0], 'y':planet[1], 'owner_id':self.user_id})
+		db.add_pending_action(self.act_id, 'fleet', 'erase', {'x':to[0], 'y':to[1], 'owner_id':self.user_id})
 		
 		# add insert record with incoming_fleet, weight, is_hidden, times_spotted, id, from, to, owner_id, arrival_turn, in_transit(false)
 		

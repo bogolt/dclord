@@ -35,6 +35,9 @@ def distance(a, b):
 	dx = a[0]-b[0]
 	dy = a[1]-b[1]
 	return math.sqrt( dx * dx + dy * dy ) 
+
+def planet_area_filter(lt, size):
+	return ['x>=%s'%(lt[0],), 'y>=%s'%(lt[1],), 'x<=%s'%(lt[0]+size[0],) ,'y<=%s'%(lt[1]+size[1],)]
 	
 CARAPACE_PROBE = 11
 
@@ -351,9 +354,14 @@ class DcFrame(wx.Frame):
 			if act['type']== request.RequestMaker.GEO_EXPLORE:
 				return True
 		return False
+	
+	def get_unit_range(self, unit):
+		for proto in db.prototypes(['id=%s'%(unit['class'],)]):
+			return float(proto['fly_range'])
 
 	def onSendScouts(self, _):
-		turn = db.getTurn()		
+		turn = db.getTurn()
+		min_size = 70
 		for acc in config.accounts():
 			user_id = int(acc['id'])
 			self.pending_actions.user_id = user_id
@@ -361,6 +369,7 @@ class DcFrame(wx.Frame):
 			# find units that can geo-explore
 			# find the ones that are already in fleets in one of our planets
 			
+			fly_range = 0.0
 			ready_scout_fleets = {}
 			# get all fleets over our planets
 			for planet in db.planets(turn, ['owner_id=%s'%(user_id,)]):
@@ -372,10 +381,11 @@ class DcFrame(wx.Frame):
 					unit = units[0]
 					if not self.is_geo_scout(unit):
 						continue
+					fly_range = self.get_unit_range(unit)
 					print 'unit %s on planet %s for fleet %s is geo-scout'%(unit, coord, fleet)
 					# ok, this is geo-scout, single unit in fleet, on our planet
 					#ready_scout_fleets.append((coord, fleet))
-					ready_scout_fleets.setdefault(coord, []).append(fleet)
+					ready_scout_fleets.setdefault(coord, []).append((fleet, fly_range))
 					
 			
 			# get possible planets to explore in nearest distance
@@ -383,9 +393,23 @@ class DcFrame(wx.Frame):
 				serialization.load_geo_size_center(coord, 10)
 			
 			# jump to nearest/biggest unexplored planet
-			
-			
-			#db.fleets(
+			exclude = set()
+			for coord, fleets in ready_scout_fleets.iteritems():
+				for fleet, fleet_range in fleets:
+					fly_range = fleet_range / 3
+					lt = int(coord[0]-fly_range), int(coord[1]-fly_range)
+					for p in db.items('planet_size', ['s>=%s'%(min_size,)] + planet_area_filter( lt, (int(fly_range*2), int(fly_range*2))), ('x', 'y', 's')):
+						dest = get_coord(p)
+						if dest in exclude:
+							continue
+						# check if some 'flying_fleet' already moves there
+						if distance(dest, coord) < fleet_range:
+							self.pending_actions.fleetMove(fleet['id'], dest)
+							exclude.add( dest )
+							print 'jump %s from %s to %s'%(fleet, coord, dest)
+							break
+							
+			self.perform_actions()
 
 	
 	def onMakeScoutFleets(self, _):		
@@ -511,7 +535,10 @@ class DcFrame(wx.Frame):
 			self.perform_actions()
 				
 	def onFlyHomeScouts(self, _):
-		turn = db.getTurn()		
+		self.cancel_jump()
+		return
+		
+		turn = db.getTurn()
 		for acc in config.accounts():
 			user_id = int(acc['id'])
 			self.pending_actions.user_id = user_id
