@@ -127,7 +127,7 @@ class BuildingFilter(wx.Window):
 		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		
-		grid = wx.GridSizer(3,4)
+		grid = wx.GridSizer(4,4)
 		
 		self.buildings = {}
 		
