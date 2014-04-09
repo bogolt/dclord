@@ -63,6 +63,12 @@ class Db:
 				name text,
 				is_open integer(1),
 				PRIMARY KEY (x, y))"""%(self.PLANET, turn_n))
+				
+		cur.execute("""create table if not exists planet_size(
+				x integer(2) not null,
+				y integer(2) not null,
+				s integer(1),
+				PRIMARY KEY (x, y))""")
 
 		cur.execute("""create table if not exists user(
 				id integer primary key,
@@ -447,6 +453,13 @@ def units(turn_n, flt, keys = None):
 	k = ('id', 'fleet_id', 'class', 'hp') if not keys else keys
 	for unit in items('unit', flt, k, turn_n):
 		yield unit
+
+def get_units(turn_n, flt, keys = None):
+	k = ('id', 'fleet_id', 'class', 'hp') if not keys else keys
+	u = []
+	for unit in items('unit', flt, k, turn_n):
+		u.append(unit)
+	return u
 
 def garrison_units(turn_n, flt, keys = None):
 	k = ('id', 'class', 'hp') if not keys else keys

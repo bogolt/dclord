@@ -48,6 +48,7 @@ options = {
 			'raw-dir':'raw',
 			'raw-xml-dir':'raw_xml',
 			'images':'img/buildings',
+			'geo-size':'geo_size',
 			'known_planets':0,
 			'load_known_planets':1,
 			'sync_path':''

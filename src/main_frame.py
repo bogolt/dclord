@@ -35,7 +35,7 @@ def distance(a, b):
 	dx = a[0]-b[0]
 	dy = a[1]-b[1]
 	return math.sqrt( dx * dx + dy * dy ) 
-
+	
 CARAPACE_PROBE = 11
 
 log = logging.getLogger('dclord')
@@ -145,6 +145,7 @@ class DcFrame(wx.Frame):
 		self.geo_explore_menu = gameMenu.Append(wx.ID_ANY, "&Geo Explore all")
 		self.fly_home_menu = gameMenu.Append(wx.ID_ANY, "Scouts fly home")
 		self.make_fleets_menu = gameMenu.Append(wx.ID_ANY, "Make scout fleets")
+		self.send_scouts = gameMenu.Append(wx.ID_ANY, "Send scout fleets")
 		
 		usersMenu = gameMenu.Append(wx.ID_ANY, "U&sers")
 		routesMenu = gameMenu.Append(wx.ID_ANY, "&Routes")
@@ -163,6 +164,7 @@ class DcFrame(wx.Frame):
 		
 		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)		
 		self.Bind(wx.EVT_MENU, self.onExploreGeoAll, self.geo_explore_menu)
+		self.Bind(wx.EVT_MENU, self.onSendScouts, self.send_scouts)
 		self.Bind(wx.EVT_MENU, self.onFlyHomeScouts, self.fly_home_menu)
 		self.Bind(wx.EVT_MENU, self.onMakeScoutFleets, self.make_fleets_menu)
 		self.Bind(wx.EVT_MENU, self.onCalculateRoutes, routesMenu)
@@ -344,7 +346,47 @@ class DcFrame(wx.Frame):
 		
 		self.perform_actions()
 	
-		
+	def is_geo_scout(self, unit):
+		for act in db.proto_actions(['proto_id=%s'%(unit['class'],)]):
+			if act['type']== request.RequestMaker.GEO_EXPLORE:
+				return True
+		return False
+
+	def onSendScouts(self, _):
+		turn = db.getTurn()		
+		for acc in config.accounts():
+			user_id = int(acc['id'])
+			self.pending_actions.user_id = user_id
+			
+			# find units that can geo-explore
+			# find the ones that are already in fleets in one of our planets
+			
+			ready_scout_fleets = {}
+			# get all fleets over our planets
+			for planet in db.planets(turn, ['owner_id=%s'%(user_id,)]):
+				coord = get_coord(planet)
+				for fleet in db.fleets(turn, filter_coord(coord)+['owner_id=%s'%(user_id,)]):
+					units = db.get_units(turn, ['fleet_id=%s'%(fleet['id'],)])
+					if len(units) != 1:
+						continue
+					unit = units[0]
+					if not self.is_geo_scout(unit):
+						continue
+					print 'unit %s on planet %s for fleet %s is geo-scout'%(unit, coord, fleet)
+					# ok, this is geo-scout, single unit in fleet, on our planet
+					#ready_scout_fleets.append((coord, fleet))
+					ready_scout_fleets.setdefault(coord, []).append(fleet)
+					
+			
+			# get possible planets to explore in nearest distance
+			for coord in ready_scout_fleets.keys():
+				serialization.load_geo_size_center(coord, 10)
+			
+			# jump to nearest/biggest unexplored planet
+			
+			
+			#db.fleets(
+
 	
 	def onMakeScoutFleets(self, _):		
 		# get all planets
@@ -469,10 +511,7 @@ class DcFrame(wx.Frame):
 			self.perform_actions()
 				
 	def onFlyHomeScouts(self, _):
-		turn = db.getTurn()
-		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
-		util.assureDirClean(out_dir)
-		
+		turn = db.getTurn()		
 		for acc in config.accounts():
 			user_id = int(acc['id'])
 			self.pending_actions.user_id = user_id

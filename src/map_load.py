@@ -1,4 +1,6 @@
 import pygame
+import os
+import os.path
 
 pygame.init()
 
@@ -17,7 +19,10 @@ for X in range(0, 20):
 		xxx = xx if xx > 0 else 1
 		yyy = yy if yy > 0 else 1
 		
-		f = open('/home/xar/.config/dclord/data/geo_size/visible_size_%s_%s'%(xxx, yyy), 'wt')
+		path = '/home/xar/.config/dclord/data/geo_size/'
+		if not os.path.exists(path):
+			os.mkdir(path)
+		f = open(os.path.join(path, 'visible_size_%s_%s'%(xxx, yyy)), 'wt')
 		f.write('x,y,s\n')
 		for y in range(yy, yy + 50):
 			for x in range(xx, xx + 50):

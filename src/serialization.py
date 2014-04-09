@@ -128,7 +128,19 @@ def loadCsv(file_name, turn_n = None):
 		log.error('failed to load csv %s: %s'%(file_name, e))	
 	log.info('loading %s done'%(file_name,))
 
-	
+
+def load_geo_size(path):
+	print 'loading %s'%(path,)
+	try:
+		for p in csv.DictReader(open(path, 'rt')):
+			for s in unicode_strings:
+				if s in p and p[s]:
+					p[s] = p[s].decode('utf-8')
+			db.setData('planet_size', p, None)
+			yield p
+	except IOError, e:
+		log.error('failed to load csv %s: %s'%(path, e))		
+
 def load_all_visible_geo(path ):
 	for f in os.listdir(path):
 		print 'loading %s'%(f,)
@@ -137,10 +149,50 @@ def load_all_visible_geo(path ):
 				for s in unicode_strings:
 					if s in p and p[s]:
 						p[s] = p[s].decode('utf-8')
-				#db.setData('planet', p, None)
+				db.setData('planet_size', p, None)
 				yield p
 		except IOError, e:
 			log.error('failed to load csv %s: %s'%(path, e))	
+
+def get_coord_point_left(v):
+	v_0 = (v / 10) * 10
+	v100 = (v_0 / 100) * 100
+	v10 = v_0 - v100
+	
+	return v100 + (0 if v10 < 50 else 50 )
+
+def get_coord_point_right(v):
+	return get_coord_point_left(v) + 50
+
+def load_geo_size_rect(left_top, size):
+	x,y = left_top
+	
+	px = get_coord_point_left(x)
+	py = get_coord_point_left(y)
+	print 'was %s %s got %s %s'%(x,y, px, py)
+	
+	dx = get_coord_point_right(x+size[0])
+	dy = get_coord_point_right(y+size[1])
+
+	path = os.path.join(config.options['data']['path'])
+	x = px
+	y = py
+	print 'get rect %s %s : %s %s'%(px,py, dx, dy)
+	while True:
+		load_geo_size( os.path.join(path, 'visible_size_%s_%s'%(x, y)))
+		
+		if x>=dx and y>=dy:
+			break
+
+		x += 50
+		if x >= dx:
+			y+=50
+			x=px			
+
+def load_geo_size_center(center, dist):
+	x,y = center
+	load_geo_size_rect((x-dist, y-dist), (dist,dist))
+	
 
 @util.run_once
 def loadGeoPlanets(turn_n = None, cb = None):
