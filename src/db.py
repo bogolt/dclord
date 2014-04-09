@@ -21,6 +21,7 @@ class Db:
 		self.conn = sqlite3.connect(dbpath)
 		self.turns = {}
 		self.max_turn = 0
+		self.pending_actions = {}
 				
 		self.cur = self.conn.cursor()
 
@@ -70,10 +71,12 @@ class Db:
 				login text
 				)""")
 				
+				
 		cur.execute("""create table if not exists requested_action(
 				id integer primary key,
-				return_id integer default null,
-				is_ok integer default null
+				user_id integer not null,
+				return_id integer default 0,
+				is_ok integer default 0
 				)""")
 				
 		#what if approaching unknown fleet does not have an id?
@@ -164,8 +167,8 @@ class Db:
 				)"""%(self.GARRISON_QUEUE_UNIT, turn_n))
 		
 		cur.execute("""create table if not exists proto(
-				id integer,
-				owner_id integer,
+				id integer primary key,
+				owner_id integer not null,
 				class integer,
 				carapace integer,
 				weight integer,
@@ -255,10 +258,10 @@ class Db:
 	def eraseObject(self, table, data, turn_n = None):
 		table_name = '%s_%s'%(table, turn_n) if turn_n else table
 		try:
-			self.cur.execute('delete %s WHERE %s'%(table_name, ','.join('?'*len(data))),tuple(data.values()))
+			self.cur.execute('delete from %s WHERE %s'%(table_name, ','.join('?'*len(data))),tuple(data.values()))
 			self.conn.commit()
 		except sqlite3.Error, e:
-			log.error('Error "%s", when executing: delete %s WHERE %s'%(e, table_name,tuple(data.values())))
+			log.error('Error "%s", when executing: delete from %s WHERE %s'%(e, table_name,tuple(data.values())))
 			print traceback.format_stack()		
 
 	#def getAnything(self):
@@ -333,11 +336,22 @@ class Db:
 	
 	def cancel_pending_action(self, act_id):
 		del self.pending_actions[act_id]
+		
+	def get_action_result(self, action_id):
+		self.cur.execute("select return_id, is_ok from requested_action where id=:action_id", (action_id,))
+		c = self.cur.fetchone()
+		if not c:
+			return None
+		return int(c[0]), 1==int(c[1])
+	
+	def clear_action_result(self, user_id):
+		self.cur.execute('delete from requested_action where user_id=:user_id', (user_id, ))
+		
 
 db = Db()	
 
-def add_pending_action(act_id, table, data):
-	db.add_pending_action(act_id, table, data)
+def add_pending_action(act_id, table, action_type, data):
+	db.add_pending_action(act_id, table, action_type, data)
 
 def perform_pending_action(self, act_id, return_id = None):
 	db.perform_pending_action(act_id, return_id)
@@ -443,7 +457,6 @@ def alienUnits(turn_n, flt, keys = None):
 	k = ('id', 'fleet_id', 'class', 'carapace', 'color', 'weight') if not keys else keys
 	for unit in items(Db.ALIENT_UNIT, flt, k, turn_n):
 		yield unit
-		
 
 def get_unit_prototype(turn_n, unit_id):
 	for unit in units(turn_n, ['id=%s'%(unit_id,)]):
@@ -452,7 +465,21 @@ def get_unit_prototype(turn_n, unit_id):
 def get_prototype(bc):
 	for proto in prototypes(['id=%s'%(bc,)]):
 		return proto
-		
+
+def get_units_class(turn_n, flt):
+	cls = []
+	print 'class with filter %s'%(flt,)
+	for proto in prototypes(flt):
+		print 'got proto %s'%(proto,)
+		cls.append( proto['id'] )
+	return cls
+
+def get_action_result(action_id):
+	return db.get_action_result(action_id)
+
+def clear_action_result(user_id):
+	db.clear_action_result(user_id)
+
 def nextFleetTempId():
 	return 0
 

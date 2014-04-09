@@ -28,6 +28,9 @@ def get_coord(obj):
 		return x,y
 	return int(x), int(y)
 	
+def filter_coord(coord):
+	return ['x=%s'%(coord[0],), 'y=%s'%(coord[1],)]
+	
 def distance(a, b):
 	dx = a[0]-b[0]
 	dy = a[1]-b[1]
@@ -111,6 +114,8 @@ class DcFrame(wx.Frame):
 		#	print 'load p %s'%(p,)
 		#	self._mgr.LoadPerspective( p )
 		
+		self.recv_data_callback = {}
+		
 		self.makeMenu()
 		
 		self.Bind(event.EVT_DATA_DOWNLOAD, self.onDownloadRawData)
@@ -137,7 +142,10 @@ class DcFrame(wx.Frame):
 		
 		gameMenu = wx.Menu()
 		self.updateMenu = gameMenu.Append(wx.ID_ANY, "&Download from sever")
-		self.uploadMenu = gameMenu.Append(wx.ID_ANY, "&Geo Explore and fly back")
+		self.geo_explore_menu = gameMenu.Append(wx.ID_ANY, "&Geo Explore all")
+		self.fly_home_menu = gameMenu.Append(wx.ID_ANY, "Scouts fly home")
+		self.make_fleets_menu = gameMenu.Append(wx.ID_ANY, "Make scout fleets")
+		
 		usersMenu = gameMenu.Append(wx.ID_ANY, "U&sers")
 		routesMenu = gameMenu.Append(wx.ID_ANY, "&Routes")
 		
@@ -152,10 +160,11 @@ class DcFrame(wx.Frame):
 		panel.Append(gameMenu, "G&ame")
 		panel.Append(syncMenu, "Sync")
 		self.SetMenuBar(panel)
-				
-		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)
-		self.Bind(wx.EVT_MENU, self.onUpload, self.uploadMenu)
-		self.Bind(wx.EVT_MENU, self.onShowUsers, usersMenu)
+		
+		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)		
+		self.Bind(wx.EVT_MENU, self.onExploreGeoAll, self.geo_explore_menu)
+		self.Bind(wx.EVT_MENU, self.onFlyHomeScouts, self.fly_home_menu)
+		self.Bind(wx.EVT_MENU, self.onMakeScoutFleets, self.make_fleets_menu)
 		self.Bind(wx.EVT_MENU, self.onCalculateRoutes, routesMenu)
 		self.Bind(wx.EVT_MENU, self.onSetSyncPath, set_sync_dir)
 	
@@ -312,9 +321,9 @@ class DcFrame(wx.Frame):
 		#self.cancel_jump()
 		#self.explore_all()
 		#self.send_back()
-		
+		pass
 	
-	def perform_actions(self):
+	def perform_actions(self, cb = None, data = None):
 		if self.pending_actions.is_empty():
 			return
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
@@ -334,8 +343,10 @@ class DcFrame(wx.Frame):
 			self.pending_actions.createNewFleet(coord, fleet_name)
 		
 		self.perform_actions()
+	
 		
-	def auto_geo_scout(self, user_id):
+	
+	def onMakeScoutFleets(self, _):		
 		# get all planets
 		# get harrison units able to scout
 		# create fleets
@@ -350,21 +361,74 @@ class DcFrame(wx.Frame):
 		# get all scouting fleets ( on other planets )
 		# geo-explore
 		# send them back to nearest home planet
+	
+		carapace = 11 # probe/zond
+		fleet_name = 'scout:geo'
+		turn = db.getTurn()
 		
-		pass
+		for acc in config.accounts():
+			user_id = int(acc['id'])
+
+			units_classes = db.get_units_class(turn, ['carapace=%s'%(carapace,), 'owner_id=%s'%(user_id,)])
+			any_class = 'class in (%s)'%(','.join([str(cls) for cls in units_classes]),)
+			print 'testing user %s with class %s'%(user_id, any_class)
+			
+			self.pending_actions.user_id = user_id
+			pending_units = []
+			
+			for planet in db.planets(turn, ['owner_id=%s'%(user_id,)]):
+				coord = get_coord(planet)
+				print 'checking harrison for planet %s'%(planet,)
+				for unit in db.garrison_units(turn, filter_coord(coord) + [any_class]):
+					print 'found unit %s on planet %s'%(unit, planet,)
+					self.pending_actions.createNewFleet(coord, fleet_name)
+					pending_units.append( (self.pending_actions.get_action_id(), coord, unit['id'] ) )
+					print 'found unit %s on planet %s'%(unit, coord )
+			
+			if len(pending_units) == 0:
+				continue
+			
+			self.recv_data_callback[acc['login']] = (self.cb_move_units_to_fleets, user_id, pending_units )
+			# exec actions to create fleets on the planets
+			self.perform_actions()
+			
+	def cb_move_units_to_fleets(self, user_id, units):
+		
+		turn = db.getTurn()
+		self.pending_actions.user_id = user_id
+		at_least_one = False
+		print 'executing move_units_to_fleets with user %s, units %s'%(user_id, units)
+		for act_id, coord, unit_id in units:
+			print 'action %s, coord %s, unit %s'%(act_id, coord, unit_id)
+			# get fleet for these coords
+			res = db.get_action_result(act_id)
+			if not res:
+				print 'oops no result'
+				continue
+			ret_id, is_ok = res
+			print 'result is %s %s'%(ret_id, is_ok)
+			if not is_ok:
+				continue
+			
+			at_least_one = True
+			print 'moving unit %s to fleet %s'%(unit_id, ret_id)
+			self.pending_actions.moveUnitToFleet(ret_id, unit_id)
+			
+		if at_least_one:
+			self.perform_actions()
 	
 	def harrison_units_to_fleets(self, user_id, coord, unit_type, fleets_ids):
 		#TODO: check if fleet empty
 		#add fleet new info to local-db
 		
-		turn = self.db.getTurn()
+		turn = db.getTurn()
 		self.pending_actions.user_id = user_id
 		
 		i = 0
 		if len(fleet_ids) < 1:
 			return
 		
-		for unit in self.db.garrison_units(turn, ['x=%s'%(coord[0],), 'y=%s'%(coord[1],), 'class=%s'%(unit_type,)]):
+		for unit in db.garrison_units(turn, ['x=%s'%(coord[0],), 'y=%s'%(coord[1],), 'class=%s'%(unit_type,)]):
 			self.pending_actions.moveUnitToFleet(fleet_ids[i], unit['id'])
 			i += 1
 			if i >= len(fleet_ids):
@@ -403,8 +467,8 @@ class DcFrame(wx.Frame):
 				self.pending_actions.cancelJump(fleet['id'])
 			
 			self.perform_actions()
-		
-	def send_back(self):
+				
+	def onFlyHomeScouts(self, _):
 		turn = db.getTurn()
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
@@ -484,7 +548,7 @@ class DcFrame(wx.Frame):
 	# 2. fly somewhere ( closest jumpable )
 	# 
 
-	def explore_all(self):
+	def onExploreGeoAll(self, _):
 		'upload pending events on server'
 		
 		turn = db.getTurn()
@@ -573,6 +637,13 @@ class DcFrame(wx.Frame):
 		if status != import_raw.XmlHandler.StatusOk:
 			status_text = 'Not authorized' if status == import_raw.XmlHandler.StatusAuthError else 'Turn in progress'
 			self.log('Error processing %s %s'%(key, status_text))
+		
+		if key in self.recv_data_callback:
+			func, user_id, data = self.recv_data_callback[key]
+			del self.recv_data_callback[key]
+			func(user_id, data)
+			db.clear_action_result(user_id)
+		
 		self.map.turn = db.db.max_turn
 		self.map.update()
 		self.object_filter.update()

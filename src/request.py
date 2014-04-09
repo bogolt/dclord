@@ -35,15 +35,27 @@ class RequestMaker:
 		return self.act("change_planet_name", pos('planetid', coord)+val('newname', name))
 	
 	def fleetMove(self, fleetId, to):
-		return self.act('move_fleet', pos('move_to', to)+val('fleet_id',fleetId))
+		act = self.act('move_fleet', pos('move_to', to)+val('fleet_id',fleetId))
+		
+		# save fleet info
+		db.add_pending_action(self.act_id, 'fleet', 'erase', {'name':name, 'x':planet[0], 'y':planet[1], 'owner_id':self.user_id})
+		
+		# add insert record with incoming_fleet, weight, is_hidden, times_spotted, id, from, to, owner_id, arrival_turn, in_transit(false)
+		
+		#db.add_pending_action(self.act_id, 'fleet', 'insert', {'name':name, 'x':planet[0], 'y':planet[1], 'owner_id':self.user_id})
+		return act
+		
 	
 	def createNewFleet(self, planet, name):
 		
 		plId = pos('planetid', planet)
 		nm = val('new_fleet_name', name)
 		act = self.act('create_new_fleet', plId + nm)
-		db.add_pending_action(self.act_id, 'fleet', {'name':name, 'x':planet[0], 'y':planet[1], 'owner_id':self.user_id})
+		db.add_pending_action(self.act_id, 'fleet', 'insert', {'name':name, 'x':planet[0], 'y':planet[1], 'owner_id':self.user_id})
 		return act
+	
+	def get_action_id(self):
+		return self.act_id
 		
 #	def createFleetFromChosen(self, coord, units, name):
 #		return self.act('create_fleet_from_choosen', val('planetid', '%d:%d'%(coord[0], coord[1])) + val('new_fleet_name', name)+ val('fleetx', coord[0])+ val('fleety',coord[1]) + ''.join(val('

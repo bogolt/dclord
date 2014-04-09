@@ -191,14 +191,15 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.iframe = True
 		elif XmlHandler.PerformAction == name and self.iframe:
 			data = getAttrs(attrs, {'id':'id', 'result':'result', 'return-id':'return-id'})
+			print 'got attrs %s, data %s'%(attrs, data)
 			act_id = data['id']
-			result = data['result']=='ok'
+			result = unicode(data['result'])==unicode('ok')
 			ret_id = 0
 			if 'return-id' in data:
 				ret_id = data['return-id']
-			
-			if result:
-				self.actions.append( (act_id, ret_id) )
+			print 'final result ret-id %s, result is %s'%(ret_id, result)
+			db.setData('requested_action', {'id':act_id, 'user_id':self.user['id'], 'return_id':ret_id, 'is_ok':result})
+			#self.actions.append( (act_id, ret_id) )
 		elif XmlHandler.Diplomacy == name:
 			self.dip = True
 		elif XmlHandler.DipRelation == name and self.dip:
