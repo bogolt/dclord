@@ -310,7 +310,7 @@ class DcFrame(wx.Frame):
 		
 		# epxlore, send back
 		#self.cancel_jump()
-		self.explore_all()
+		#self.explore_all()
 		#self.send_back()
 		
 	
@@ -335,6 +335,24 @@ class DcFrame(wx.Frame):
 		
 		self.perform_actions()
 		
+	def auto_geo_scout(self, user_id):
+		# get all planets
+		# get harrison units able to scout
+		# create fleets
+		# put units to fleets
+		
+		# get all scouting fleets ( available to jump ( on my planets ) )
+		# get unexplored planets
+		# send nearest fleets to these planets
+		
+		# load size-map, use it to scout biggest first ( N > 70, descending )
+		
+		# get all scouting fleets ( on other planets )
+		# geo-explore
+		# send them back to nearest home planet
+		
+		pass
+	
 	def harrison_units_to_fleets(self, user_id, coord, unit_type, fleets_ids):
 		#TODO: check if fleet empty
 		#add fleet new info to local-db
