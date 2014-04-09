@@ -355,7 +355,7 @@ class Map(util.BufferedWindow):
 		dc.DestroyClippingRegion()
 
 	def selectUser(self, user_id):
-		#self.centerAt( db.getUserHw(user_id, db.getTurn()) )
+		self.centerAt( db.getUserHw(user_id, db.getTurn()) )
 		self.selected_user_id = user_id
 		self.update()
 
