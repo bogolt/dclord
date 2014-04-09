@@ -47,7 +47,7 @@ options = {
 			'path':None,
 			'raw-dir':'raw',
 			'raw-xml-dir':'raw_xml',
-			'images':'images/static/img/buildings',
+			'images':'img/buildings',
 			'known_planets':0,
 			'load_known_planets':1,
 			'sync_path':''
