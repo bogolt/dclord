@@ -241,6 +241,9 @@ class Map(util.BufferedWindow):
 		#print 'request planets with turn %s'%(self.turn,)
 		for p in db.planets(self.turn, self.planet_filter + flt + cond):
 			self.drawPlanet(dc, p)
+
+		for p in db.items('planet_size', flt, ('x', 'y', 's')):
+			self.drawPlanet(dc, p)
 			
 	def drawFleets(self, dc, rect):
 		self.fleets = {}

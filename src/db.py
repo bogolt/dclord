@@ -260,6 +260,18 @@ class Db:
 		except sqlite3.Error, e:
 			log.error('Error "%s", when executing: insert or replace into %s%s values%s'%(e, table_name,keys,tuple(data.values())))
 			print traceback.format_stack()
+	
+	def set_planet_geo_size(self, data):
+		x = int(data['x'])
+		y = int(data['y'])
+		self.cur.execute('select count(*) from planet_%s WHERE x=:x and y=:y'%(self.max_turn,), (x,y))
+		r = self.cur.fetchone()
+		if int(r[0]) > 0:
+			return
+		s = int(data['s'])
+		#print 'insert planet size %s:%s %s'%(x,y,s)
+		self.cur.execute('insert into planet_size (x,y,s) values(:x, :y, :s)', (x,y,s))
+		self.conn.commit()
 
 	def eraseObject(self, table, data, turn_n = None):
 		table_name = '%s_%s'%(table, turn_n) if turn_n else table
@@ -379,6 +391,10 @@ def setData(table, data, turn_n = None):
 	#	print 'turnless %s %s'%(table, data)
 	#print 'set data %s %s %s'%(table, data, turn_n)
 	db.addObject(table, data, turn_n)
+
+def set_planet_geo_size(data):
+	global db
+	db.set_planet_geo_size(data)
 	
 def prepareTurn(turn_n):
 	global db
@@ -423,7 +439,12 @@ def planets(turn_n, flt, keys = None):
 	k = ('x','y','owner_id','name','o','e','m','t','s') if not keys else keys
 	for i in items('planet', flt, k, turn_n):
 		yield i
-	
+
+def planets_size(flt):
+	k = ('x','y','owner_id','name','o','e','m','t','s') if not keys else keys
+	for i in items('planet', flt, k, turn_n):
+		yield i
+			
 def get_planet(coord):
 	for pl in planets(getTurn(), ['x=%s'%(coord[0],), 'y=%s'%(coord[1],)]):
 		return pl

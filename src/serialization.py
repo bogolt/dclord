@@ -128,16 +128,26 @@ def loadCsv(file_name, turn_n = None):
 		log.error('failed to load csv %s: %s'%(file_name, e))	
 	log.info('loading %s done'%(file_name,))
 
+def in_rect(coord, left_top, size):
+	if coord[0] < left_top[0]:
+		return False
+	if coord[1] < left_top[1]:
+		return False
+		
+	if coord[0] > left_top[0] + size[0]:
+		return False
 
-def load_geo_size(path):
-	print 'loading %s'%(path,)
+	if coord[1] > left_top[1] + size[1]:
+		return False
+	return True
+
+def load_geo_size(path, left_top, size):
 	try:
 		for p in csv.DictReader(open(path, 'rt')):
-			for s in unicode_strings:
-				if s in p and p[s]:
-					p[s] = p[s].decode('utf-8')
-			db.setData('planet_size', p, None)
-			yield p
+			x=int(p['x'])
+			y=int(p['y'])
+			if in_rect( (x,y), left_top, size):
+				db.set_planet_geo_size(p)
 	except IOError, e:
 		log.error('failed to load csv %s: %s'%(path, e))		
 
@@ -174,24 +184,17 @@ def load_geo_size_rect(left_top, size):
 	dx = get_coord_point_right(x+size[0])
 	dy = get_coord_point_right(y+size[1])
 
-	path = os.path.join(config.options['data']['path'])
+	path = os.path.join(config.options['data']['path'], 'geo_size')
 	x = px
 	y = py
 	print 'get rect %s %s : %s %s'%(px,py, dx, dy)
-	while True:
-		load_geo_size( os.path.join(path, 'visible_size_%s_%s'%(x, y)))
-		
-		if x>=dx and y>=dy:
-			break
-
-		x += 50
-		if x >= dx:
-			y+=50
-			x=px			
+	for x in range(px, dx+1, 50):
+		for y in range(py, dy+1, 50):
+			load_geo_size( os.path.join(path, 'visible_size_%s_%s'%(y, x)), left_top, size )
 
 def load_geo_size_center(center, dist):
 	x,y = center
-	load_geo_size_rect((x-dist, y-dist), (dist,dist))
+	load_geo_size_rect((x-dist, y-dist), (dist*2,dist*2))
 	
 
 @util.run_once
