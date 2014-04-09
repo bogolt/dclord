@@ -131,8 +131,8 @@ class DcFrame(wx.Frame):
 		
 	def makeMenu(self):
 		fileMenu = wx.Menu()
-		fileMenu.Append(wx.ID_EXIT, "E&xit")
-		self.Bind(wx.EVT_MENU, self.onClose, id=wx.ID_EXIT)
+		exit_action = fileMenu.Append(wx.ID_ANY, "E&xit")
+		self.Bind(wx.EVT_MENU, self.onClose, exit_action)
 		self.Bind(wx.EVT_MENU, self.onAbout, fileMenu.Append(wx.ID_ANY, "&About dcLord"))
 		
 		gameMenu = wx.Menu()
