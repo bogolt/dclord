@@ -575,6 +575,7 @@ class DcFrame(wx.Frame):
 			self.log('Error processing %s %s'%(key, status_text))
 		self.map.turn = db.db.max_turn
 		self.map.update()
+		self.object_filter.update()
 		self.history.updateTurns(self.map.turn)
 		
 	
