@@ -362,9 +362,11 @@ class DcFrame(wx.Frame):
 	def onSendScouts(self, _):
 		turn = db.getTurn()
 		min_size = 70
+		
 		for acc in config.accounts():
 			user_id = int(acc['id'])
 			self.pending_actions.user_id = user_id
+			print 'send scouts %s size %s'%(user_id, min_size)
 			
 			# find units that can geo-explore
 			# find the ones that are already in fleets in one of our planets
@@ -373,6 +375,7 @@ class DcFrame(wx.Frame):
 			ready_scout_fleets = {}
 			# get all fleets over our planets
 			for planet in db.open_planets(user_id):
+				print 'open planet %s'%(planet,)
 				coord = get_coord(planet)
 				for fleet in db.fleets(turn, filter_coord(coord)+['owner_id=%s'%(user_id,)]):
 					units = db.get_units(turn, ['fleet_id=%s'%(fleet['id'],)])
@@ -381,7 +384,7 @@ class DcFrame(wx.Frame):
 					unit = units[0]
 					if not self.is_geo_scout(unit):
 						continue
-					fly_range = self.get_unit_range(unit)
+					fly_range = max(fly_range, self.get_unit_range(unit))
 					print 'unit %s on planet %s for fleet %s is geo-scout'%(unit, coord, fleet)
 					# ok, this is geo-scout, single unit in fleet, on our planet
 					#ready_scout_fleets.append((coord, fleet))
@@ -395,19 +398,28 @@ class DcFrame(wx.Frame):
 			# jump to nearest/biggest unexplored planet
 			exclude = set()
 			for coord, fleets in ready_scout_fleets.iteritems():
+				lt = int(coord[0]-fly_range), int(coord[1]-fly_range)
+				
+				possible_planets = []
+				for p in db.items('planet_size', ['s>=%s'%(min_size,)] + planet_area_filter( lt, (int(fly_range*2), int(fly_range*2))), ('x', 'y', 's')):
+					dest = get_coord(p)
+					if dest in exclude:
+						continue
+					dist = distance(dest, coord)
+					if dist > fly_range:
+						continue
+					possible_planets.append( (dist, dest) )
+
 				for fleet, fleet_range in fleets:
-					fly_range = fleet_range / 3
-					lt = int(coord[0]-fly_range), int(coord[1]-fly_range)
-					for p in db.items('planet_size', ['s>=%s'%(min_size,)] + planet_area_filter( lt, (int(fly_range*2), int(fly_range*2))), ('x', 'y', 's')):
-						dest = get_coord(p)
-						if dest in exclude:
+					for dist, planet in sorted(possible_planets):
+						if dist > fleet_range:
 							continue
-						# check if some 'flying_fleet' already moves there
-						if distance(dest, coord) < fleet_range:
-							self.pending_actions.fleetMove(fleet['id'], dest)
-							exclude.add( dest )
-							print 'jump %s from %s to %s'%(fleet, coord, dest)
-							break
+						# ok fly to it
+						self.pending_actions.fleetMove(fleet['id'], planet)
+						exclude.add( planet )
+						print 'jump %s from %s to %s'%(fleet, coord, planet)
+						possible_planets.remove( (dist, planet ) )
+						break
 							
 			self.perform_actions()
 

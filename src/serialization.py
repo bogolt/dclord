@@ -40,6 +40,7 @@ def saveProto():
 
 def savePlanets():
 	saveTable('planet', ('x','y','o','e','m','t','s','owner_id', 'name', 'is_open'), ['owner_id is not null'], 'planets', db.getTurn())
+	saveTable('open_planets', ('x','y','user_id'), [], 'open_planets', None)
 	#saveTable('planet', ('x','y','owner_id', 'name', 'is_open'), ['owner_id is not null'], 'planets')
 
 def saveFleets():
@@ -207,6 +208,7 @@ def loadGeoPlanets(turn_n = None, cb = None):
 	
 def loadPlanets(turn_n = None, cb = None):
 	loadTable('planet', 'planets', turn_n, cb=cb)
+	loadTable('open_planets', 'open_planets', None, turn_n, cb=cb)
 	if int(config.options['filter']['inhabited_planets'])==0:
 		loadGeoPlanets(turn_n)
 
