@@ -157,6 +157,12 @@ def loadTable(table_name, file_name, turn_n = None, load_turn = None, cb = None)
 			for s in unicode_strings:
 				if s in p and p[s]:
 					p[s] = p[s].decode('utf-8')
+			todel = []
+			for k,v in p.iteritems():
+				if v == '' or v==unicode(''):
+					todel.append(k)
+			for td in todel:
+				del p[td]
 			db.setData(table_name, p, turn_n)
 	except IOError, e:
 		log.error('failed to load table %s: %s'%(table_name, e))

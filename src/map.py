@@ -67,7 +67,7 @@ class Map(util.BufferedWindow):
 		self.click_timer = wx.Timer(self, wx.ID_ANY)
 		self.motionEvent = []
 		
-		
+		self.draw_geo = 1==int(config.options['map']['draw_geo'])
 		
 		self.Bind(wx.EVT_LEFT_UP, self.onLeftUp)
 		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)		
@@ -219,6 +219,30 @@ class Map(util.BufferedWindow):
 			dc.SetBrush(wx.Brush('white'))
 				#dc.SetPen(wx.Pen(colour=col, width=2))
 				#dc.DrawCircle(rx, ry, self.relSize(sz))
+	
+	def drawPlanetGeo(self, dc, planet):
+		if not all(k in planet and k != unicode('') for k in('o','e','m','s')):
+			return
+			
+		planetPos = objPos(planet)
+		rx,ry = self.relPos(planetPos)
+
+		try:
+			sz = int(planet['s'])
+		except:
+			return
+		
+		br = {'o':'green', 'e':'blue', 'm':'red'}
+		offset = 0
+		for key in ['o', 'e', 'm']:
+			value = int(planet[key])
+			dc.SetPen(wx.Pen(colour=br[key], width=1))
+			dc.SetBrush(wx.Brush(br[key]))
+			ln = int(self.cell_size*(value/100.0)/2)
+			dc.DrawRectangle(rx-self.cell_size/2 + offset, ry+self.cell_size/2 - ln, 4, ln)
+			offset += 6
+			
+		dc.SetBrush(wx.Brush('white'))
 				
 	def visibleAreaFilter(self, xname='x', yname='y'):
 		f = []
@@ -241,6 +265,8 @@ class Map(util.BufferedWindow):
 		#print 'request planets with turn %s'%(self.turn,)
 		for p in db.planets(self.turn, self.planet_filter + flt + cond):
 			self.drawPlanet(dc, p)
+			if self.draw_geo:
+				self.drawPlanetGeo(dc, p)
 
 		for p in db.items('planet_size', flt, ('x', 'y', 's')):
 			self.drawPlanet(dc, p)

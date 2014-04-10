@@ -157,15 +157,21 @@ class DcFrame(wx.Frame):
 		syncMenu = wx.Menu()
 		set_sync_dir = syncMenu.Append(wx.ID_ANY, "Set sync path")
 		
+		self.view = wx.Menu()
+		self.view_show_geo = self.view.Append(wx.ID_ANY, "Show geo", kind=wx.ITEM_CHECK)
+		self.view.Check(self.view_show_geo.GetId(), 1==int(config.options['map']['draw_geo']))
+		
 		#actionMenu = wx.Menu()
 		#actionDefineArea = actionMenu.Append(
 		
 		panel = wx.MenuBar()
 		panel.Append(fileMenu, "&File")
 		panel.Append(gameMenu, "G&ame")
+		panel.Append(self.view, "Vie&w")
 		panel.Append(syncMenu, "Sync")
 		self.SetMenuBar(panel)
 		
+		self.Bind(wx.EVT_MENU, self.onShowGeo, self.view_show_geo)
 		self.Bind(wx.EVT_MENU, self.onShowUsers, usersMenu)
 		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)		
 		self.Bind(wx.EVT_MENU, self.onExploreGeoAll, self.geo_explore_menu)
@@ -214,6 +220,15 @@ class DcFrame(wx.Frame):
 			self.map.update()
 			wx.Yield()
 	
+	def onShowGeo(self, evt):
+		show_geo = 1 == int(config.options['map']['draw_geo'])
+		show_geo = 0 if show_geo==1 else 1
+		config.options['map']['draw_geo'] = show_geo
+		self.map.draw_geo = 1==show_geo
+		
+		#self.view.Check(self.view_show_geo.GetId(), bool())
+		self.map.update()
+		
 	def showHidePane(self, paneObject):
 		pane = self._mgr.GetPane(paneObject)
 		if pane.IsShown():

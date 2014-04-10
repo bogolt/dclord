@@ -80,6 +80,7 @@ options = {
 		 'route_test_color':'#dfdd00',
 		 'route_found_color':'#00ff00',
 		 'route_direct_color':'#ff0000',
+		 'draw_geo':0,
 		 
 		 'comma':0
 		 
