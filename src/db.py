@@ -69,6 +69,13 @@ class Db:
 				y integer(2) not null,
 				s integer(1),
 				PRIMARY KEY (x, y))""")
+		
+		# each user may have it's own list of open planets ( consider Mobile Portal here )
+		cur.execute("""create table if not exists open_planets(
+				x integer(2) not null,
+				y integer(2) not null,
+				user_id integer not null,
+				PRIMARY KEY (x, y, user_id))""")
 
 		cur.execute("""create table if not exists user(
 				id integer primary key,
@@ -270,7 +277,7 @@ class Db:
 			return
 		s = int(data['s'])
 		#print 'insert planet size %s:%s %s'%(x,y,s)
-		self.cur.execute('insert into planet_size (x,y,s) values(:x, :y, :s)', (x,y,s))
+		self.cur.execute('insert or replace into planet_size (x,y,s) values(:x, :y, :s)', (x,y,s))
 		self.conn.commit()
 
 	def eraseObject(self, table, data, turn_n = None):
@@ -365,8 +372,20 @@ class Db:
 	def clear_action_result(self, user_id):
 		self.cur.execute('delete from requested_action where user_id=:user_id', (user_id, ))
 		
+	def set_open_planet(self, coord, user_id):
+		x,y=coord
+		self.cur.execute('insert or replace into open_planets (x,y,user_id) values(:x, :y, :user_id)', (x,y,user_id))
+		self.conn.commit()
+		
 
 db = Db()	
+
+def set_open_planet(coord, user_id):
+	db.set_open_planet(coord, user_id)
+	
+def open_planets(user_id):
+	for planet in items('open_planets', ['user_id=%s'%(user_id,)], ('x','y')):
+		yield planet
 
 def add_pending_action(act_id, table, action_type, data):
 	db.add_pending_action(act_id, table, action_type, data)
