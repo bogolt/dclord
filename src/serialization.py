@@ -5,6 +5,7 @@ import os
 import os.path
 import logging
 import util
+import wx
 
 log = logging.getLogger('dclord')
 
@@ -75,6 +76,59 @@ def save():
 	saveProto()
 	saveUsers()
 	savePlayers()
+	
+	save_sync_data()
+
+def load_sync_data():
+	sync_path = config.options['data']['sync_path']
+	if not sync_path or sync_path == '':
+		return
+
+	acc_path = os.path.join(sync_path, 'users')
+	if not os.path.exists(acc_path):
+		util.assureDirExist(acc_path)
+			
+	# read data we don't have
+	
+	nick = config.options['user']['nick']
+	if not nick:
+		nick = str(min(config.user_id_dict.keys()))
+		
+	for acc in os.listdir(acc_path):
+		if acc == nick:
+			continue
+		
+		# copy back to us new data
+		path = os.path.join(acc_path, acc)
+		
+		turn = max( [int(d) for d in os.listdir(path) ] )
+		turn_path = os.path.join(path, str(turn) )
+		out_dir = os.path.join( wx.GetTempDir(), os.path.join('unpack_sync', acc) )
+		for gz_file in os.listdir(turn_path):
+			outf = os.path.join(out_dir, gz_file)
+			util.unpack(os.path.join(turn_path, gz_file), outf)
+			loadExternalTable(outf, turn)	
+				
+def save_sync_data():
+	
+	sync_path = config.options['data']['sync_path']
+	if not sync_path or sync_path == '':
+		return
+		
+	nick = config.options['user']['nick']
+	if not nick:
+		nick = str(min(config.user_id_dict.keys()))
+		
+	acc_path = os.path.join(sync_path, 'users')
+	if not os.path.exists(acc_path):
+		util.assureDirExist(acc_path)
+
+	out_acc_p = os.path.join(acc_path, nick)
+	outp = os.path.join(out_acc_p, str(db.getTurn()))
+	util.assureDirExist(outp)
+	pt = os.path.join(config.options['data']['path'], str(db.getTurn()))
+	for f in os.listdir(pt):
+		util.pack(os.path.join(pt, f), os.path.join(outp, os.path.join(f, ".gz") ))
 
 def loadExternalTable(path, turn_n ):
 	try:

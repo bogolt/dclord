@@ -149,6 +149,7 @@ class DcFrame(wx.Frame):
 		self.fly_home_menu = gameMenu.Append(wx.ID_ANY, "Scouts fly home")
 		self.make_fleets_menu = gameMenu.Append(wx.ID_ANY, "Make scout fleets")
 		self.send_scouts = gameMenu.Append(wx.ID_ANY, "Send scout fleets")
+		self.cancel_jump_menu = gameMenu.Append(wx.ID_ANY, "Cancel jump") 
 		
 		usersMenu = gameMenu.Append(wx.ID_ANY, "U&sers")
 		routesMenu = gameMenu.Append(wx.ID_ANY, "&Routes")
@@ -165,8 +166,10 @@ class DcFrame(wx.Frame):
 		panel.Append(syncMenu, "Sync")
 		self.SetMenuBar(panel)
 		
+		self.Bind(wx.EVT_MENU, self.onShowUsers, usersMenu)
 		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)		
 		self.Bind(wx.EVT_MENU, self.onExploreGeoAll, self.geo_explore_menu)
+		self.Bind(wx.EVT_MENU, self.cancel_jump, self.cancel_jump_menu)
 		self.Bind(wx.EVT_MENU, self.onSendScouts, self.send_scouts)
 		self.Bind(wx.EVT_MENU, self.onFlyHomeScouts, self.fly_home_menu)
 		self.Bind(wx.EVT_MENU, self.onMakeScoutFleets, self.make_fleets_menu)
@@ -184,44 +187,8 @@ class DcFrame(wx.Frame):
 			self.sync_data()
 			
 	def sync_data(self):
-		self.sync_path = config.options['data']['sync_path']
-		if not self.sync_path or self.sync_path == '':
-			return
-
-		nick = config.options['user']['nick']
-		if not nick:
-			nick = str(min(config.user_id_dict.keys()))
-
-		acc_path = os.path.join(self.sync_path, 'users')
-		if not os.path.exists(acc_path):
-			util.assureDirExist(acc_path)
-		
-		out_acc_p = os.path.join(acc_path, nick)
-		outp = os.path.join(out_acc_p, str(db.getTurn()))
-		util.assureDirExist(outp)
-		pt = os.path.join(config.options['data']['path'], str(db.getTurn()))
-		for f in os.listdir(pt):
-			util.pack(os.path.join(pt, f), os.path.join(outp, f) )
-		
-		# read data we don't have
-		for acc in os.listdir(acc_path):
-			if acc == nick:
-				continue
-			
-			# copy back to us new data
-			path = os.path.join(acc_path, acc)
-			
-			turn = max( [int(d) for d in os.listdir(path) ] )
-			turn_path = os.path.join(path, str(turn) )
-			out_dir = os.path.join( wx.GetTempDir(), os.path.join('unpack_sync', acc) )
-			for gz_file in os.listdir(turn_path):
-				outf = os.path.join(out_dir, gz_file)
-				util.unpack(os.path.join(turn_path, gz_file), outf)
-				serialization.loadExternalTable(outf, turn)
-			
-		
-		# ok now save our data
-		
+		serialization.load_sync_data()
+		serialization.save_sync_data()
 		
 	def onCalculateRoutes(self, evt):
 		planets = []
@@ -513,12 +480,8 @@ class DcFrame(wx.Frame):
 				break
 
 		self.perform_actions( )		
-		
-#	def get_planet_fleets(self, coord, fleet_name):
-#		for fleet in self.db.fleets(
-	
-	
-	def cancel_jump(self):
+
+	def cancel_jump(self, evt):
 
 		turn = db.getTurn()
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
@@ -547,13 +510,11 @@ class DcFrame(wx.Frame):
 			self.perform_actions()
 				
 	def onFlyHomeScouts(self, _):
-		self.cancel_jump()
-		return
-		
 		turn = db.getTurn()
 		for acc in config.accounts():
 			user_id = int(acc['id'])
 			self.pending_actions.user_id = user_id
+			print 'fly home scouts for user %s %s'%(user_id, acc['login'])
 							
 			# fly scouts back to base
 			
@@ -592,7 +553,9 @@ class DcFrame(wx.Frame):
 					print 'fleet %s %s needs to get home'%(coord, fleet)
 					fleets.append( (coord, fleet) )					
 
-			user_id = int(acc['id'])
+			if not fleets:
+				print 'no scout fleets found not at home'
+				continue
 			
 			coords = []
 			for planet in db.planets(turn, ['owner_id=%s'%(user_id,)]):
