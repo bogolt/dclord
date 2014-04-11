@@ -77,7 +77,7 @@ def save():
 	saveUsers()
 	savePlayers()
 	
-	save_sync_data()
+	#save_sync_data()
 
 def load_sync_data():
 	sync_path = config.options['data']['sync_path']
@@ -116,7 +116,7 @@ def save_sync_data():
 		return
 		
 	nick = config.options['user']['nick']
-	if not nick:
+	if not nick and config.user_id_dict != {}:
 		nick = str(min(config.user_id_dict.keys()))
 		
 	acc_path = os.path.join(sync_path, 'users')
