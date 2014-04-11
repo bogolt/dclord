@@ -53,6 +53,6 @@ class HistoryPanel(wx.Window):
 			self.turns[t] = self.pos
 			self.pos+=1
 		
-		if turn != self.turn:
+		if turn != self.turn and turn:
 			self.turn = turn
 			self.turnList.SetSelection(self.turns[self.turn])

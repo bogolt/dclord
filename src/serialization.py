@@ -303,8 +303,6 @@ def loadGeoPlanets(turn_n = None, cb = None):
 	
 	for p in loadCsv('planets_geo', turn_n):
 		db.smartUpdate('planet', ['x=%s'%(p['x'],), 'y=%s'%(p['y'],)], p, turn_n)
-		
-	#load_geo_size_all('./physical_size_map.csv')
 	
 def loadPlanets(turn_n = None, cb = None):
 	loadTable('planet', 'planets', turn_n, cb=cb)
@@ -348,7 +346,7 @@ def getLastTurn(cb = None):
 	if not os.path.exists(path):
 		if cb:
 			util.appendLog(cb, 'Data path specified "%s" does not exist'%(path,))
-		return 0
+		return None
 		
 	for pt in os.listdir(path):
 		if os.path.isdir(os.path.join(path, pt)):
@@ -365,6 +363,8 @@ def load(turn_n = None, ev_cb = None):
 	#TODO: make async ( other thread )
 	if not turn_n:
 		turn_n = getLastTurn(ev_cb)
+		if not turn_n:
+			return
 	print 'loading turn %s'%(turn_n,)
 	if turn_n:
 		turn_n = str(turn_n)
