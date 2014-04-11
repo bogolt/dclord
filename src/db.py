@@ -284,7 +284,6 @@ class Db:
 		s = s * 10
 		if s == 0:
 			s = 1
-		print 'insert geo size planet %s:%s %s %s'%(x,y,image,s)
 		self.cur.execute('insert or replace into planet_size (x,y,image,s) values(:x, :y, :image, :s)', (x,y,image,s))
 		self.conn.commit()
 

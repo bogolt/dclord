@@ -208,14 +208,16 @@ class Map(util.BufferedWindow):
 			col = config.options['map']['planet_selected_user_color']
 		else:
 			col = getOwnerColor(owner_id)
-
+		
 		dc.SetPen(wx.Pen(colour=col, width=1))
+		
 
 		if self.cell_size == 1:
 			dc.DrawPoint(rx, ry)
 		else:
 			if self.planet_filter_ptr and self.planet_filter_ptr.is_planet_shown(planetPos):
 				dc.SetBrush(wx.Brush('red'))
+				
 			dc.DrawCircle(rx, ry, self.relSize(sz))
 			dc.SetBrush(wx.Brush('white'))
 				#dc.SetPen(wx.Pen(colour=col, width=2))
