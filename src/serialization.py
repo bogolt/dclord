@@ -202,13 +202,39 @@ def in_rect(coord, left_top, size):
 		return False
 	return True
 
-def load_geo_size(path, left_top, size):
+def load_geo_size_all(path):
 	try:
+		print 'load all geo sizes from %s'%path
+		for p in csv.DictReader(open(path, 'rt')):
+			db.set_planet_geo_size(p)
+	except IOError, e:
+		log.error('failed to load csv %s: %s'%(path, e))
+
+geo_size_loaded = set()
+def load_geo_size(path, left_top, size):
+	global geo_size_loaded
+	if path in geo_size_loaded:
+		print 'no double loading %s'%path
+		return
+	try:
+		print 'loading geo %s'%path
 		for p in csv.DictReader(open(path, 'rt')):
 			x=int(p['x'])
 			y=int(p['y'])
+			img = int(p['img'])
+			s = int(p['s'])
+			
+			#skip holes
+			if img >= 90:
+				continue
+			
+			#skip stars
+			if s == 11:
+				continue
 			if in_rect( (x,y), left_top, size):
 				db.set_planet_geo_size(p)
+		
+		geo_size_loaded.add(path)
 	except IOError, e:
 		log.error('failed to load csv %s: %s'%(path, e))		
 
@@ -237,21 +263,33 @@ def get_coord_point_right(v):
 
 def load_geo_size_rect(left_top, size):
 	x,y = left_top
+	step = 25
 	
-	px = get_coord_point_left(x)
-	py = get_coord_point_left(y)
+	px = (x-x%step) if x >= step else 0
+	py = (y-y%step) if y >= step else 0
+	
 	print 'was %s %s got %s %s'%(x,y, px, py)
 	
-	dx = get_coord_point_right(x+size[0])
-	dy = get_coord_point_right(y+size[1])
+	lx = x + size[0]
+	ly = y + size[0]
 
-	path = os.path.join(config.options['data']['path'], 'geo_size')
+	dx = (lx-lx%step) if lx >= step else 0
+	dy = (ly-ly%step) if ly >= step else 0
+	
+	if px == dx:
+		dx += step
+	
+	if py == dy:
+		dy += step
+	
+	path = config.options['data']['geo-size']
 	x = px
 	y = py
 	print 'get rect %s %s : %s %s'%(px,py, dx, dy)
-	for x in range(px, dx+1, 50):
-		for y in range(py, dy+1, 50):
-			load_geo_size( os.path.join(path, 'visible_size_%s_%s'%(y, x)), left_top, size )
+	
+	for x in range(px, dx+step, step):
+		for y in range(py, dy+step, step):
+			load_geo_size( os.path.join(path, '%s_%s.csv'%(x, y)), left_top, size )
 
 def load_geo_size_center(center, dist):
 	x,y = center
@@ -265,6 +303,8 @@ def loadGeoPlanets(turn_n = None, cb = None):
 	
 	for p in loadCsv('planets_geo', turn_n):
 		db.smartUpdate('planet', ['x=%s'%(p['x'],), 'y=%s'%(p['y'],)], p, turn_n)
+		
+	#load_geo_size_all('./physical_size_map.csv')
 	
 def loadPlanets(turn_n = None, cb = None):
 	loadTable('planet', 'planets', turn_n, cb=cb)

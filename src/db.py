@@ -68,6 +68,7 @@ class Db:
 				x integer(2) not null,
 				y integer(2) not null,
 				s integer(1),
+				image integer(1),
 				PRIMARY KEY (x, y))""")
 		
 		# each user may have it's own list of open planets ( consider Mobile Portal here )
@@ -276,8 +277,15 @@ class Db:
 		if int(r[0]) > 0:
 			return
 		s = int(data['s'])
+		image = data['img']
+		#if s == 0:
+		#	return
 		#print 'insert planet size %s:%s %s'%(x,y,s)
-		self.cur.execute('insert or replace into planet_size (x,y,s) values(:x, :y, :s)', (x,y,s))
+		s = s * 10
+		if s == 0:
+			s = 1
+		print 'insert geo size planet %s:%s %s %s'%(x,y,image,s)
+		self.cur.execute('insert or replace into planet_size (x,y,image,s) values(:x, :y, :image, :s)', (x,y,image,s))
 		self.conn.commit()
 
 	def eraseObject(self, table, data, turn_n = None):

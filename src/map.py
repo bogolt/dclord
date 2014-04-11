@@ -5,6 +5,7 @@ import logging
 import util
 import config
 import event
+import serialization
 
 log = logging.getLogger('dclord')
 
@@ -384,7 +385,9 @@ class Map(util.BufferedWindow):
 		dc.DestroyClippingRegion()
 
 	def selectUser(self, user_id):
-		self.centerAt( db.getUserHw(user_id, db.getTurn()) )
+		pos = db.getUserHw(user_id, db.getTurn())
+		self.centerAt( pos )
+		serialization.load_geo_size_center( pos, 12 )
 		self.selected_user_id = user_id
 		self.update()
 
