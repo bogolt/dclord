@@ -122,17 +122,30 @@ class BuildingCheckBox(wx.Window):
 			
 
 class BuildingFilter(wx.Window):
+	BARRACS = 4
+	SHIPYARD = 5
+	PALACE = 12
+	GOVERN = 13
+	FACTORY = 14
+	CUSTOMS = 22
+	CONSTRUCT=25
+	PARTS_FACTORY=28
+	LABORATORY=32
+	SPECIALIST=34
+	GODFATHER=36
+	CAPITAL=42
+	
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent)
 		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		
-		grid = wx.GridSizer(4,4)
+	
 		
 		self.buildings = {}
 		
-		buildings  = [4,5,12,13,14,22,25,28,30,32,34,36,41,42]
-		
+		#buildings  = [4,5,12,13,14,22,25,28,30,32,34,36,41,42]
+		buildings  = [self.BARRACS, self.SHIPYARD, self.PALACE, self.GOVERN, self.FACTORY, self.CUSTOMS, self.CONSTRUCT, self.PARTS_FACTORY, self.LABORATORY, self.SPECIALIST, self.GODFATHER, self.CAPITAL]
+		grid = wx.GridSizer(len(buildings)/3, 3)
 		blds = []
 		for uid in buildings:
 			b = BuildingCheckBox(self, uid)
