@@ -229,8 +229,8 @@ def load_geo_size(path, left_top, size):
 				continue
 			
 			#skip stars
-			if s == 11:
-				continue
+			#if s == 11:
+			#	continue
 			if in_rect( (x,y), left_top, size):
 				db.set_planet_geo_size(p)
 		

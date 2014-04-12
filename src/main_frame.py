@@ -337,6 +337,12 @@ class DcFrame(wx.Frame):
 				return True
 		return False
 	
+	def is_geo_scout_fleet(self, turn, fleet_id):
+		for u in db.units(turn, ['fleet_id=%s'%(fleet_id,)]):
+			if self.is_geo_scout(u):
+				return True
+		return False
+	
 	def get_unit_range(self, unit):
 		for proto in db.prototypes(['id=%s'%(unit['class'],)]):
 			return float(proto['fly_range'])
@@ -344,6 +350,10 @@ class DcFrame(wx.Frame):
 	def onSendScouts(self, _):
 		turn = db.getTurn()
 		min_size = 70
+		
+		friend_geo_scout_ids = []
+		for user in db.users():
+			friend_geo_scout_ids.append(str(user['id']))
 		
 		for acc in config.accounts():
 			user_id = int(acc['id'])
@@ -383,13 +393,32 @@ class DcFrame(wx.Frame):
 				lt = int(coord[0]-fly_range), int(coord[1]-fly_range)
 				
 				possible_planets = []
-				for p in db.items('planet_size', ['s>=%s'%(min_size,)] + planet_area_filter( lt, (int(fly_range*2), int(fly_range*2))), ('x', 'y', 's')):
+				#s!=11 - skip stars
+				for p in db.items('planet_size', ['s>=%s'%(min_size,), 's!=11'] + planet_area_filter( lt, (int(fly_range*2), int(fly_range*2))), ('x', 'y', 's')):
 					dest = get_coord(p)
 					if dest in exclude:
 						continue
 					dist = distance(dest, coord)
 					if dist > fly_range:
 						continue
+						
+					planet = db.get_planet(dest)
+					if planet and 'o' in planet:
+						continue
+					
+					has_flying_geo_scouts = False
+					# get list of all flying fleets ( or our allies and mults ) to this planet 
+					for fleet in db.flyingFleets(turn, filter_coord(dest) + ['owner_id in(%s)'%','.join(friend_geo_scout_ids)]):
+						# check if the fleet is geo-scout
+						if self.is_geo_scout_fleet(turn, fleet['id']):
+							has_flying_geo_scouts = True
+							print 'found another scout %s, skip planet %s'%(fleet, dest)
+					if has_flying_geo_scouts:
+						exclude.add(dest)
+						continue
+					
+					#TODO: can check if it will take too long for the other fleet, send ours
+					
 					possible_planets.append( (dist, dest) )
 
 				for fleet, fleet_range in fleets:
