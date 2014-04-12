@@ -10,6 +10,7 @@ class RequestMaker:
 	GEO_EXPLORE = 1
 	OFFER_VASSALAGE = 102
 	ARC_COLONISE=6
+	COLONY_COLONISE=2
 	def __init__(self, user_id = 0):
 		self.act_id = 0
 		self.req = ''
@@ -64,6 +65,14 @@ class RequestMaker:
 	# id==102 - offer becoming vassal
 	def store_action(self, unit_id, action_id):
 		return self.act('store_action', val('unit_id', unit_id) + val('action_id',action_id))
+
+	# return id of cancel action
+	def colonize_arc(self, unit_id):
+		return self.store_action(unit_id, self.ARC_COLONISE)
+
+	# return id of cancel action
+	def colonize_colony(self, unit_id):
+		return self.store_action(unit_id, self.COLONY_COLONISE)
 		
 	def moveUnitToFleet(self, fleetId, unitId):
 		return self.act('move_unit_to_fleet', val('fleet_id', fleetId)+val('unit_id', unitId))
