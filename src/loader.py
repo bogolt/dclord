@@ -44,6 +44,7 @@ class AsyncLoader(Thread):
 		conn.request(args['query_type'], args['query'], args['opts'])
 		r = conn.getresponse()
 		if r.status != 200:
+			log.error('Request failed, error %s'%r.status)
 			wx.PostEvent(cb, event.DataDownload(attr1=key, attr2=None))
 			return False
 
