@@ -467,9 +467,12 @@ def planets(turn_n, flt, keys = None):
 		yield i
 
 def planets_size(flt):
-	k = ('x','y','owner_id','name','o','e','m','t','s') if not keys else keys
-	for i in items('planet', flt, k, turn_n):
+	for i in items('planet_size', flt, ('x','y','s', 'image')):
 		yield i
+
+def get_planet_size(flt):
+	for p in planets_size(flt):
+		return p
 			
 def get_planet(coord):
 	for pl in planets(getTurn(), ['x=%s'%(coord[0],), 'y=%s'%(coord[1],)]):

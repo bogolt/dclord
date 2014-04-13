@@ -111,6 +111,15 @@ class DcFrame(wx.Frame):
 		
 		#self.map.set_planet_fileter(self.planet_filter)
 		self._mgr.Update()
+		
+		
+		#TODO: load from data
+		self.manual_control_units = set()
+		
+		#can be fleet or unit id
+		self.manual_control_units.add( 7906 )
+		self.manual_control_units.add( 7291 ) # probes over Othes planets
+
 
 		#p = config.options['window']['pane-info']
 		#if p:
@@ -370,10 +379,15 @@ class DcFrame(wx.Frame):
 				print 'open planet %s'%(planet,)
 				coord = get_coord(planet)
 				for fleet in db.fleets(turn, filter_coord(coord)+['owner_id=%s'%(user_id,)]):
+					if int(fleet['id']) in self.manual_control_units:
+						continue
 					units = db.get_units(turn, ['fleet_id=%s'%(fleet['id'],)])
 					if len(units) != 1:
 						continue
 					unit = units[0]
+					if int(unit['id']) in self.manual_control_units:
+						continue
+
 					if not self.is_geo_scout(unit):
 						continue
 					fly_range = max(fly_range, self.get_unit_range(unit))
@@ -394,7 +408,7 @@ class DcFrame(wx.Frame):
 				
 				possible_planets = []
 				#s!=11 - skip stars
-				for p in db.items('planet_size', ['s>=%s'%(min_size,), 's!=11'] + planet_area_filter( lt, (int(fly_range*2), int(fly_range*2))), ('x', 'y', 's')):
+				for p in db.planets_size(['s>=%s'%(min_size,), 's!=11'] + planet_area_filter( lt, (int(fly_range*2), int(fly_range*2)))):
 					dest = get_coord(p)
 					if dest in exclude:
 						continue
@@ -555,12 +569,7 @@ class DcFrame(wx.Frame):
 				
 	def onFlyHomeScouts(self, _):
 		turn = db.getTurn()
-		manual_control_units = set()
-		
-		#can be fleet or unit id
-		manual_control_units.add( 7906 )
-		manual_control_units.add( 7291 ) # probes over Othes planets
-		
+				
 		for acc in config.accounts():
 			user_id = int(acc['id'])
 			self.pending_actions.user_id = user_id
@@ -577,7 +586,7 @@ class DcFrame(wx.Frame):
 			if fleet_name:
 				fleet_flt.append( 'name="%s"'%(fleet_name,) ) 
 			for fleet in db.fleets(turn, fleet_flt):
-				if int(fleet['id']) in manual_control_units:
+				if int(fleet['id']) in self.manual_control_units:
 					continue
 				print 'found fleet %s'%(fleet,)
 				# if fleet over empty planet - jump back home
@@ -654,7 +663,7 @@ class DcFrame(wx.Frame):
 			# find if there is any explore-capable fleets over unexplored planets
 			# or simply tell explore to every unit =))) game server will do the rest
 			
-			#1. find all fleets above empty planets			
+			#1. find all fleets above empty planets
 			
 			# get fleet position, check if planet geo is unknown
 			fleet_planet = {}
@@ -663,15 +672,21 @@ class DcFrame(wx.Frame):
 			for fleet in db.fleets(turn, ['owner_id=%s'%(acc['id'],)] ):
 				print 'got fleet %s'%(fleet,)
 				coord = get_coord(fleet)
-				for planet in db.planets(turn, ['x=%s'%(fleet['x'],), 'y=%s'%(fleet['y'],)]):
+				cfilter = filter_coord(coord)
+				for planet in db.planets(turn, cfilter):
 					# skip if occupied
 					if planet['owner_id'] and not explore_owned_planets:
 						continue
-					if not planet['o'] or not planet['e'] or not planet['m'] or not planet['t']:
-						if not coord in pl:
-							pl[coord] = set()
-						pl[ coord ].add(fleet['id'])
-						print 'planet unexplored %s'%(planet,)
+					if planet['o'] and planet['e'] and planet['m'] and planet['t']:
+						continue
+					#check holes and stars
+					planet_size = db.get_planet_size(cfilter)
+					if not planet_size or planet_size == 11:
+						continue
+					if not coord in pl:
+						pl[coord] = set()
+					pl[ coord ].add(fleet['id'])
+					print 'planet unexplored %s'%(planet,)
 			
 			acts = {}
 			
