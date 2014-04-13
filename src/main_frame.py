@@ -555,6 +555,12 @@ class DcFrame(wx.Frame):
 				
 	def onFlyHomeScouts(self, _):
 		turn = db.getTurn()
+		manual_control_units = set()
+		
+		#can be fleet or unit id
+		manual_control_units.add( 7906 )
+		manual_control_units.add( 7291 ) # probes over Othes planets
+		
 		for acc in config.accounts():
 			user_id = int(acc['id'])
 			self.pending_actions.user_id = user_id
@@ -571,6 +577,8 @@ class DcFrame(wx.Frame):
 			if fleet_name:
 				fleet_flt.append( 'name="%s"'%(fleet_name,) ) 
 			for fleet in db.fleets(turn, fleet_flt):
+				if int(fleet['id']) in manual_control_units:
+					continue
 				print 'found fleet %s'%(fleet,)
 				# if fleet over empty planet - jump back home
 				coord = get_coord(fleet)
@@ -637,6 +645,7 @@ class DcFrame(wx.Frame):
 		'upload pending events on server'
 		
 		turn = db.getTurn()
+		explore_owned_planets = True
 		
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
@@ -656,7 +665,7 @@ class DcFrame(wx.Frame):
 				coord = get_coord(fleet)
 				for planet in db.planets(turn, ['x=%s'%(fleet['x'],), 'y=%s'%(fleet['y'],)]):
 					# skip if occupied
-					if planet['owner_id']:
+					if planet['owner_id'] and not explore_owned_planets:
 						continue
 					if not planet['o'] or not planet['e'] or not planet['m'] or not planet['t']:
 						if not coord in pl:
@@ -691,6 +700,8 @@ class DcFrame(wx.Frame):
 				print 'explore (%s) %s'%(coord, unit_id)
 				self.pending_actions.explore_planet( coord, unit_id )
 			self.perform_actions()
+		
+		# now request new known_planets, to get the exploration results
 		
 	def onActionsReply(self, event):
 		user = event.attr1
