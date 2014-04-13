@@ -116,7 +116,7 @@ class DcFrame(wx.Frame):
 		#TODO: load from data
 		self.manual_control_units = set()
 		
-		#can be fleet or unit id
+		#unit id
 		self.manual_control_units.add( 7906 )
 		self.manual_control_units.add( 7291 ) # probes over Othes planets
 
@@ -325,6 +325,10 @@ class DcFrame(wx.Frame):
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
 		
+		#if self.started:
+		#	self.actions_queue.append(self.pending_actions, cb, data )
+		
+		self.started = True
 		l = loader.AsyncLoader()
 		l.sendActions(self, config.user_id_dict[self.pending_actions.user_id]['login'], self.pending_actions, out_dir)
 		l.start()
@@ -379,8 +383,6 @@ class DcFrame(wx.Frame):
 				print 'open planet %s'%(planet,)
 				coord = get_coord(planet)
 				for fleet in db.fleets(turn, filter_coord(coord)+['owner_id=%s'%(user_id,)]):
-					if int(fleet['id']) in self.manual_control_units:
-						continue
 					units = db.get_units(turn, ['fleet_id=%s'%(fleet['id'],)])
 					if len(units) != 1:
 						continue
@@ -471,6 +473,10 @@ class DcFrame(wx.Frame):
 		
 		for acc in config.accounts():
 			user_id = int(acc['id'])
+			
+			
+			if user_id < 601140:
+				continue
 
 			units_classes = db.get_units_class(turn, ['carapace=%s'%(carapace,), 'owner_id=%s'%(user_id,)])
 			any_class = 'class in (%s)'%(','.join([str(cls) for cls in units_classes]),)
@@ -586,8 +592,6 @@ class DcFrame(wx.Frame):
 			if fleet_name:
 				fleet_flt.append( 'name="%s"'%(fleet_name,) ) 
 			for fleet in db.fleets(turn, fleet_flt):
-				if int(fleet['id']) in self.manual_control_units:
-					continue
 				print 'found fleet %s'%(fleet,)
 				# if fleet over empty planet - jump back home
 				coord = get_coord(fleet)
@@ -603,6 +607,9 @@ class DcFrame(wx.Frame):
 					# if zero units - don't care about empty fleet as well
 					if len(units) != 1:
 						print 'fleet %s has %s units, while required 1'%(fleet['id'], len(units))
+						continue
+
+					if int(units[0]['id']) in self.manual_control_units:
 						continue
 
 					proto = db.get_prototype(units[0]['class'])
