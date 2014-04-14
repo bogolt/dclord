@@ -82,6 +82,8 @@ class DcFrame(wx.Frame):
 		print 'map turn is set to %s'%(self.map.turn,)
 		self.map.update()
 
+		self.started = False
+		self.actions_queue = []
 		
 		self.pf = None
 		
@@ -319,21 +321,29 @@ class DcFrame(wx.Frame):
 		#self.send_back()
 		pass
 	
-	def perform_actions(self, cb = None, data = None):
+	def perform_actions(self):
 		if self.pending_actions.is_empty():
 			return
+					
+		login = config.user_id_dict[self.pending_actions.user_id]['login']
+		self.actions_queue.append( (login, str(self.pending_actions) ) )
+		self.pending_actions.clear()
+		
+		if not self.started:
+			self.perform_next_action()
+			
+	def perform_next_action(self):
+		if self.actions_queue==[]:
+			return
+		login, acts = self.actions_queue[0]
+		del self.actions_queue[0]
+		
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
-		
-		#if self.started:
-		#	self.actions_queue.append(self.pending_actions, cb, data )
-		
-		self.started = True
+
 		l = loader.AsyncLoader()
-		l.sendActions(self, config.user_id_dict[self.pending_actions.user_id]['login'], self.pending_actions, out_dir)
+		l.sendActions(self, login, acts, out_dir)
 		l.start()
-		
-		self.pending_actions.clear()
 		
 	def create_fleet(self, user_id, fleet_name, planet_coord, count = 1):
 		
@@ -688,6 +698,7 @@ class DcFrame(wx.Frame):
 						continue
 					#check holes and stars
 					if not db.is_planet(coord):
+						print '%s not a planet'%(coord,)
 						continue
 					if not coord in pl:
 						pl[coord] = set()
@@ -717,12 +728,31 @@ class DcFrame(wx.Frame):
 			#hw_planet = db.getUserHw(acc['id'])
 			#actions.createNewFleet(hw_planet, 'a_new_shiny_fleet')
 			
+			at_least_one = False
 			for coord, unit_id in acts.iteritems():
 				print 'explore (%s) %s'%(coord, unit_id)
 				self.pending_actions.explore_planet( coord, unit_id )
-			self.perform_actions()
+				at_least_one = True
+			
+			if at_least_one:
+				self.perform_actions()
+				
+				#request updated known_planets info
+				self.request_data('known_planets', acc)
+				
 		
 		# now request new known_planets, to get the exploration results
+		
+	def request_data(self, request, acc):
+		import loader
+		l = loader.AsyncLoader()
+		
+		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
+		util.assureDirExist(out_dir)
+		log.info('requesting user %s info'%(acc['login'],))
+		d = os.path.join(util.getTempDir(), 'raw_data') if not out_dir else out_dir
+		l.getDcData(self, acc['login'], request, d, out_dir)
+		l.start()
 		
 	def onActionsReply(self, event):
 		user = event.attr1
@@ -765,6 +795,9 @@ class DcFrame(wx.Frame):
 		self.map.update()
 		self.object_filter.update()
 		self.history.updateTurns(self.map.turn)
+		
+		self.started = False
+		self.perform_next_action()
 		
 	
 	def onSelectUser(self, evt):
