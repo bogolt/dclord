@@ -156,6 +156,8 @@ class DcFrame(wx.Frame):
 		
 		gameMenu = wx.Menu()
 		self.updateMenu = gameMenu.Append(wx.ID_ANY, "&Download from sever")
+		self.updateGeo = gameMenu.Append(wx.ID_ANY, "Download known planets from sever")
+		
 		self.geo_explore_menu = gameMenu.Append(wx.ID_ANY, "&Geo Explore all")
 		self.fly_home_menu = gameMenu.Append(wx.ID_ANY, "Scouts fly home")
 		self.make_fleets_menu = gameMenu.Append(wx.ID_ANY, "Make scout fleets")
@@ -184,7 +186,9 @@ class DcFrame(wx.Frame):
 		
 		self.Bind(wx.EVT_MENU, self.onShowGeo, self.view_show_geo)
 		self.Bind(wx.EVT_MENU, self.onShowUsers, usersMenu)
-		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)		
+		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)
+		self.Bind(wx.EVT_MENU, self.onUpdateGeo, self.updateGeo)
+		
 		self.Bind(wx.EVT_MENU, self.onExploreGeoAll, self.geo_explore_menu)
 		self.Bind(wx.EVT_MENU, self.cancel_jump, self.cancel_jump_menu)
 		self.Bind(wx.EVT_MENU, self.onSendScouts, self.send_scouts)
@@ -299,6 +303,19 @@ class DcFrame(wx.Frame):
 		self.players = self.res.LoadFrame(None, 'PlayersView')
 		self.players.setConf(self.conf)
 		self.players.Show(True)
+
+	def onUpdateGeo(self, event):
+		'download and process info from server'
+		import loader
+		l = loader.AsyncLoader()
+		
+		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
+		util.assureDirClean(out_dir)
+		for acc in config.accounts():
+			log.info('requesting user %s info'%(acc['login'],))
+			d = os.path.join(util.getTempDir(), 'raw_data') if not out_dir else out_dir
+			l.getDcData(self, acc['login'], 'known_planets', d)
+		l.start()
 
 	def onUpdate(self, event):
 		'download and process info from server'
@@ -461,6 +478,9 @@ class DcFrame(wx.Frame):
 			self.perform_actions()
 
 	
+	def perform_commands(self, acc, cmds):
+		cmds = {'move':[(fleet_id, (x,y))], 'create_fleet':[('name', (x,y))], 'unit_to_fleet':[(unit_id, fleet_id)], 'geo_explore':[unit_id], 'colonize':[unit_id], 'arc_colonize':[unit_id], 'build':[], 'cancel_colonize':[colonize_action], 'cancel_jump':[fleet_id]}
+	
 	def onMakeScoutFleets(self, _):		
 		# get all planets
 		# get harrison units able to scout
@@ -476,6 +496,11 @@ class DcFrame(wx.Frame):
 		# get all scouting fleets ( on other planets )
 		# geo-explore
 		# send them back to nearest home planet
+		
+		#command_type, 
+		#move_command = ('move_to', 
+		
+		#move_commands = [((x,y), fleet_id)]
 	
 		carapace = 11 # probe/zond
 		fleet_name = 'scout:geo'
@@ -485,8 +510,8 @@ class DcFrame(wx.Frame):
 			user_id = int(acc['id'])
 			
 			
-			if user_id < 601140:
-				continue
+			#if user_id < 601140:
+			#	continue
 
 			units_classes = db.get_units_class(turn, ['carapace=%s'%(carapace,), 'owner_id=%s'%(user_id,)])
 			any_class = 'class in (%s)'%(','.join([str(cls) for cls in units_classes]),)
@@ -738,7 +763,7 @@ class DcFrame(wx.Frame):
 				self.perform_actions()
 				
 				#request updated known_planets info
-				self.request_data('known_planets', acc)
+				#self.request_data('known_planets', acc)
 				
 		
 		# now request new known_planets, to get the exploration results
