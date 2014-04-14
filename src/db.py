@@ -665,3 +665,7 @@ def has_all_buildings(turn_n, coord, buildings):
 		if not is_found:
 			return False
 	return True
+
+def is_planet(coord):
+	planet_size = db.get_planet_size(['x=%s'%(coord[0],), 'y=%s'%(coord[1],)])
+	return planet_size and planet_size != 11

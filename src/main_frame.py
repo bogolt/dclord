@@ -687,8 +687,7 @@ class DcFrame(wx.Frame):
 					if planet['o'] and planet['e'] and planet['m'] and planet['t']:
 						continue
 					#check holes and stars
-					planet_size = db.get_planet_size(cfilter)
-					if not planet_size or planet_size == 11:
+					if not db.is_planet(coord):
 						continue
 					if not coord in pl:
 						pl[coord] = set()
