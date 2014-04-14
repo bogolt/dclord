@@ -1,6 +1,7 @@
 import sqlite3
 import logging
 import sys, traceback
+import serialization
 
 def to_pos(a,b):
 	return int(a),int(b)
@@ -272,9 +273,9 @@ class Db:
 	def set_planet_geo_size(self, data):
 		x = int(data['x'])
 		y = int(data['y'])
-		self.cur.execute('select count(*) from planet_%s WHERE x=:x and y=:y'%(self.max_turn,), (x,y))
+		self.cur.execute('select s from planet_%s WHERE x=:x and y=:y'%(self.max_turn,), (x,y))
 		r = self.cur.fetchone()
-		if int(r[0]) > 0:
+		if r and r[0]:
 			return
 		s = int(data['s'])
 		image = data['img']
@@ -470,8 +471,9 @@ def planets_size(flt):
 	for i in items('planet_size', flt, ('x','y','s', 'image')):
 		yield i
 
-def get_planet_size(flt):
-	for p in planets_size(flt):
+def get_planet_size(coord):
+	serialization.load_geo_size_at(coord)
+	for p in planets_size(['x=%s'%(coord[0],), 'y=%s'%(coord[1],)]):
 		return p
 			
 def get_planet(coord):
@@ -667,5 +669,5 @@ def has_all_buildings(turn_n, coord, buildings):
 	return True
 
 def is_planet(coord):
-	planet_size = db.get_planet_size(['x=%s'%(coord[0],), 'y=%s'%(coord[1],)])
+	planet_size = get_planet_size(coord)
 	return planet_size and planet_size != 11

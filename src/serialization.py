@@ -231,8 +231,8 @@ def load_geo_size(path, left_top, size):
 			#skip stars
 			#if s == 11:
 			#	continue
-			if in_rect( (x,y), left_top, size):
-				db.set_planet_geo_size(p)
+			#if in_rect( (x,y), left_top, size):
+			db.set_planet_geo_size(p)
 		
 		geo_size_loaded.add(path)
 	except IOError, e:
@@ -294,7 +294,16 @@ def load_geo_size_rect(left_top, size):
 def load_geo_size_center(center, dist):
 	x,y = center
 	load_geo_size_rect((x-dist, y-dist), (dist*2,dist*2))
+
+def load_geo_size_at(center):
+	x,y = center
 	
+	step = 25
+	
+	px = (x-x%step) if x >= step else 0
+	py = (y-y%step) if y >= step else 0
+	path = config.options['data']['geo-size']
+	load_geo_size( os.path.join(path, '%s_%s.csv'%(px, py)), (x,y), (x,y) )
 
 @util.run_once
 def loadGeoPlanets(turn_n = None, cb = None):
