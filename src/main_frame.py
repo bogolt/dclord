@@ -95,6 +95,7 @@ class DcFrame(wx.Frame):
 		
 		self._mgr = wx.aui.AuiManager(self)
 		
+		self.command_selected_user = False
 		
 		info = wx.aui.AuiPaneInfo()
 		info.CenterPane()
@@ -166,6 +167,10 @@ class DcFrame(wx.Frame):
 		self.make_fleets_menu = gameMenu.Append(wx.ID_ANY, "Make scout fleets")
 		self.send_scouts = gameMenu.Append(wx.ID_ANY, "Send scout fleets")
 		self.cancel_jump_menu = gameMenu.Append(wx.ID_ANY, "Cancel jump") 
+		
+		#cmd_sel_user = gameMenu.Append(wx.ID_ANY, "Command selected user", kind=wx.ITEM_CHECK)
+		#gameMenu.Check(self.view_show_geo.GetId(), 1==int(config.options['map']['draw_geo']))
+		#self.command_selected_user
 		
 		usersMenu = gameMenu.Append(wx.ID_ANY, "U&sers")
 		routesMenu = gameMenu.Append(wx.ID_ANY, "&Routes")
@@ -328,6 +333,8 @@ class DcFrame(wx.Frame):
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
 		for acc in config.accounts():
+			if self.command_selected_user and int(acc['id']) != self.map.selected_user_id:
+				continue
 			log.info('requesting user %s info'%(acc['login'],))
 			l.getUserInfo(self, acc['login'], out_dir)
 		l.start()
@@ -402,11 +409,13 @@ class DcFrame(wx.Frame):
 		
 		for acc in config.accounts():
 			user_id = int(acc['id'])
+
+			if self.command_selected_user and user_id != self.map.selected_user_id:
+				continue
+
 			self.pending_actions.user_id = user_id
 			print 'send scouts %s size %s'%(user_id, min_size)
-			
-			
-			
+					
 			# find units that can geo-explore
 			# find the ones that are already in fleets in one of our planets
 			
@@ -421,7 +430,8 @@ class DcFrame(wx.Frame):
 						continue
 					units = db.get_units(turn, ['fleet_id=%s'%(fleet['id'],)])
 					if len(units) != 1:
-						print 'fleet %s has wrong units count ( != 1 ), skipping it'%(fleet,)
+						print 'fleet %s has wrong units count ( != 1 ) %s, skipping it'%(fleet, units)
+						
 						continue
 					unit = units[0]
 					if int(unit['id']) in self.manual_control_units:

@@ -45,7 +45,7 @@ def savePlanets():
 	#saveTable('planet', ('x','y','owner_id', 'name', 'is_open'), ['owner_id is not null'], 'planets')
 
 def saveFleets():
-	saveTable('fleet', ('id', 'x','y','owner_id', 'is_hidden','turn','name','weight'), None, 'fleets', db.getTurn())
+	saveTable(db.Db.FLEET, ('id', 'x','y','owner_id', 'is_hidden','name','weight'), None, 'fleets', db.getTurn())
 	saveTable(db.Db.FLYING_FLEET, ('id', 'x','y','in_transit', 'owner_id','from_x','from_y','weight', 'arrival_turn','is_hidden'), None, 'flying_fleets', db.getTurn())
 	saveTable(db.Db.FLYING_ALIEN_FLEET, ('x','y','user_id','from_x','from_y','weight', 'arrival_turn','is_hidden'), None, 'flying_alien_fleets', db.getTurn())
 		

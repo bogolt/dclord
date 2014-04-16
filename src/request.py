@@ -54,7 +54,7 @@ class RequestMaker:
 		if dist > rng:
 			print 'Error - attempt to move fleet %s to distance %s which is longer then fleet max range %s'%(fleetId, dist, rng)
 		
-		turns = math.ceil(dist / speed)
+		turns = int(math.ceil(dist / speed))
 		
 		db.add_pending_action(self.act_id, db.Db.FLEET, 'erase', ['id=%s'%(fleetId,)])
 		db.add_pending_action(self.act_id, db.Db.FLYING_FLEET, 'insert', {'x':to[0], 'y':to[1], 'owner_id':self.user_id, 'id':fleetId, 'from_x':fleet['x'], 'from_y':fleet['y'], 'arrival_turn':turns + db.getTurn()})

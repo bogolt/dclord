@@ -362,17 +362,22 @@ class Db:
 			yield r
 	
 	def add_pending_action(self, act_id, table, action_type, data):
+		print 'add pending action %s %s %s %s'%(act_id, table, action_type, data)
 		self.pending_actions.setdefault(act_id, []).append((table, action_type, data))
 		
 	def perform_pending_action(self, act_id, return_id = None):
+		if act_id not in self.pending_actions:
+			print 'action %s not in pending actions: %s'%(act_id, self.pending_actions.keys())
 		actions = self.pending_actions[act_id]
 		for table, action_type, data in actions:
 			if return_id and 'id' in data:
 				data['id'] = return_id
 				
 			if action_type == 'insert':
+				print 'exec pending insert %s %s %s'%(table, data, db.max_turn)
 				self.addObject(table, data, db.max_turn)
 			elif action_type == 'erase':
+				print 'exec pending erase %s %s %s'%(table, data, db.max_turn)
 				self.eraseObject(table, data, db.max_turn)
 		
 		del self.pending_actions[act_id]
@@ -417,7 +422,7 @@ def open_planets(user_id):
 def add_pending_action(act_id, table, action_type, data):
 	db.add_pending_action(act_id, table, action_type, data)
 
-def perform_pending_action(self, act_id, return_id = None):
+def perform_pending_action(act_id, return_id):
 	db.perform_pending_action(act_id, return_id)
 
 def cancel_pending_action(self, act_id):
@@ -526,11 +531,10 @@ def units(turn_n, flt, keys = None):
 		yield unit
 
 def get_units(turn_n, flt, keys = None):
-	k = ('id', 'fleet_id', 'class', 'hp') if not keys else keys
-	u = []
-	for unit in items('unit', flt, k, turn_n):
-		u.append(unit)
-	return u
+	us = []
+	for u in units(turn_n,flt, keys):
+		us.append(u)
+	return us
 
 def garrison_units(turn_n, flt, keys = None):
 	k = ('id', 'class', 'hp') if not keys else keys
@@ -546,8 +550,8 @@ def get_unit_prototype(turn_n, unit_id):
 	for unit in units(turn_n, ['id=%s'%(unit_id,)]):
 		return get_prototype(unit['class'])
 			
-def get_prototype(bc):
-	for proto in prototypes(['id=%s'%(bc,)]):
+def get_prototype(bc, keys = None):
+	for proto in prototypes(['id=%s'%(bc,),], keys):
 		return proto
 
 def get_units_class(turn_n, flt):
@@ -702,14 +706,16 @@ def get_fleet_speed_range(fleet_id):
 	if not fleet:
 		return None,None
 		
-	min_speed = None
-	min_range = None
+	min_speed = 99999
+	min_range = 99999
 	for u in units(getTurn(), ['fleet_id=%s'%(fleet_id,)]):
-		if int(u['is_spaceship'])!=1:
+		proto = get_prototype(u['class'], ('is_spaceship', 'fly_speed', 'fly_range'))
+		if int(proto['is_spaceship'])!=1:
 			continue
-		speed = float(u['fly_speed'])
-		rnge = float(u['fly_range'])
-		min_speed = min(speed, min_speed) if min_speed else speed
-		min_range = min(rnge, min_range) if min_range else rnge
+			
+		speed = float(proto['fly_speed'])
+		rnge = float(proto['fly_range'])
+		min_speed = min(speed, min_speed)
+		min_range = min(rnge, min_range)
 		
 	return min_speed, min_range

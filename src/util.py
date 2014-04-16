@@ -5,6 +5,7 @@ import os.path
 import shutil
 import tempfile
 import event
+import math
 from datetime import datetime
 
 def getTempDir():

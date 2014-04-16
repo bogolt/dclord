@@ -155,6 +155,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			fleetDict = {'x':'x','y':'y','id':'id','in-transit':'in_transit','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
 			data = getAttrs(attrs, fleetDict)
 
+			#save fleet-id to fill unit table
+			self.obj_id = data['id']
+
 			tta = 0
 			if 'tta' in data:
 				tta = int(data['tta'])
@@ -174,7 +177,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			#TODO: alien fleet / flying or not here ( 1st delete all alien fleets visible by user before adding any of them
 			fleetDict = {'x':'x','y':'y','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
 			data = getAttrs(attrs, fleetDict)
-
+			
 			tta = 0
 			if 'tta' in data:
 				tta = int(data['tta'])
@@ -183,9 +186,12 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			if tta > 0:
 				data['arrival_turn'] = int(self.user['turn'])+tta
 				data['user_id'] = self.user['id']
+				self.obj_id = None
 				db.setData(db.Db.FLYING_ALIEN_FLEET, data, self.turn)
 			else:
 				safeRemove(data, ['from_x', 'from_y', 'tta'])
+				#save fleet-id to fill alien-unit table
+				self.obj_id = data['id']
 				db.setData(db.Db.FLEET, data, self.turn)
 		elif XmlHandler.Garrison == name:
 			self.pos = getAttrs(attrs, {'x':'x', 'y':'y'})
@@ -219,15 +225,16 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.PerformAction == name and self.iframe:
 			data = getAttrs(attrs, {'id':'id', 'result':'result', 'return-id':'return-id'})
 			print 'got attrs %s, data %s'%(attrs, data)
-			act_id = data['id']
+			act_id = int(data['id'])
+			print 'got action id %s'%(act_id,)
 			ret_id = 0
 			if 'return-id' in data:
 				ret_id = data['return-id']
 
-			if 'result' in data:
-				result = unicode(data['result'])==unicode('ok')
-				print 'final result ret-id %s, result is %s'%(ret_id, result)
-				db.setData('requested_action', {'id':act_id, 'user_id':self.user['id'], 'return_id':ret_id, 'is_ok':result})
+			if 'result' in data and unicode(data['result'])==unicode('ok'):
+				print 'final result ret-id %s'%(ret_id,)
+				db.setData('requested_action', {'id':act_id, 'user_id':self.user['id'], 'return_id':ret_id, 'is_ok':1})
+				db.perform_pending_action(act_id, ret_id)
 			#self.actions.append( (act_id, ret_id) )
 		elif XmlHandler.Diplomacy == name:
 			self.dip = True
@@ -236,6 +243,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			db.setData('player', data, self.turn)
 		elif XmlHandler.UserFleets == name:
 			db.eraseObject(db.Db.FLEET, ['owner_id=%s'%(self.user['id'],),], self.turn)
+			db.eraseObject(db.Db.FLYING_FLEET, ['owner_id=%s'%(self.user['id'],),], self.turn)
 		elif XmlHandler.AlienFleets == name:
 			db.eraseObject(db.Db.FLYING_ALIEN_FLEET, ['user_id=%s'%(self.user['id'],)], self.turn)
 	def endElement(self, name):
