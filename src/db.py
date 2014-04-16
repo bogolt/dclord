@@ -14,7 +14,9 @@ class Db:
 	FLEET = 'fleet'
 	UNIT = 'unit'
 	ALIENT_UNIT = 'alien_unit'
-	INCOMING_FLEET = 'incoming_fleet'
+	FLYING_FLEET = 'flying_fleet'
+	FLYING_ALIEN_FLEET = 'flying_alien_fleet'
+	#ALIEN_FLEET = 'alien_fleet'
 	GARRISON_UNIT = 'garrison_unit'
 	GARRISON_QUEUE_UNIT = 'garrison_queue_unit'
 	
@@ -127,9 +129,8 @@ class Db:
 				turn integer(2)
 				)"""%(self.FLEET, turn_n))
 
-		
 		cur.execute("""create table if not exists %s_%s(
-				id integer,
+				id integer PRIMARY KEY,
 				x integer(2) not null,
 				y integer(2) not null,
 				owner_id integer,
@@ -141,9 +142,19 @@ class Db:
 				is_hidden integer(1),
 				times_spotted integer(1),
 				turn integer(2),
-				temp_id integer,
 				in_transit integer(1)
-				)"""%(self.INCOMING_FLEET, turn_n))
+				)"""%(self.FLYING_FLEET, turn_n))
+						
+		cur.execute("""create table if not exists %s_%s(
+				x integer(2) not null,
+				y integer(2) not null,
+				user_id interger,
+				from_x integer(2),
+				from_y integer(2),
+				arrival_turn integer(2),
+				weight integer,
+				is_hidden integer(1)
+				)"""%(self.FLYING_ALIEN_FLEET, turn_n))
 				
 		
 		cur.execute("""create table if not exists %s_%s(
@@ -401,7 +412,7 @@ def set_open_planet(coord, user_id):
 	db.set_open_planet(coord, user_id)
 	
 def open_planets(user_id):
-	for planet in items('open_planets', ['user_id=%s'%(user_id,)], ('x','y'), turn_n):
+	for planet in items('open_planets', ['user_id=%s'%(user_id,)], ('x','y')):
 		yield planet
 
 def add_pending_action(act_id, table, action_type, data):
@@ -496,8 +507,8 @@ def fleets(turn_n, flt, keys = None):
 		yield i
 
 def flyingFleets(turn_n, flt, keys = None):
-	k = ('id', 'temp_id', 'x','y','owner_id', 'in_transit', 'from_x', 'from_y', 'is_hidden') if not keys else keys
-	for i in items('incoming_fleet', flt, k, turn_n):
+	k = ('id', 'x','y','owner_id', 'in_transit', 'from_x', 'from_y', 'is_hidden') if not keys else keys
+	for i in items(Db.FLYING_FLEET, flt, k, turn_n):
 		yield i
 		
 def prototypes(flt, keys = None):

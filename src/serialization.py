@@ -46,7 +46,8 @@ def savePlanets():
 
 def saveFleets():
 	saveTable('fleet', ('id', 'x','y','owner_id', 'is_hidden','turn','name','weight'), None, 'fleets', db.getTurn())
-	saveTable('incoming_fleet', ('id', 'x','y','in_transit', 'owner_id','from_x','from_y','weight', 'arrival_turn','temp_id', 'is_hidden','turn'), None, 'incoming_fleets', db.getTurn())
+	saveTable(db.Db.FLYING_FLEET, ('id', 'x','y','in_transit', 'owner_id','from_x','from_y','weight', 'arrival_turn','is_hidden'), None, 'flying_fleets', db.getTurn())
+	saveTable(db.Db.FLYING_ALIEN_FLEET, ('x','y','user_id','from_x','from_y','weight', 'arrival_turn','is_hidden'), None, 'flying_alien_fleets', db.getTurn())
 		
 def saveUnits():
 	saveTable('unit', ('id', 'hp','class', 'fleet_id'), [], 'units', db.getTurn())
@@ -321,7 +322,8 @@ def loadPlanets(turn_n = None, cb = None):
 
 def loadFleets(turn_n = None, cb = None):
 	loadTable('fleet', 'fleets', turn_n)
-	loadTable('incoming_fleet', 'incoming_fleets', turn_n)
+	loadTable(db.Db.FLYING_FLEET, 'flying_fleets', turn_n)
+	loadTable(db.Db.FLYING_ALIEN_FLEET, 'flying_alien_fleets', turn_n)
 	
 def loadUnits(turn_n = None, cb = None):
 	loadTable('unit', 'units', turn_n, cb=cb)

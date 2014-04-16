@@ -411,7 +411,7 @@ class DcFrame(wx.Frame):
 			fly_range = 0.0
 			ready_scout_fleets = {}
 			# get all fleets over our planets
-			for planet in db.open_planets(user_id, turn):
+			for planet in db.open_planets(user_id):
 				print 'open planet %s'%(planet,)
 				coord = get_coord(planet)
 				for fleet in db.fleets(turn, filter_coord(coord)+['owner_id=%s'%(user_id,)]):

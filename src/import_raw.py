@@ -46,6 +46,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	KnownPlanets = 'known-planets'
 	Fleet = 'fleet'
 	AlienFleet = 'allien-fleet'
+	AlienFleets = 'allien-fleets'
 	Unit = 'u'
 	AlienUnit = 'allien-ship'
 	Garrison = 'harrison'
@@ -150,33 +151,42 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				del data['age']
 			db.setPlanet(data, self.turn)
 			
-		elif XmlHandler.Fleet == name or XmlHandler.AlienFleet == name:
+		elif XmlHandler.Fleet == name:
 			fleetDict = {'x':'x','y':'y','id':'id','in-transit':'in_transit','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
 			data = getAttrs(attrs, fleetDict)
-			if 'id' in data:
-				self.obj_id = int(data['id'])
-			else:
-				self.obj_id = int(db.nextFleetTempId())
-				data['temp_id'] = self.obj_id
+
 			tta = 0
 			if 'tta' in data:
 				tta = int(data['tta'])
 				if tta > 0:
 					data['arrival_turn'] = int(self.user['turn'])+tta
 				del data['tta']
-			if tta == 0:
-				safeRemove(data, ['from_x', 'from_y', 'tta'])
 			
-			if name==XmlHandler.Fleet:
-				data['owner_id'] = self.user['id']
-			else:
-				data['turn'] = self.turn
+			data['owner_id'] = self.user['id']
 				
 			if tta>0:
-				db.setData('incoming_fleet', data, self.turn)
+				db.setData(db.Db.FLYING_FLEET, data, self.turn)
 			elif 'in_transit' in data:
-				del data['in_transit']
-				db.setData('fleet', data, self.turn)
+				safeRemove(data, ['from_x', 'from_y', 'tta', 'in_transit'])
+				db.setData(db.Db.FLEET, data, self.turn)
+				
+		elif XmlHandler.AlienFleet == name:
+			#TODO: alien fleet / flying or not here ( 1st delete all alien fleets visible by user before adding any of them
+			fleetDict = {'x':'x','y':'y','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
+			data = getAttrs(attrs, fleetDict)
+
+			tta = 0
+			if 'tta' in data:
+				tta = int(data['tta'])
+				del data['tta']
+				
+			if tta > 0:
+				data['arrival_turn'] = int(self.user['turn'])+tta
+				data['user_id'] = self.user['id']
+				db.setData(db.Db.FLYING_ALIEN_FLEET, data, self.turn)
+			else:
+				safeRemove(data, ['from_x', 'from_y', 'tta'])
+				db.setData(db.Db.FLEET, data, self.turn)
 		elif XmlHandler.Garrison == name:
 			self.pos = getAttrs(attrs, {'x':'x', 'y':'y'})
 		elif XmlHandler.AlienUnit == name:
@@ -210,12 +220,14 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			data = getAttrs(attrs, {'id':'id', 'result':'result', 'return-id':'return-id'})
 			print 'got attrs %s, data %s'%(attrs, data)
 			act_id = data['id']
-			result = unicode(data['result'])==unicode('ok')
 			ret_id = 0
 			if 'return-id' in data:
 				ret_id = data['return-id']
-			print 'final result ret-id %s, result is %s'%(ret_id, result)
-			db.setData('requested_action', {'id':act_id, 'user_id':self.user['id'], 'return_id':ret_id, 'is_ok':result})
+
+			if 'result' in data:
+				result = unicode(data['result'])==unicode('ok')
+				print 'final result ret-id %s, result is %s'%(ret_id, result)
+				db.setData('requested_action', {'id':act_id, 'user_id':self.user['id'], 'return_id':ret_id, 'is_ok':result})
 			#self.actions.append( (act_id, ret_id) )
 		elif XmlHandler.Diplomacy == name:
 			self.dip = True
@@ -223,8 +235,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			data = getAttrs(attrs, {'player':'player_id', 'name':'name'})
 			db.setData('player', data, self.turn)
 		elif XmlHandler.UserFleets == name:
-			db.eraseObject('fleets', ['owner_id=%s'%(self.user['id'],),], self.turn)
-			
+			db.eraseObject(db.Db.FLEET, ['owner_id=%s'%(self.user['id'],),], self.turn)
+		elif XmlHandler.AlienFleets == name:
+			db.eraseObject(db.Db.FLYING_ALIEN_FLEET, ['user_id=%s'%(self.user['id'],)], self.turn)
 	def endElement(self, name):
 		if name==XmlHandler.UserInfo:
 			pass
