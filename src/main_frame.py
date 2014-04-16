@@ -44,6 +44,12 @@ h.setFormatter(formatter)
 log.addHandler(h)
 log.setLevel(logging.DEBUG)
 
+def value_in(values, value):
+	for v in values:
+		if v in value:
+			return True
+	return False
+
 class DcFrame(wx.Frame):
 	def __init__(self, parent):
 		sz = int(config.options['window']['width']), int(config.options['window']['height'])
@@ -116,7 +122,9 @@ class DcFrame(wx.Frame):
 		#unit id
 		self.manual_control_units.add( 7906 )
 		self.manual_control_units.add( 7291 ) # probes over Othes planets
-
+		
+		#TODO: load from file
+		self.exclude_fleet_names = [] #busy, taken, etc...
 
 		#p = config.options['window']['pane-info']
 		#if p:
@@ -408,6 +416,8 @@ class DcFrame(wx.Frame):
 				print 'open planet %s'%(planet,)
 				coord = get_coord(planet)
 				for fleet in db.fleets(turn, filter_coord(coord)+['owner_id=%s'%(user_id,)]):
+					if value_in(self.exclude_fleet_names, fleet['name']):
+						continue
 					units = db.get_units(turn, ['fleet_id=%s'%(fleet['id'],)])
 					if len(units) != 1:
 						print 'fleet %s has wrong units count ( != 1 ), skipping it'%(fleet,)
