@@ -392,7 +392,8 @@ class DcFrame(wx.Frame):
 
 	def onSendScouts(self, _):
 		turn = db.getTurn()
-		min_size = 90
+		min_size = 70
+		max_size = 99
 		
 		#helps avoid flying on the same planet with different accounts
 		friend_geo_scout_ids = []
@@ -447,8 +448,8 @@ class DcFrame(wx.Frame):
 				lt = int(coord[0]-fly_range), int(coord[1]-fly_range)
 				
 				possible_planets = []
-				#s!=11 - skip stars
-				for p in db.planets_size(['s>=%s'%(min_size,), 's!=11'] + planet_area_filter( lt, (int(fly_range*2), int(fly_range*2)))):
+				#s<=99 - skip stars
+				for p in db.planets_size(['s>=%s'%(min_size,), 's<=%s'%(max_size,)] + planet_area_filter( lt, (int(fly_range*2), int(fly_range*2)))):
 					dest = get_coord(p)
 					if dest in exclude:
 						continue
