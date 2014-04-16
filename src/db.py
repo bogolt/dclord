@@ -141,7 +141,6 @@ class Db:
 				weight integer,
 				is_hidden integer(1),
 				times_spotted integer(1),
-				turn integer(2),
 				in_transit integer(1)
 				)"""%(self.FLYING_FLEET, turn_n))
 						
@@ -694,3 +693,23 @@ def is_planet(coord):
 
 def eraseObject(table, data, turn_n = None):
 	db.eraseObject(table, data, turn_n)
+
+def get_fleet_speed_range(fleet_id):
+	fleet = None
+	for f in fleets(getTurn(), ['id=%s'%(fleet_id,)]):
+		fleet = f
+		break
+	if not fleet:
+		return None,None
+		
+	min_speed = None
+	min_range = None
+	for u in units(getTurn(), ['fleet_id=%s'%(fleet_id,)]):
+		if int(u['is_spaceship'])!=1:
+			continue
+		speed = float(u['fly_speed'])
+		rnge = float(u['fly_range'])
+		min_speed = min(speed, min_speed) if min_speed else speed
+		min_range = min(rnge, min_range) if min_range else rnge
+		
+	return min_speed, min_range

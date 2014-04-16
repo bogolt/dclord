@@ -1,4 +1,6 @@
 import db
+import util
+import math
 
 def pos(name, coord):
 	return val(name, '%s:%s'%(coord[0],coord[1]))
@@ -39,11 +41,23 @@ class RequestMaker:
 		act = self.act('move_fleet', pos('move_to', to)+val('fleet_id',fleetId))
 		
 		# save fleet info
-		db.add_pending_action(self.act_id, 'fleet', 'erase', {'x':to[0], 'y':to[1], 'owner_id':self.user_id})
+		fleet = None
+		for f in db.fleets(db.getTurn(), ['id=%s'%(fleetId,)]):
+			fleet = f
+			break
 		
-		# add insert record with incoming_fleet, weight, is_hidden, times_spotted, id, from, to, owner_id, arrival_turn, in_transit(false)
+		speed, rng = db.get_fleet_speed_range(fleetId)
+		cur_pos = util.get_coord(fleet)
+		dist = util.distance(to, cur_pos)
 		
-		#db.add_pending_action(self.act_id, 'fleet', 'insert', {'name':name, 'x':planet[0], 'y':planet[1], 'owner_id':self.user_id})
+		# cannot move this far
+		if dist > rng:
+			print 'Error - attempt to move fleet %s to distance %s which is longer then fleet max range %s'%(fleetId, dist, rng)
+		
+		turns = math.ceil(dist / speed)
+		
+		db.add_pending_action(self.act_id, db.Db.FLEET, 'erase', ['id=%s'%(fleetId,)])
+		db.add_pending_action(self.act_id, db.Db.FLYING_FLEET, 'insert', {'x':to[0], 'y':to[1], 'owner_id':self.user_id, 'id':fleetId, 'from_x':fleet['x'], 'from_y':fleet['y'], 'arrival_turn':turns + db.getTurn()})
 		return act
 		
 	

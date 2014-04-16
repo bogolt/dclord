@@ -162,3 +162,15 @@ def appendLog(cb, text):
 	print str(datetime.now()) + " " + text + '\n'
 	cb.log(text)
 	#wx.PostEvent(cb, event.LogAppend(attr1=text))
+
+def distance(a, b):
+	dx = a[0]-b[0]
+	dy = a[1]-b[1]
+	return math.sqrt( dx * dx + dy * dy ) 
+
+def get_coord(obj):
+	x = obj['x']
+	y = obj['y']
+	if type(x) is int:
+		return x,y
+	return int(x), int(y)

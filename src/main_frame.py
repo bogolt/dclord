@@ -31,11 +31,6 @@ def get_coord(obj):
 def filter_coord(coord):
 	return ['x=%s'%(coord[0],), 'y=%s'%(coord[1],)]
 	
-def distance(a, b):
-	dx = a[0]-b[0]
-	dy = a[1]-b[1]
-	return math.sqrt( dx * dx + dy * dy ) 
-
 def planet_area_filter(lt, size):
 	return ['x>=%s'%(lt[0],), 'y>=%s'%(lt[1],), 'x<=%s'%(lt[0]+size[0],) ,'y<=%s'%(lt[1]+size[1],)]
 	
@@ -447,7 +442,7 @@ class DcFrame(wx.Frame):
 					dest = get_coord(p)
 					if dest in exclude:
 						continue
-					dist = distance(dest, coord)
+					dist = util.distance(dest, coord)
 					if dist > fly_range:
 						continue
 						
@@ -680,10 +675,10 @@ class DcFrame(wx.Frame):
 			for coord, fleet in fleets:
 				#find closest planet
 				closest_planet = coords[0]
-				min_distance = distance(coords[0], coord)
+				min_distance = util.distance(coords[0], coord)
 				for c in coords:
-					if distance(coord, c) < min_distance:
-						min_distance = distance(coord, c)
+					if util.distance(coord, c) < min_distance:
+						min_distance = util.distance(coord, c)
 						closest_planet = c
 				
 				# ok, found then jump
