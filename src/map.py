@@ -235,9 +235,9 @@ class Map(util.BufferedWindow):
 		except:
 			return
 		
-		br = {'o':'green', 'e':'blue', 'm':'red'}
+		br = {'o':'green', 'e':'blue', 'm':'red', 't':'yellow'}
 		offset = 0
-		for key in ['o', 'e', 'm']:
+		for key in ['o', 'e', 'm', 't']:
 			value = int(planet[key])
 			dc.SetPen(wx.Pen(colour=br[key], width=1))
 			dc.SetBrush(wx.Brush(br[key]))

@@ -49,7 +49,7 @@ options = {
 			'raw-xml-dir':'raw_xml',
 			'images':'img/buildings',
 			'geo-size':'image_size_map',
-			'known_planets':0,
+			'known_planets':1,
 			'load_known_planets':1,
 			'sync_path':''
 			},
@@ -66,9 +66,9 @@ options = {
 		 'window_size_x':600,
 		 'window_size_y':500,
 		 'own_fleet_color':'#dd0000',
-		 'own_flying_fleet_color':'#de0000',
-		 'fleet_color':'#dd0000',
-		 'flying_fleet_color':'#de0000',
+		 'own_flying_fleet_color':'#deeeee',
+		 'fleet_color':'#dd0ff0',
+		 'flying_fleet_color':'#deeeff',
 		 'own_fleet_route_color':'#0000ff',
 		 'fleet_route_color':'#00ff00',
 		 'planet_color':'#0000dd',
@@ -94,7 +94,7 @@ options = {
 			},
 		 'filter':
 			{
-			'inhabited_planets':1,
+			'inhabited_planets':0,
 			'fleets':1
 			}
 		}
