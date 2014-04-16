@@ -41,7 +41,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	NodeDC = 'dc'
 	UserInfo = 'this-player'
 	UserPlanets = 'user-planets'
+	UserFleets = 'fleets'
 	Planet = 'planet'
+	KnownPlanets = 'known-planets'
 	Fleet = 'fleet'
 	AlienFleet = 'allien-fleet'
 	Unit = 'u'
@@ -129,6 +131,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			
 		elif XmlHandler.UserPlanets == name:
 			self.read_level = XmlHandler.UserPlanets
+			db.eraseObject(db.Db.PLANET, ['owner_id=%s'%(self.user['id'],),], self.turn)
+		elif XmlHandler.KnownPlanets == name:
+			db.eraseObject('open_planets', ['user_id=%s'%(self.user['id'],),])
 		elif XmlHandler.Planet == name:
 			data = getAttrs(attrs, {'x':'x', 'open':'is_open', 'owner-id':'owner_id', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s', 'age':'age'})
 			
@@ -136,9 +141,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				data['owner_id'] = self.user['id']
 				db.set_open_planet(get_coord(data), self.user['id'])
 				#log.info('load owner planet %s'%(data,))
-			elif 'is_open' in data:
-				if int(data['is_open']) == 1:
-					db.set_open_planet(get_coord(data), self.user['id'])
+			elif 'is_open' in data and int(data['is_open']) == 1:
+				db.set_open_planet(get_coord(data), self.user['id'])
 
 			if 'age' in data:
 				#don't need this for now
@@ -218,6 +222,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.DipRelation == name and self.dip:
 			data = getAttrs(attrs, {'player':'player_id', 'name':'name'})
 			db.setData('player', data, self.turn)
+		elif XmlHandler.UserFleets == name:
+			db.eraseObject('fleets', ['owner_id=%s'%(self.user['id'],),], self.turn)
 			
 	def endElement(self, name):
 		if name==XmlHandler.UserInfo:

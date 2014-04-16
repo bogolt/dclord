@@ -389,16 +389,21 @@ class DcFrame(wx.Frame):
 
 	def onSendScouts(self, _):
 		turn = db.getTurn()
-		min_size = 70
+		min_size = 90
 		
+		#helps avoid flying on the same planet with different accounts
 		friend_geo_scout_ids = []
 		for user in db.users():
 			friend_geo_scout_ids.append(str(user['id']))
 		
 		for acc in config.accounts():
 			user_id = int(acc['id'])
+			if user_id != 545716:
+				continue
 			self.pending_actions.user_id = user_id
 			print 'send scouts %s size %s'%(user_id, min_size)
+			
+			
 			
 			# find units that can geo-explore
 			# find the ones that are already in fleets in one of our planets
@@ -406,18 +411,21 @@ class DcFrame(wx.Frame):
 			fly_range = 0.0
 			ready_scout_fleets = {}
 			# get all fleets over our planets
-			for planet in db.open_planets(user_id):
+			for planet in db.open_planets(user_id, turn):
 				print 'open planet %s'%(planet,)
 				coord = get_coord(planet)
 				for fleet in db.fleets(turn, filter_coord(coord)+['owner_id=%s'%(user_id,)]):
 					units = db.get_units(turn, ['fleet_id=%s'%(fleet['id'],)])
 					if len(units) != 1:
+						print 'fleet %s has wrong units count ( != 1 ), skipping it'%(fleet,)
 						continue
 					unit = units[0]
 					if int(unit['id']) in self.manual_control_units:
+						print 'unit %s reserved for manual control, skipping it'%(unit,)
 						continue
 
 					if not self.is_geo_scout(unit):
+						print 'unit %s is not geo-scout, skipping it'%(unit,)
 						continue
 					fly_range = max(fly_range, self.get_unit_range(unit))
 					print 'unit %s on planet %s for fleet %s is geo-scout'%(unit, coord, fleet)

@@ -291,10 +291,10 @@ class Db:
 	def eraseObject(self, table, data, turn_n = None):
 		table_name = '%s_%s'%(table, turn_n) if turn_n else table
 		try:
-			self.cur.execute('delete from %s WHERE %s'%(table_name, ','.join('?'*len(data))),tuple(data.values()))
+			self.cur.execute('delete from %s WHERE %s'%(table_name, ' AND '.join(data)))
 			self.conn.commit()
 		except sqlite3.Error, e:
-			log.error('Error "%s", when executing: delete from %s WHERE %s'%(e, table_name,tuple(data.values())))
+			log.error('Error "%s", when executing: delete from %s WHERE %s'%(e, table_name, ' AND '.join(data)))
 			print traceback.format_stack()		
 
 	#def getAnything(self):
@@ -380,11 +380,20 @@ class Db:
 	def clear_action_result(self, user_id):
 		self.cur.execute('delete from requested_action where user_id=:user_id', (user_id, ))
 		
+	
+	def get_planet_owner(self, coord):
+		x,y = coord
+		self.cur.execute('select owner_id from planet_%s where x=:x and y=:y'%self.max_turn, (x,y))
+		r = self.cur.fetchone()
+		if r and r[0]:
+			return int(r[0])
+		
+		return None
+	
 	def set_open_planet(self, coord, user_id):
 		x,y=coord
 		self.cur.execute('insert or replace into open_planets (x,y,user_id) values(:x, :y, :user_id)', (x,y,user_id))
 		self.conn.commit()
-		
 
 db = Db()	
 
@@ -392,7 +401,7 @@ def set_open_planet(coord, user_id):
 	db.set_open_planet(coord, user_id)
 	
 def open_planets(user_id):
-	for planet in items('open_planets', ['user_id=%s'%(user_id,)], ('x','y')):
+	for planet in items('open_planets', ['user_id=%s'%(user_id,)], ('x','y'), turn_n):
 		yield planet
 
 def add_pending_action(act_id, table, action_type, data):
@@ -671,3 +680,6 @@ def has_all_buildings(turn_n, coord, buildings):
 def is_planet(coord):
 	planet_size = get_planet_size(coord)
 	return planet_size and planet_size != 11
+
+def eraseObject(table, data, turn_n = None):
+	db.eraseObject(table, data, turn_n)
