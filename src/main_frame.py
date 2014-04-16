@@ -398,8 +398,6 @@ class DcFrame(wx.Frame):
 		
 		for acc in config.accounts():
 			user_id = int(acc['id'])
-			if user_id != 545716:
-				continue
 			self.pending_actions.user_id = user_id
 			print 'send scouts %s size %s'%(user_id, min_size)
 			
