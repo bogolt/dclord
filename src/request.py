@@ -66,7 +66,7 @@ class RequestMaker:
 		plId = pos('planetid', planet)
 		nm = val('new_fleet_name', name)
 		act = self.act('create_new_fleet', plId + nm)
-		db.add_pending_action(self.act_id, 'fleet', 'insert', {'name':name, 'x':planet[0], 'y':planet[1], 'owner_id':self.user_id})
+		db.add_pending_action(self.act_id, db.Db.FLEET, 'insert', {'name':name, 'x':planet[0], 'y':planet[1], 'owner_id':self.user_id})
 		return act
 	
 	def get_action_id(self):
@@ -89,7 +89,30 @@ class RequestMaker:
 		return self.store_action(unit_id, self.COLONY_COLONISE)
 		
 	def moveUnitToFleet(self, fleetId, unitId):
-		return self.act('move_unit_to_fleet', val('fleet_id', fleetId)+val('unit_id', unitId))
+		
+		act = self.act('move_unit_to_fleet', val('fleet_id', fleetId)+val('unit_id', unitId))
+		
+		u = None
+		for unit in db.units(db.getTurn(), ['id=%s'%(unitId,)]):
+			u = unit
+		
+		if not u:
+			for unit in db.garrison_units(db.getTurn(), ['id=%s'%(unitId,)], ('x', 'y', 'class', 'hp')):
+				u = unit
+			if not u:
+				print 'local unit %s not found'%(unitId,)
+				return act
+			print 'get garrison unit %s'%(u,)
+			db.add_pending_action(self.act_id, db.Db.GARRISON_UNIT, 'erase', {'id':unitId})
+			del u['x']
+			del u['y']
+			u['fleet_id'] = fleetId
+			db.add_pending_action(self.act_id, db.Db.UNIT, 'insert', u)
+		else:
+			print 'get fleet unit %s'%(u,)
+			db.add_pending_action(self.act_id, db.Db.UNIT, 'update', ({'id':unitId}, {'fleet_id':fleetId}))
+			
+		return act
 		
 	def cancelJump(self, fleetId):
 		return self.act('cancel_jump', val('fleet_id', fleetId))

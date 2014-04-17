@@ -151,7 +151,7 @@ def set_user_id(login, user_id):
 	global user_id_dict
 	acc = users[login]
 	acc['id'] = user_id
-	user_id_dict[user_id] = acc
+	user_id_dict[int(user_id)] = acc
 
 def saveUsers():
 	conf = UnicodeConfigParser()

@@ -13,7 +13,7 @@ class Db:
 	USER = 'user'
 	FLEET = 'fleet'
 	UNIT = 'unit'
-	ALIENT_UNIT = 'alien_unit'
+	ALIEN_UNIT = 'alien_unit'
 	FLYING_FLEET = 'flying_fleet'
 	FLYING_ALIEN_FLEET = 'flying_alien_fleet'
 	#ALIEN_FLEET = 'alien_fleet'
@@ -82,7 +82,7 @@ class Db:
 				PRIMARY KEY (x, y, user_id))""")
 
 		cur.execute("""create table if not exists user(
-				id integer primary key,
+				id integer PRIMARY KEY,
 				name text not null,
 				race_id integer not null,
 				login text
@@ -90,7 +90,7 @@ class Db:
 				
 				
 		cur.execute("""create table if not exists requested_action(
-				id integer primary key,
+				id integer PRIMARY KEY,
 				user_id integer not null,
 				return_id integer default 0,
 				is_ok integer default 0
@@ -100,7 +100,7 @@ class Db:
 		#id integer primary key,
 
 		cur.execute("""create table if not exists player_%s(
-				player_id integer primary key,
+				player_id integer PRIMARY KEY,
 				name text,
 				race_id integer
 				)"""%(turn_n,))
@@ -112,19 +112,19 @@ class Db:
 				)"""%(turn_n,))
 		
 		cur.execute("""create table if not exists hw_%s(
-				player_id integer primary key,
+				player_id integer PRIMARY KEY,
 				hw_x integer(2),
 				hw_y integer(2)
 				)"""%(turn_n,))
 		
 		cur.execute("""create table if not exists %s_%s(
-				id integer primary key,
+				id integer PRIMARY KEY,
 				x integer(2) not null,
 				y integer(2) not null,
 				owner_id integer,
 				name text,
 				weight integer,
-				is_hidden integer(1),
+				is_hidden integer(1) default 0,
 				times_spotted integer(1),
 				turn integer(2)
 				)"""%(self.FLEET, turn_n))
@@ -157,7 +157,7 @@ class Db:
 				
 		
 		cur.execute("""create table if not exists %s_%s(
-				id integer primary key,
+				id integer PRIMARY KEY,
 				fleet_id integer not null,
 				class integer not null,
 				hp integer not null
@@ -165,17 +165,17 @@ class Db:
 				
 		
 		cur.execute("""create table if not exists %s_%s(
-				id integer primary key,
+				id integer PRIMARY KEY,
 				fleet_id integer not null,
 				carapace integer not null,
 				color integer(1),
 				weight integer,
 				class integer
-				)"""%(self.ALIENT_UNIT, turn_n))
+				)"""%(self.ALIEN_UNIT, turn_n))
 
 	
 		cur.execute("""create table if not exists %s_%s(
-				id integer primary key,
+				id integer PRIMARY KEY,
 				x integer(2) not null,
 				y integer(2) not null,
 				class integer not null,
@@ -184,7 +184,7 @@ class Db:
 		
 	
 		cur.execute("""create table if not exists %s_%s(
-				id integer primary key,
+				id integer PRIMARY KEY,
 				x integer(2) not null,
 				y integer(2) not null,
 				class integer not null,
@@ -192,7 +192,7 @@ class Db:
 				)"""%(self.GARRISON_QUEUE_UNIT, turn_n))
 		
 		cur.execute("""create table if not exists proto(
-				id integer primary key,
+				id integer PRIMARY KEY,
 				owner_id integer not null,
 				class integer,
 				carapace integer,
@@ -305,7 +305,17 @@ class Db:
 			self.conn.commit()
 		except sqlite3.Error, e:
 			log.error('Error "%s", when executing: delete from %s WHERE %s'%(e, table_name, ' AND '.join(data)))
+			print traceback.format_stack()
+			
+	def updateObject(self, table, flt, values, turn_n = None):
+		table_name = '%s_%s'%(table, turn_n) if turn_n else table
+		try:
+			self.cur.execute('update %s SET %s WHERE %s'%(table_name, ','.join(['%s=%s'%(k,v) for k,v in values.iteritems()]), ' AND '.join(flt)))
+			self.conn.commit()
+		except sqlite3.Error, e:
+			log.error('Error "%s", when executing: delete from %s WHERE %s'%(e, table_name, ' AND '.join(data)))
 			print traceback.format_stack()		
+		
 
 	#def getAnything(self):
 		#self.cur.execute("select hw_x,hw_y from player where hw_x not null and hw_y not null")
@@ -368,6 +378,7 @@ class Db:
 	def perform_pending_action(self, act_id, return_id = None):
 		if act_id not in self.pending_actions:
 			print 'action %s not in pending actions: %s'%(act_id, self.pending_actions.keys())
+			return
 		actions = self.pending_actions[act_id]
 		for table, action_type, data in actions:
 			if return_id and 'id' in data:
@@ -379,6 +390,11 @@ class Db:
 			elif action_type == 'erase':
 				print 'exec pending erase %s %s %s'%(table, data, db.max_turn)
 				self.eraseObject(table, data, db.max_turn)
+			elif action_type == 'update':
+				flt, values = data
+				print 'exec pending update %s %s %s %s'%(table, flt, values, db.max_turn)
+				self.updateObject(table, flt, values, db.max_turn)
+				
 		
 		del self.pending_actions[act_id]
 	
@@ -543,7 +559,7 @@ def garrison_units(turn_n, flt, keys = None):
 						
 def alienUnits(turn_n, flt, keys = None):
 	k = ('id', 'fleet_id', 'class', 'carapace', 'color', 'weight') if not keys else keys
-	for unit in items(Db.ALIENT_UNIT, flt, k, turn_n):
+	for unit in items(Db.ALIEN_UNIT, flt, k, turn_n):
 		yield unit
 
 def get_unit_prototype(turn_n, unit_id):

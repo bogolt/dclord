@@ -155,6 +155,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			fleetDict = {'x':'x','y':'y','id':'id','in-transit':'in_transit','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
 			data = getAttrs(attrs, fleetDict)
 
+			db.eraseObject(db.Db.UNIT, ['fleet_id=%s'%(fleetDict['id'],),], self.turn)
+			
 			#save fleet-id to fill unit table
 			self.obj_id = data['id']
 
@@ -177,6 +179,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			#TODO: alien fleet / flying or not here ( 1st delete all alien fleets visible by user before adding any of them
 			fleetDict = {'x':'x','y':'y','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
 			data = getAttrs(attrs, fleetDict)
+			#db.eraseObject(db.Db.ALIEN_UNIT, ['fleet_id=%s'%(fleetDict['id'],),], self.turn)
 			
 			tta = 0
 			if 'tta' in data:
@@ -195,6 +198,10 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				db.setData(db.Db.FLEET, data, self.turn)
 		elif XmlHandler.Garrison == name:
 			self.pos = getAttrs(attrs, {'x':'x', 'y':'y'})
+			self.obj_id = None
+			db.eraseObject(db.Db.GARRISON_QUEUE_UNIT, ['%s=%s'%(k,v) for k,v in self.pos.iteritems()], self.turn)
+			db.eraseObject(db.Db.GARRISON_UNIT, ['%s=%s'%(k,v) for k,v in self.pos.iteritems()], self.turn)
+			
 		elif XmlHandler.AlienUnit == name:
 			data = getAttrs(attrs, {'class-id':'class', 'id':'id', 'weight':'weight', 'carapace':'carapace', 'color':'color'})
 			data['fleet_id'] = self.obj_id
@@ -244,8 +251,10 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.UserFleets == name:
 			db.eraseObject(db.Db.FLEET, ['owner_id=%s'%(self.user['id'],),], self.turn)
 			db.eraseObject(db.Db.FLYING_FLEET, ['owner_id=%s'%(self.user['id'],),], self.turn)
+			self.pos = None
 		elif XmlHandler.AlienFleets == name:
 			db.eraseObject(db.Db.FLYING_ALIEN_FLEET, ['user_id=%s'%(self.user['id'],)], self.turn)
+			self.pos = None
 	def endElement(self, name):
 		if name==XmlHandler.UserInfo:
 			pass

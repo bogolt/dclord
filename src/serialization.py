@@ -59,7 +59,7 @@ def saveAlienUnits():
 	saveTable('alien_unit', ('id', 'carapace','color','weight','fleet_id'), [], 'alien_units', db.getTurn())
 	
 def saveUsers():
-	saveTable('user', ('id', 'name', 'race_id'), None, 'users')
+	saveTable('user', ('id', 'name', 'race_id', 'login'), None, 'users')
 	saveTable('hw', ('hw_x', 'hw_y', 'player_id'), None, 'hw', db.getTurn())
 	
 def savePlayers():
