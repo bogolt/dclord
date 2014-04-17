@@ -120,13 +120,16 @@ class FleetWindow(scrolled.ScrolledPanel):
 		scrolled.ScrolledPanel.__init__(self, parent, -1, size=(200,200))
 		self.vbox = wx.BoxSizer(wx.VERTICAL)
 		
+		self.tree = wx.TreeCtrl(self, 1, wx.DefaultPosition, (-1,-1), wx.TR_HAS_BUTTONS)
+		self.vbox.Add(self.tree, 1, wx.EXPAND)
+
 		self.setOwnedUnits(coord, turn)
 		self.setAlienUnits(coord, turn)
 		
 		self.SetSizer( self.vbox )
 		self.SetAutoLayout( 1 )
 		self.SetupScrolling()
-		
+				
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
 				
 	def onSize(self, evt):
@@ -138,17 +141,27 @@ class FleetWindow(scrolled.ScrolledPanel):
 		if not coord:
 			return
 		
-		log.info('requesting fleet info at %s'%(coord,))
-		for fleet,unit in db.all_ownedUnits(turn, coord):
-			cl = int(fleet['owner_id']), int(unit['class'])
-			if cl in units:
-				units[cl].add(unit)
-			else:
-				uwindow = UnitStackWindow(self, cl[0], unit)
-				self.vbox.Add( uwindow)
-				units[cl] = uwindow
-		for u in units.values():
-			u.update()
+		self.tree.DeleteAllItems()
+		for user in db.users():
+			user_id = user['id']
+			root = self.tree.AddRoot(user['name'])
+			for fleet in db.fleets(turn, util.filter_coord(coord) + ['owner_id=%s'%(user_id,)]):
+				tree_fleet = self.tree.AppendItem(root, fleet['name'])
+				for unit in db.units(turn, ['fleet_id=%s'%(fleet['id'],)]):
+					self.tree.AppendItem(tree_fleet, str(unit['class']))
+			
+		
+		#log.info('requesting fleet info at %s'%(coord,))
+		#for fleet,unit in db.all_ownedUnits(turn, coord):
+		#	cl = int(fleet['owner_id']), int(unit['class'])
+		#	if cl in units:
+		#		units[cl].add(unit)
+		#	else:
+		#		uwindow = UnitStackWindow(self, cl[0], unit)
+		#		self.vbox.Add( uwindow)
+		#		units[cl] = uwindow
+		#for u in units.values():
+		#	u.update()
 	
 	def setAlienUnits(self, coord, turn):
 		units = {}

@@ -175,3 +175,6 @@ def get_coord(obj):
 	if type(x) is int:
 		return x,y
 	return int(x), int(y)
+
+def filter_coord(coord):
+	return ['x=%s'%(coord[0],), 'y=%s'%(coord[1],)]
