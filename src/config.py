@@ -173,6 +173,8 @@ def saveUsers():
 def loadAll():
 	global options
 	options['data']['path'] = os.path.join(getOptionsDir(), options['data']['dir'])
+	if not os.path.exists(options['data']['path']):
+		os.makedirs(options['data']['path'])
 	loadAccounts()
 	loadOptions()
 	
