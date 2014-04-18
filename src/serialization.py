@@ -370,7 +370,7 @@ def loadGeoPlanets(turn_n = None, cb = None):
 	
 def loadPlanets(turn_n = None, cb = None):
 	loadTable(db.Db.PLANET, turn_n, cb=cb)
-	loadTable('open_planets', None, turn_n, cb=cb)
+	loadTable(db.Db.OPEN_PLANET, None, turn_n, cb=cb)
 	if int(config.options['filter']['inhabited_planets'])==0:
 		loadGeoPlanets(turn_n)
 
