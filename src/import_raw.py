@@ -189,6 +189,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			if tta > 0:
 				data['arrival_turn'] = int(self.user['turn'])+tta
 				data['user_id'] = self.user['id']
+				if 'owner_id' in data:
+					print 'got owner of flying alient fleet: %s'%(data,)
+					del data['owner_id']
 				self.obj_id = None
 				db.setData(db.Db.FLYING_ALIEN_FLEET, data, self.turn)
 			else:
@@ -203,9 +206,10 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			db.eraseObject(db.Db.GARRISON_UNIT, ['%s=%s'%(k,v) for k,v in self.pos.iteritems()], self.turn)
 			
 		elif XmlHandler.AlienUnit == name:
-			data = getAttrs(attrs, {'class-id':'class', 'id':'id', 'weight':'weight', 'carapace':'carapace', 'color':'color'})
-			data['fleet_id'] = self.obj_id
-			db.setData('alien_unit', data, self.turn)
+			if self.obj_id:
+				data = getAttrs(attrs, {'class-id':'class', 'id':'id', 'weight':'weight', 'carapace':'carapace', 'color':'color'})
+				data['fleet_id'] = self.obj_id
+				db.setData(db.Db.ALIEN_UNIT, data, self.turn)
 		elif XmlHandler.Unit == name:
 			data = getAttrs(attrs, {'bc':'class', 'id':'id', 'hp':'hp'})
 			if self.obj_id:
