@@ -7,6 +7,8 @@ import config
 import image
 import unit_list
 
+import  wx.lib.scrolledpanel as scrolled
+
 log = logging.getLogger('dclord')
 
 class StackedObject(wx.Window):
@@ -35,9 +37,10 @@ class StackedObject(wx.Window):
 		self.text.SetLabel('x%d'%(len(self.units),))
 		self.sizer.Layout()
 	
-class PlanetWindow(wx.Window):
+class PlanetWindow(scrolled.ScrolledPanel):
 	def __init__(self, parent, coord = None, turn = None, show_units = False):
-		wx.Window.__init__(self, parent, wx.ID_ANY)
+		scrolled.ScrolledPanel.__init__(self, parent, wx.ID_ANY, size=(200,300))
+		#wx.Window.__init__(self, parent, wx.ID_ANY)
 		
 		self.turn = turn if turn else db.getTurn()
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -71,7 +74,18 @@ class PlanetWindow(wx.Window):
 		
 		if show_units:
 			self.addUnits()
-		self.sizer.Layout()
+		#self.sizer.Layout()
+		
+		#self.SetSizer( self.vbox )
+		self.SetAutoLayout( 1 )
+		self.SetupScrolling()
+				
+		self.Bind(wx.EVT_SIZE, self.onSize, self)
+				
+	def onSize(self, evt):
+		if self.GetAutoLayout():
+			self.Layout()
+
 		
 	def addUnits(self):
 		gunits = {}
@@ -112,9 +126,7 @@ class UnitStackWindow(wx.Window):
 		
 	def update(self):
 		self.text.SetLabel('%d units, [%s]'%(len(self.units), self.user_name))
-	
 
-import  wx.lib.scrolledpanel as scrolled
 class FleetWindow(scrolled.ScrolledPanel):
 	def __init__(self, parent, coord = None, turn = None):
 		scrolled.ScrolledPanel.__init__(self, parent, -1, size=(200,200))
@@ -229,10 +241,7 @@ class FleetWindow(scrolled.ScrolledPanel):
 		
 class InfoPanel(wx.Panel):
 	def __init__(self, parent):
-		wx.Window.__init__(self, parent, -1, size=(120,200))
-		
-		#self.image_list = image.UnitImageList()
-			
+		wx.Window.__init__(self, parent, -1, size=(120,200))			
 		self.sizer = wx.BoxSizer(wx.VERTICAL)	
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
