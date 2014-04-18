@@ -11,6 +11,20 @@ import  wx.lib.scrolledpanel as scrolled
 
 log = logging.getLogger('dclord')
 
+def get_unit_name(carapace):
+    return {
+        1: 'shuttle',
+        2: 'comm shuttle',
+        6: 'shuttle',
+        11: 'probe',
+        21: 'transport'
+        }.get(carapace, '')
+        
+def get_unit_name(carapace):
+	if carapace == 11:
+		return 'probe'
+	return ''
+
 class StackedObject(wx.Window):
 	def __init__(self, parent, unit):
 		wx.Window.__init__(self, parent, wx.ID_ANY)
@@ -40,7 +54,6 @@ class StackedObject(wx.Window):
 class PlanetWindow(scrolled.ScrolledPanel):
 	def __init__(self, parent, coord = None, turn = None, show_units = False):
 		scrolled.ScrolledPanel.__init__(self, parent, wx.ID_ANY, size=(200,300))
-		#wx.Window.__init__(self, parent, wx.ID_ANY)
 		
 		self.turn = turn if turn else db.getTurn()
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -177,8 +190,10 @@ class FleetWindow(scrolled.ScrolledPanel):
 					else:
 						img_item = image.add_image(image_list, obj_carp)
 						img_list_data[obj_carp] = img_item
-
-					self.tree.AppendItem(tree_fleet, str(proto['name']), image=img_item)
+					name = proto['name']
+					if not name:
+						name = get_unit_name(int(proto['carapace']))
+					self.tree.AppendItem(tree_fleet, name, image=img_item)
 					
 		for user in db.alien_players(turn):
 			user_id = int(user['player_id'])
@@ -198,7 +213,7 @@ class FleetWindow(scrolled.ScrolledPanel):
 						img_item = image.add_image(image_list, obj_carp)
 						img_list_data[obj_carp] = img_item
 
-					self.tree.AppendItem(tree_fleet, str(proto['name']), image=img_item)
+					self.tree.AppendItem(tree_fleet, get_unit_name(int(unit['carapace'])), image=img_item)
 				
 					
 		self.tree.ExpandAll()
