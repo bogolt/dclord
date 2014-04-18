@@ -142,13 +142,30 @@ class FleetWindow(scrolled.ScrolledPanel):
 			return
 		
 		self.tree.DeleteAllItems()
+		image_list = wx.ImageList(40, 40)
+		self.tree.AssignImageList(image_list)
+		img_list_data = {}
+		root = self.tree.AddRoot('Fleets')
 		for user in db.users():
 			user_id = user['id']
-			root = self.tree.AddRoot(user['name'])
+			tree_user = None
 			for fleet in db.fleets(turn, util.filter_coord(coord) + ['owner_id=%s'%(user_id,)]):
-				tree_fleet = self.tree.AppendItem(root, fleet['name'])
-				for unit in db.units(turn, ['fleet_id=%s'%(fleet['id'],)]):
-					self.tree.AppendItem(tree_fleet, str(unit['class']))
+				if not tree_user:
+					tree_user = self.tree.AppendItem(root, user['name'])
+				tree_fleet = self.tree.AppendItem(tree_user, fleet['name'])
+				for unit in db.units(turn, ['fleet_id=%s'%(fleet['id'],)]):					
+					proto = db.get_prototype(unit['class'], ('carapace', 'color'))
+					obj_carp = int(unit['class']), int(proto['carapace']), int(proto['color'])
+					img_item = None
+					if obj_carp in img_list_data:
+						img_item = img_list_data[obj_carp]
+					else:
+						img_item = image.add_image(image_list, obj_carp)
+						img_list_data[obj_carp] = img_item
+						
+					self.tree.AppendItem(tree_fleet, str(unit['class']), image=img_item)
+					
+		self.tree.ExpandAll()
 			
 		
 		#log.info('requesting fleet info at %s'%(coord,))
@@ -188,6 +205,8 @@ class FleetWindow(scrolled.ScrolledPanel):
 class InfoPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(120,200))
+		
+		#self.image_list = image.UnitImageList()
 			
 		self.sizer = wx.BoxSizer(wx.VERTICAL)	
 		self.SetSizer(self.sizer)
