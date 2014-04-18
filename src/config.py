@@ -22,7 +22,6 @@ class UnicodeConfigParser(ConfigParser.RawConfigParser):
 			fp.write("[%s]\n" % DEFAULTSECT)
 			for (key, value) in self._defaults.items():
 				if type(value) is str or type(value) is unicode:
-					print '%s = %s'%(key, value)
 					fp.write("%s = %s\n" % (key, value.decode('utf8').replace('\n', '\n\t')))
 				else:
 					fp.write("%s = %s\n" % (key, value))
@@ -32,7 +31,6 @@ class UnicodeConfigParser(ConfigParser.RawConfigParser):
 			for (key, value) in self._sections[section].items():
 				if key != "__name__":
 					if type(value) is str or type(value) is unicode:
-						print '%s = %s'%(key, value)
 						fp.write("%s = %s\n" %(key, value.decode('utf8').replace('\n','\n\t')))
 					else:
 						fp.write("%s = %s\n" %(key, value))
