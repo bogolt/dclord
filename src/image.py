@@ -48,7 +48,7 @@ def smaller(bitmap, ratio = 2):
 def add_image(wx_img_list, obj):
 	bc, carp, color = obj
 	img = None
-	if int(bc) < 113:
+	if bc and int(bc) < 113 :
 		img = getBcImage(bc)
 	else:
 		img = getCarapaceImage(carp, color)

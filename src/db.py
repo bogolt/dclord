@@ -505,10 +505,21 @@ def users(flt = None, keys = None):
 	for i in items('user', flt, k):
 		yield i
 
+def get_user_ids(flt = None):
+	ids = []
+	for u in items(Db.USER, flt, ('id',)):
+		ids.append(u['id'])
+	return ids
+
 def players(turn_n, flt = None, keys = None):
 	k = ('player_id','name') if not keys else keys
 	for i in items('player', flt, k, turn_n):
 		yield i
+		
+def alien_players(turn_n):
+	user_ids = get_user_ids()
+	for p in players(turn_n, ['player_id not in (%s)'%(','.join([str(item) for item in user_ids]),)]):
+		yield p
 
 def planets(turn_n, flt, keys = None):
 	k = ('x','y','owner_id','name','o','e','m','t','s') if not keys else keys
