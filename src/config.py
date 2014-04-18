@@ -3,9 +3,11 @@ import platform
 import os
 import os.path
 import ConfigParser
+import codecs
 import logging
 import util
 import codecs
+import json
 
 log = logging.getLogger('dclord')
 
@@ -19,13 +21,21 @@ class UnicodeConfigParser(ConfigParser.RawConfigParser):
 		if self._defaults:
 			fp.write("[%s]\n" % DEFAULTSECT)
 			for (key, value) in self._defaults.items():
-				fp.write("%s = %s\n" % (key, value.decode('utf8').replace('\n', '\n\t')))
+				if type(value) is str or type(value) is unicode:
+					print '%s = %s'%(key, value)
+					fp.write("%s = %s\n" % (key, value.decode('utf8').replace('\n', '\n\t')))
+				else:
+					fp.write("%s = %s\n" % (key, value))
 			fp.write("\n")
 		for section in self._sections:
 			fp.write("[%s]\n" % section)
 			for (key, value) in self._sections[section].items():
 				if key != "__name__":
-					fp.write("%s = %s\n" %(key, value.decode('utf8').replace('\n','\n\t')))
+					if type(value) is str or type(value) is unicode:
+						print '%s = %s'%(key, value)
+						fp.write("%s = %s\n" %(key, value.decode('utf8').replace('\n','\n\t')))
+					else:
+						fp.write("%s = %s\n" %(key, value))
 		fp.write("\n")
 
 	# This function is needed to override default lower-case conversion
@@ -99,32 +109,24 @@ options = {
 			}
 		}
 
-config_file_name = 'dclord.cfg'
+config_file_name = 'dclord.json'
 users_file_name = 'users.cfg'
 def loadOptions():
-	config = ConfigParser.ConfigParser()
-	config.read(os.path.join(getOptionsDir(), config_file_name))
+	path = os.path.join(getOptionsDir(), config_file_name)
+	if not os.path.exists(path):
+		return
+		
+	with open( path, 'rt') as f:
+		data = json.loads(f.read())
+		
 	global options
-	for s in config.sections():
-		opt = {}
-		for k,v in config.items(s):
-			opt[k] = v
-		options.setdefault(s, {}).update(opt)
+	options.update(data)
 
 def saveOptions():
-	conf = ConfigParser.RawConfigParser()
-	global options
-	for name, sect in options.items():
-		conf.add_section(name)
-		for k,v in sect.items():
-			conf.set(name, k, v)
 	path = os.path.join(getOptionsDir(), config_file_name)
-	util.assureDirExist(getOptionsDir())
-	try:
-		with open(path, 'wb') as configfile:
-			conf.write(configfile)
-	except IOError, err:
-		log.error("unable to save config file: %s"%(err,))
+	global options
+	with open( path, 'wt') as f:
+		f.write( json.dumps(options) )
 
 def loadAccounts():
 	config = UnicodeConfigParser()

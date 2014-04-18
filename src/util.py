@@ -160,8 +160,9 @@ class BufferedWindow(wx.Window):
 		dc = wx.BufferedPaintDC(self, self.image)
 
 def appendLog(cb, text):
-	print str(datetime.now()) + " " + text + '\n'
-	cb.log(text)
+	#crash on windows if path is cyrillic ( cannot put to console ?? )
+	#print unicode(text + '\n')
+	cb.log(unicode(text))
 	#wx.PostEvent(cb, event.LogAppend(attr1=text))
 
 def distance(a, b):
