@@ -414,7 +414,7 @@ class DcFrame(wx.Frame):
 				continue
 
 			self.pending_actions.user_id = user_id
-			print 'send scouts %s size %s'%(user_id, min_size)
+			print 'send scouts %s size %s'%(acc['login'], min_size)
 					
 			# find units that can geo-explore
 			# find the ones that are already in fleets in one of our planets
@@ -653,6 +653,7 @@ class DcFrame(wx.Frame):
 				# if fleet over empty planet - jump back home
 				coord = get_coord(fleet)
 				planet = db.get_planet( coord )
+				#TODO: allow jump on all open-planets ( not only owned by user )
 				if not planet or not planet['owner_id'] or int(planet['owner_id']) != user_id:
 					print 'fleet %s not at home'%(fleet['id'],)
 					units = []
@@ -736,21 +737,28 @@ class DcFrame(wx.Frame):
 			for fleet in db.fleets(turn, ['owner_id=%s'%(acc['id'],)] ):
 				print 'got fleet %s'%(fleet,)
 				coord = get_coord(fleet)
-				cfilter = filter_coord(coord)
-				for planet in db.planets(turn, cfilter):
+				
+				if coord in pl:
+					pl[coord].add(fleet['id'])
+					continue
+				
+				planet = db.get_planet(coord)
+				if planet:
 					# skip if occupied
 					if planet['owner_id'] and not explore_owned_planets:
+						print 'planet %s occupied, skip'%(planet,)
 						continue
 					if planet['o'] and planet['e'] and planet['m'] and planet['t']:
+						print 'planet %s explored, skip'%(planet,)
 						continue
-					#check holes and stars
-					if not db.is_planet(coord):
-						print '%s not a planet'%(coord,)
-						continue
-					if not coord in pl:
-						pl[coord] = set()
-					pl[ coord ].add(fleet['id'])
-					print 'planet unexplored %s'%(planet,)
+				#check holes and stars
+				if not db.is_planet(coord):
+					print 'Coord %s not a planet'%(coord,)
+					continue
+				if not coord in pl:
+					pl[coord] = set()
+				pl[ coord ].add(fleet['id'])
+				print 'Add to exploration list planet %s'%(planet,)
 			
 			acts = {}
 			
