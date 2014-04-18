@@ -19,11 +19,6 @@ def get_unit_name(carapace):
         11: 'probe',
         21: 'transport'
         }.get(carapace, '')
-        
-def get_unit_name(carapace):
-	if carapace == 11:
-		return 'probe'
-	return ''
 
 class StackedObject(wx.Window):
 	def __init__(self, parent, unit):
