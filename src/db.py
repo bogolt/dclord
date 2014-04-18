@@ -501,7 +501,7 @@ def itemsDiff(table_name, flt, keys, turn_start, turn_end):
 	pass
 
 def users(flt = None, keys = None):
-	k = ('id','name','race_id') if not keys else keys
+	k = ('id','name','race_id', 'login') if not keys else keys
 	for i in items('user', flt, k):
 		yield i
 

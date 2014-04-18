@@ -85,6 +85,8 @@ def get_user_nickname():
 	# find out first user id ( consider it user nickname )
 	min_id = None
 	for user in db.users():
+		if not user['login'] in config.users:
+			continue
 		user_id = int(user['id'])
 		if not min_id:
 			min_id = user_id
