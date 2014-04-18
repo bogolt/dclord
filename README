@@ -1,2 +1,10 @@
 dcLord is a client for online turn based stratey game Divide and Conquer ( http://www.the-game.ru )
 It is using game xml interface to load accounts info and represnt it in graphical form.
+
+Get binary package for windows: https://dl.dropboxusercontent.com/u/931528/dcLord/dcLord_0.3.6.zip
+
+To run from source you'll need two folders. Both can be downloaded from binary windows package. Simply unpack it and copy to your local dir folders: img and image_size_map.
+You'll need then laying in your current directory to make client work.
+
+Then cd to src dir, and execute python dclord.py
+It is prefereable to put img and image_size_map here, in src dir.
