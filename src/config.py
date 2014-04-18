@@ -126,7 +126,7 @@ def saveOptions():
 	path = os.path.join(getOptionsDir(), config_file_name)
 	global options
 	with open( path, 'wt') as f:
-		f.write( json.dumps(options) )
+		f.write( json.dumps(options, indent=4) )
 
 def loadAccounts():
 	config = UnicodeConfigParser()
