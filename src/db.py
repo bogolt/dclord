@@ -10,7 +10,10 @@ log = logging.getLogger('dclord')
 
 class Db:
 	PLANET = 'planet'
+	OPEN_PLANET = 'open_planet'
 	USER = 'user'
+	PLAYER = 'player'
+	HW = 'hw'
 	FLEET = 'fleet'
 	UNIT = 'unit'
 	ALIEN_UNIT = 'alien_unit'
@@ -19,6 +22,8 @@ class Db:
 	#ALIEN_FLEET = 'alien_fleet'
 	GARRISON_UNIT = 'garrison_unit'
 	GARRISON_QUEUE_UNIT = 'garrison_queue_unit'
+	PROTO = 'proto'
+	PROTO_ACTION = 'proto_action'
 	
 	def __init__(self, dbpath=":memory:"):
 		self.conn = sqlite3.connect(dbpath)
@@ -27,7 +32,25 @@ class Db:
 		self.pending_actions = {}
 				
 		self.cur = self.conn.cursor()
-
+		
+		self.prepare()
+		
+	def prepare(self):
+		self.cur = self.conn.cursor()
+		cur = self.cur
+		cur.execute("""create table if not exists %s(
+				id integer PRIMARY KEY,
+				name text not null,
+				race_id integer not null,
+				login text
+				)"""%(Db.USER,))
+				
+		# each user may have it's own list of open planets ( consider Mobile Portal here )
+		cur.execute("""create table if not exists %s(
+				x integer(2) not null,
+				y integer(2) not null,
+				user_id integer not null,
+				PRIMARY KEY (x, y, user_id))"""%(Db.OPEN_PLANET,))
 	
 	def close(self):
 		self.conn.close()
@@ -74,21 +97,6 @@ class Db:
 				image integer(1),
 				PRIMARY KEY (x, y))""")
 		
-		# each user may have it's own list of open planets ( consider Mobile Portal here )
-		cur.execute("""create table if not exists open_planets(
-				x integer(2) not null,
-				y integer(2) not null,
-				user_id integer not null,
-				PRIMARY KEY (x, y, user_id))""")
-
-		cur.execute("""create table if not exists user(
-				id integer PRIMARY KEY,
-				name text not null,
-				race_id integer not null,
-				login text
-				)""")
-				
-				
 		cur.execute("""create table if not exists requested_action(
 				id integer PRIMARY KEY,
 				user_id integer not null,
@@ -99,11 +107,11 @@ class Db:
 		#what if approaching unknown fleet does not have an id?
 		#id integer primary key,
 
-		cur.execute("""create table if not exists player_%s(
+		cur.execute("""create table if not exists %s_%s(
 				player_id integer PRIMARY KEY,
 				name text,
 				race_id integer
-				)"""%(turn_n,))
+				)"""%(Db.PLAYER, turn_n,))
 		
 		cur.execute("""create table if not exists dip_%s(
 				owner_id integer,
@@ -111,11 +119,11 @@ class Db:
 				status integer(1)				
 				)"""%(turn_n,))
 		
-		cur.execute("""create table if not exists hw_%s(
+		cur.execute("""create table if not exists %s_%s(
 				player_id integer PRIMARY KEY,
 				hw_x integer(2),
 				hw_y integer(2)
-				)"""%(turn_n,))
+				)"""%(Db.HW, turn_n,))
 		
 		cur.execute("""create table if not exists %s_%s(
 				id integer PRIMARY KEY,
@@ -191,7 +199,7 @@ class Db:
 				done integer
 				)"""%(self.GARRISON_QUEUE_UNIT, turn_n))
 		
-		cur.execute("""create table if not exists proto(
+		cur.execute("""create table if not exists %s(
 				id integer PRIMARY KEY,
 				owner_id integer not null,
 				class integer,
@@ -254,9 +262,9 @@ class Db:
 				detect_range real,
 				scan_strength real,
 				stealth_level real
-				)""")
+				)"""%(Db.PROTO,))
 				
-		cur.execute("""create table if not exists proto_action(
+		cur.execute("""create table if not exists %s(
 				id integer primary key,
 				type integer not null,
 				proto_id integer not null,
@@ -267,7 +275,7 @@ class Db:
 				cost_second integer,
 				cost_money integer,
 				planet_can_be text
-				)""")
+				)"""%(Db.PROTO_ACTION,))
 		
 	def addObject(self, table, data, turn_n = None):
 		keys=tuple(data.keys())
@@ -414,7 +422,7 @@ class Db:
 	
 	def get_planet_owner(self, coord):
 		x,y = coord
-		self.cur.execute('select owner_id from planet_%s where x=:x and y=:y'%self.max_turn, (x,y))
+		self.cur.execute('select owner_id from %s_%s where x=:x and y=:y'%(Db.PLANET,), self.max_turn, (x,y))
 		r = self.cur.fetchone()
 		if r and r[0]:
 			return int(r[0])
@@ -423,7 +431,7 @@ class Db:
 	
 	def set_open_planet(self, coord, user_id):
 		x,y=coord
-		self.cur.execute('insert or replace into open_planets (x,y,user_id) values(:x, :y, :user_id)', (x,y,user_id))
+		self.cur.execute('insert or replace into %s(x,y,user_id) values(:x, :y, :user_id)'%(Db.OPEN_PLANET,), (x,y,user_id))
 		self.conn.commit()
 
 db = Db()	
@@ -432,7 +440,7 @@ def set_open_planet(coord, user_id):
 	db.set_open_planet(coord, user_id)
 	
 def open_planets(user_id):
-	for planet in items('open_planets', ['user_id=%s'%(user_id,)], ('x','y')):
+	for planet in items(Db.OPEN_PLANET, ['user_id=%s'%(user_id,)], ('x','y')):
 		yield planet
 
 def add_pending_action(act_id, table, action_type, data):
@@ -533,17 +541,17 @@ def flyingFleets(turn_n, flt, keys = None):
 		
 def prototypes(flt, keys = None):
 	k = ('id', 'class', 'carapace', 'weight', 'color', 'hp', 'name', 'fly_range') if not keys else keys
-	for i in items('proto', flt, k):
+	for i in items(Db.PROTO, flt, k):
 		yield i
 
 def proto_actions(flt, keys = None):
 	k = ('id', 'type', 'proto_id', 'proto_owner_id', 'max_count', 'cost_people', 'cost_main', 'cost_second', 'cost_money', 'planet_can_be') if not keys else keys
-	for i in items('proto_action', flt, k):
+	for i in items(Db.PROTO_ACTION, flt, k):
 		yield i
 		
 def units(turn_n, flt, keys = None):
 	k = ('id', 'fleet_id', 'class', 'hp') if not keys else keys
-	for unit in items('unit', flt, k, turn_n):
+	for unit in items(Db.UNIT, flt, k, turn_n):
 		yield unit
 
 def get_units(turn_n, flt, keys = None):
