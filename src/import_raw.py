@@ -40,6 +40,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	
 	NodeDC = 'dc'
 	UserInfo = 'this-player'
+	UserRace = 'this-player-race'
 	UserPlanets = 'user-planets'
 	UserFleets = 'fleets'
 	Planet = 'planet'
@@ -129,6 +130,56 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			db.setData('user', {'id':self.user['id'], 'login':d['login'], 'race_id':d['race_id'], 'name':self.user['name']})
 			config.set_user_id(d['login'], self.user['id'])
 			config.saveUsers()
+		
+		elif XmlHandler.UserRace == name:
+			
+			d = getAttrs(attrs, {
+				't-delta':'temperature_delta', 
+				't-optimal':'temperature_optimal', 
+				'race-nature':'resource_nature', 
+				'bonus-multiply':'population_growth',
+				'industry-nature': 'resource_main',
+				'unused-resource': 'resource_secondary',
+				'bonus-speed': 'modifier_fly',
+				'bonus-build-war': 'modifier_build_war',
+				'bonus-build-peace': 'modifier_build_peace',
+				'bonus-iq': 'modifier_science',
+				#'bonus-surface': 'modifier_surface',
+				'bonus-stealth': 'modifier_stealth',
+				'bonus-detectors': 'modifier_detection',
+				'bonus-mining': 'modifier_mining',
+				'bonus-price': 'modifier_price',
+				'bonus-ground-units': 'modifier_build_ground',
+				'bonus-space-units': 'modifier_build_space',
+				
+					})
+
+			# race-nature	  (nature)
+			# industry-nature ( first )
+			# unused-resource ( second )
+			
+			# bonus-multiply ( population-growth
+			# bonus-speed ( fly ? )
+			# bonus-build-war
+			# bonus-build-peace
+			
+			# bonus-iq (tech)
+			# bonus-surface (wtf)
+			
+			# bonus-stealth
+			# bonus-detectors
+			# bonus-mining 
+			# bonus-price
+			
+			# bonus-ground-units
+			# bonus-space-units
+			
+			# bonus-attack
+			# bonus-dr
+			# bonus-hp
+			
+			# race-name
+			
 			
 		elif XmlHandler.UserPlanets == name:
 			self.read_level = XmlHandler.UserPlanets

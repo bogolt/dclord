@@ -24,6 +24,7 @@ class Db:
 	GARRISON_QUEUE_UNIT = 'garrison_queue_unit'
 	PROTO = 'proto'
 	PROTO_ACTION = 'proto_action'
+	RACE = 'race'
 	
 	def __init__(self, dbpath=":memory:"):
 		self.conn = sqlite3.connect(dbpath)
@@ -51,13 +52,15 @@ class Db:
 				y integer(2) not null,
 				user_id integer not null,
 				PRIMARY KEY (x, y, user_id))"""%(Db.OPEN_PLANET,))
-	
-	def close(self):
-		self.conn.close()
-		self.max_turn = 0
-		
-		self.init()
-
+				
+		cur.execute("""create table if not exists %s(
+				id integer PRIMARY KEY,
+				resource_nature integer(1) not null,
+				temperature_optimal real,
+				temperature_delta real,
+				population_growth real
+				)"""%(Db.RACE,))
+				
 	def init(self, turn_n):
 		self.cur = self.conn.cursor()
 		cur = self.cur
