@@ -134,6 +134,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.UserRace == name:
 			
 			d = getAttrs(attrs, {
+				'race-id':'id',
 				't-delta':'temperature_delta', 
 				't-optimal':'temperature_optimal', 
 				'race-nature':'resource_nature', 
@@ -151,9 +152,11 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				'bonus-price': 'modifier_price',
 				'bonus-ground-units': 'modifier_build_ground',
 				'bonus-space-units': 'modifier_build_space',
+				'race-name':'name'
 				
 					})
 
+			db.setData(db.Db.RACE, d)
 			# race-nature	  (nature)
 			# industry-nature ( first )
 			# unused-resource ( second )

@@ -39,7 +39,7 @@ def saveProto():
 	saveTable(db.Db.PROTO_ACTION, ('id', 'type', 'proto_id', 'proto_owner_id', 'max_count', "cost_people", "cost_main", "cost_money", "cost_second", "planet_can_be"), None)
 
 def savePlanets():
-	saveTable(db.Db.PLANET, ('x','y','o','e','m','t','s','owner_id', 'name', 'is_open'), ['owner_id is not null'], db.getTurn())
+	saveTable(db.Db.PLANET, ('x','y','o','e','m','t','s','owner_id', 'name', 'is_open'), [], db.getTurn())
 	saveTable(db.Db.OPEN_PLANET, ('x','y','user_id'), [], None)
 	#saveTable('planet', ('x','y','owner_id', 'name', 'is_open'), ['owner_id is not null'], 'planets')
 
@@ -60,6 +60,7 @@ def saveAlienUnits():
 def saveUsers():
 	saveTable(db.Db.USER, ('id', 'name', 'race_id', 'login'), None)
 	saveTable(db.Db.HW, ('hw_x', 'hw_y', 'player_id'), None, db.getTurn())
+	saveTable(db.Db.RACE, ('id', 'temperature_delta',  'temperature_optimal',  'resource_nature',  'population_growth', 'resource_main', 'resource_secondary', 'modifier_fly', 'modifier_build_war', 'modifier_build_peace', 'modifier_science', 'modifier_stealth', 'modifier_detection', 'modifier_mining', 'modifier_price', 'modifier_build_ground', 'modifier_build_space', 'name'), None)
 	
 def savePlayers():
 	saveTable(db.Db.PLAYER, ('player_id', 'name'), None, db.getTurn())
@@ -139,7 +140,7 @@ def load_sync_data():
 				outf = outf[:-len('.gz')]
 			util.unpack(os.path.join(acc_path, gz_file), outf)
 			table_name = os.path.basename(outf)[:-len('.csv')]
-			if table_name == db.Db.PROTO or table_name == db.Db.PROTO_ACTION or table_name == db.Db.OPEN_PLANET or table_name == db.Db.USER:
+			if table_name == db.Db.PROTO or table_name == db.Db.PROTO_ACTION or table_name == db.Db.OPEN_PLANET or table_name == db.Db.USER or table_name == db.Db.RACE:
 				loadTable(table_name, None, load_turn, None, os.path.dirname(outf))
 			else:
 				loadTable(table_name, load_turn, None, None, os.path.dirname(outf))
@@ -395,6 +396,7 @@ def loadProto(turn_n = None, cb = None):
 def loadUsers(turn_n = None, cb = None):
 	loadTable(db.Db.USER, None, turn_n, cb=cb)
 	loadTable(db.Db.HW, turn_n, cb=cb)
+	loadTable(db.Db.RACE, None, turn_n, cb=cb)
 	
 def loadPlayers(turn_n = None, cb = None):
 	loadTable(db.Db.PLAYER, turn_n, cb=cb)

@@ -56,9 +56,24 @@ class Db:
 		cur.execute("""create table if not exists %s(
 				id integer PRIMARY KEY,
 				resource_nature integer(1) not null,
+				resource_main integer(1) not null,
+				resource_secondary integer(1) not null,
+				
 				temperature_optimal real,
 				temperature_delta real,
-				population_growth real
+				
+				population_growth real,
+				modifier_fly real,
+				modifier_build_war real,
+				modifier_build_peace real,
+				modifier_science real,
+				modifier_stealth real,
+				modifier_detection real,
+				modifier_mining real,
+				modifier_price real,
+				modifier_build_ground real,
+				modifier_build_space real,
+				name text
 				)"""%(Db.RACE,))
 				
 	def init(self, turn_n):
