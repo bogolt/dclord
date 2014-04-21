@@ -150,8 +150,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				'bonus-detectors': 'modifier_detection',
 				'bonus-mining': 'modifier_mining',
 				'bonus-price': 'modifier_price',
-				'bonus-ground-units': 'modifier_build_ground',
-				'bonus-space-units': 'modifier_build_space',
+				#'bonus-ground-units': 'modifier_build_ground',
+				#'bonus-space-units': 'modifier_build_space',
 				'race-name':'name'
 				
 					})

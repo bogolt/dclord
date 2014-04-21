@@ -60,7 +60,8 @@ def saveAlienUnits():
 def saveUsers():
 	saveTable(db.Db.USER, ('id', 'name', 'race_id', 'login'), None)
 	saveTable(db.Db.HW, ('hw_x', 'hw_y', 'player_id'), None, db.getTurn())
-	saveTable(db.Db.RACE, ('id', 'temperature_delta',  'temperature_optimal',  'resource_nature',  'population_growth', 'resource_main', 'resource_secondary', 'modifier_fly', 'modifier_build_war', 'modifier_build_peace', 'modifier_science', 'modifier_stealth', 'modifier_detection', 'modifier_mining', 'modifier_price', 'modifier_build_ground', 'modifier_build_space', 'name'), None)
+	saveTable(db.Db.RACE, ('id', 'temperature_delta',  'temperature_optimal',  'resource_nature',  'population_growth', 'resource_main', 'resource_secondary', 'modifier_fly', 'modifier_build_war', 'modifier_build_peace', 'modifier_science', 'modifier_stealth', 'modifier_detection', 'modifier_mining', 'modifier_price', 'name'), None)
+	#'modifier_build_ground', 'modifier_build_space',
 	
 def savePlayers():
 	saveTable(db.Db.PLAYER, ('player_id', 'name'), None, db.getTurn())

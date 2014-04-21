@@ -71,10 +71,12 @@ class Db:
 				modifier_detection real,
 				modifier_mining real,
 				modifier_price real,
-				modifier_build_ground real,
-				modifier_build_space real,
 				name text
 				)"""%(Db.RACE,))
+				
+#				modifier_build_ground real,
+#				modifier_build_space real,
+
 				
 	def init(self, turn_n):
 		self.cur = self.conn.cursor()
