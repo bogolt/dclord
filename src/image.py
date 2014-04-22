@@ -19,16 +19,16 @@ def loadBitmap(rel_path, dest_width = 0):
 		img.Rescale(dest_width, dest_width)
 	return img.ConvertToBitmap()
 
-def loadCarapaceImage( carapace, color ):
-	img = loadBitmap( 'carps/%s_%s.gif'%(carapace,color) )
+def loadCarapaceImage( carapace, color, dest_width = 0 ):
+	img = loadBitmap( 'carps/%s_%s.gif'%(carapace,color), dest_width)
 	global image_carapace_cache
-	image_carapace_cache[ (carapace, color) ] = img
+	image_carapace_cache[ (carapace, color, dest_width) ] = img
 	return img
 
-def getCarapaceImage(carapace, color = None):
+def getCarapaceImage(carapace, color = None, dest_width = 0):
 	key = (carapace,color)
 	global image_carapace_cache
-	return image_carapace_cache.setdefault(key, loadCarapaceImage(carapace, color))
+	return image_carapace_cache.setdefault((key, dest_width), loadCarapaceImage(carapace, color, dest_width))
 
 def loadBcImage(bc, dest_width = 0):
 	img = loadBitmap( '%s.gif'%(bc,), dest_width)

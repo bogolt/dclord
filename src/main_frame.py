@@ -68,6 +68,7 @@ class DcFrame(wx.Frame):
 		
 		self.info_panel = planet_window.InfoPanel(self)
 		self.planet_panel = planet_window.PlanetPanel(self)
+		self.garrison_panel = planet_window.GarrisonPanel(self)
 		self.object_filter = object_filter.FilterPanel(self)
 		self.planet_filter = object_filter.FilterFrame(self)
 		#self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
@@ -109,6 +110,7 @@ class DcFrame(wx.Frame):
 		self._mgr.AddPane(self.history, wx.RIGHT, "Turn")
 		self._mgr.AddPane(self.info_panel, wx.RIGHT, "Info")
 		self._mgr.AddPane(self.planet_panel, wx.RIGHT, "Planet")
+		self._mgr.AddPane(self.garrison_panel, wx.RIGHT, "Garrison")
 		self._mgr.AddPane(self.planet_filter, wx.LEFT, "Planets")
 		self._mgr.AddPane(self.object_filter, wx.LEFT, "Filter")
 		#self._mgr.AddPane(self.unit_list, wx.RIGHT, "Units")
@@ -142,8 +144,10 @@ class DcFrame(wx.Frame):
 		self.Bind(event.EVT_MAP_UPDATE, self.onMapUpdate)
 		self.Bind(event.EVT_USER_SELECT, self.onSelectUser)
 		self.Bind(event.EVT_ACTIONS_REPLY, self.onActionsReply)
-		self.Bind(event.EVT_SELECT_OBJECT, self.info_panel.selectObject)
-		self.Bind(event.EVT_SELECT_OBJECT, self.planet_panel.select_coord)
+		self.Bind(event.EVT_SELECT_OBJECT, self.onObjectSelect)
+		# self.info_panel.selectObject)
+		#self.Bind(event.EVT_SELECT_OBJECT, self.planet_panel.select_coord)
+		#self.Bind(event.EVT_SELECT_OBJECT, self.garrison_panel.select_coord)
 		self.Bind(event.EVT_TURN_SELECTED, self.onTurnSelected)
 		self.Bind(event.EVT_LOG_APPEND, self.onLog)
 	
@@ -154,6 +158,11 @@ class DcFrame(wx.Frame):
 		#self.Maximize()
 		
 		self.history.updateTurns(self.map.turn)
+		
+	def onObjectSelect(self, evt):
+		self.planet_panel.select_coord(evt)
+		self.garrison_panel.select_coord(evt)
+		self.info_panel.selectObject(evt)
 		
 	def makeMenu(self):
 		fileMenu = wx.Menu()

@@ -199,7 +199,7 @@ class FleetWindow(scrolled.ScrolledPanel):
 				tree_fleet = self.tree.AppendItem(tree_user, fleet['name'])
 
 				for unit in db.alienUnits(turn, ['fleet_id=%s'%(fleet['id'],)]):
-					print 'get alient unit %s'%(unit,)
+					#print 'get alient unit %s'%(unit,)
 					obj_carp = unit['class'], int(unit['carapace']), int(unit['color'])
 					img_item = None
 					if obj_carp in img_list_data:
@@ -369,29 +369,63 @@ class PlanetPanel(wx.Panel):
 			self.geo.text.SetLabel('o: %s, e: %s, m: %s, t: %s, s: %s'%(planet['o'], planet['e'], planet['m'], planet['t'], planet['s']))
 
 		planet = db.get_planet(pos)
-		if planet and 'owner_id' in planet and int(planet['owner_id']) in db.get_user_ids():
+		if planet and 'owner_id' in planet and planet['owner_id'] and int(planet['owner_id']) in db.get_user_ids():
 			self.buildings.set_coord(pos)
 			self.buildings.Show()
 		else:
 			self.buildings.Hide()
+		self.sizer.Layout()
+		
+class GarrisonPanel(wx.Panel):
+	def __init__(self, parent):
+		wx.Window.__init__(self, parent, -1, size=(120,200))
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		
+		#self.units = UnitsWindows(self)
+		#self.units.Hide()
+		#self.sizer.Add(self.units)
+		
+		self.SetSizer(self.sizer)
+		self.sizer.Layout()
+		
+	def select_coord(self, evt):
+		coord = evt.attr1
+		
+		self.sizer.DeleteWindows()
+		
+		planet = db.get_planet(coord)
+		if 'owner_id' not in planet:
+			return
+		
+		item_windows = {}
+		
+		dups = {}
+		protos = {}
 
+		items = {}
+		for unit in db.garrison_units(db.getTurn(), db.filter_coord(coord)):
+			bc = unit['class']
+			if bc in items:
+				items[bc].append(unit)
+				continue
+				
+			p = db.get_prototype(bc,('id', 'class', 'carapace', 'color', 'hp', 'name', 'is_building', 'fly_speed', 'fly_range', 'support_main', 'support_second'))
+			if int(p['is_building']) == 1:
+				continue
+			items[bc] = [unit]
+			protos[bc] = p
 			
-			
-			
-			
-#			if not g_type in unit_types:
-#				
-#				unit_types[g_type] = p
-#			
-#			p = unit_types[g_type]
-#			p[]
-				#unit_types.setdefault(g_type, []).append(garrison_unit)
 		
-		#for t, units in unit_types:
-			
-		
-		
-		#log.info('object select %s, updating'%(self.pos,))
+		for bc, item_list in items.iteritems():
+			p = protos[bc]
+			if 'carapace' in p and p['carapace']:
+				img = image.getCarapaceImage(int(p['carapace']), int(p['color']), 20)
+			else:
+				img = image.getBcImage(bc, 20)
+			bmp = wx.StaticBitmap(self)
+			bmp.SetBitmap(img)
+			self.sizer.Add(bmp)
+
 		self.sizer.Layout()
 	
 class InfoPanel(wx.Panel):
