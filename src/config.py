@@ -106,6 +106,7 @@ options = {
 			}
 		}
 
+
 config_file_name = 'dclord2.json'
 users_file_name = 'users.cfg'
 def loadOptions():
