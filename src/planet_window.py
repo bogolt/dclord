@@ -248,7 +248,77 @@ class FleetWindow(scrolled.ScrolledPanel):
 				keys[key] = uwindow
 				uwindow.update()
 				self.vbox.Add( uwindow)
+
+class PlanetGeoWindow(wx.Window):
+	def __init__(self, parent):
+		wx.Window.__init__(self, parent, -1, size=(120,200))
+		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.text = wx.StaticText(self, wx.ID_ANY)
+		sizer.Add(self.text)
+		self.SetSizer(sizer)
+		sizer.Layout()
+	
+	def set_planet(self, planet_info):
+		self.text.SetText('%s'%(planet_info,))
+		#sizer.Add(wx.StaticText(self, -1, 'o: %s, e: %s, m: %s, t: %s, s: %s'%(
 		
+class PlanetPanel(wx.Panel):
+	def __init__(self, parent):
+		wx.Window.__init__(self, parent, -1, size=(120,200))
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		
+		self.pos = wx.StaticText(self, wx.ID_ANY)
+		self.sizer.Add(self.pos)
+		
+		self.geo = PlanetGeoWindow(self)
+		self.sizer.Add(self.geo)
+		
+		self.owner = wx.StaticText(self, wx.ID_ANY)
+		self.sizer.Add(self.owner)
+
+		self.name = wx.StaticText(self, wx.ID_ANY)
+		self.sizer.Add(self.name)
+		
+		self.SetSizer(self.sizer)
+		self.sizer.Layout()
+		
+	def select_coord(self, evt):
+		pos = evt.attr1
+		self.pos.SetLabel('%s:%s'%pos)
+		
+		planet = db.get_planet(pos)
+		owner = None
+		name = None
+		if planet:
+			if 'owner_id' in planet:
+				owner_id = planet['owner_id']
+				if owner_id:
+					owner = db.get_player_name(owner_id)
+			if 'name' in planet:
+				name = planet['name']
+		
+		if owner:
+			self.owner.SetLabel(owner)
+			self.owner.Show()
+		else:
+			self.owner.Hide()
+
+		if name:
+			self.name.SetLabel(name)
+			self.name.Show()
+		else:
+			self.name.Hide()
+		
+		if not planet:
+			self.geo.SetLabel('')
+		else:
+			self.geo.SetLabel(str(planet))
+		
+		# buildings	if ours
+		
+		#log.info('object select %s, updating'%(self.pos,))
+		self.sizer.Layout()
+	
 class InfoPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(120,200))			

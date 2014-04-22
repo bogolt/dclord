@@ -535,6 +535,15 @@ def players(turn_n, flt = None, keys = None):
 	k = ('player_id','name') if not keys else keys
 	for i in items('player', flt, k, turn_n):
 		yield i
+
+def get_player_name(player_id):
+	for p in players(getTurn(), ['player_id=%s'%(player_id,)]):
+		return p['name']
+		
+	for u in users(['id=%s'%(player_id,)]):
+		return u['name']
+	
+	return '[unknown id %s]'%(player_id,)
 		
 def alien_players(turn_n):
 	user_ids = get_user_ids()
