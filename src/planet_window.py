@@ -262,11 +262,10 @@ class PlanetGeoWindow(wx.Window):
 		self.text.SetText('%s'%(planet_info,))
 
 
-class BuildingsWindows(wx.Window):
+class BuildingsWindows(wx.Frame):
 	def __init__(self, parent):
-		wx.Window.__init__(self, parent, -1, size=(120,200))
+		wx.Window.__init__(self, parent, wx.ID_ANY)
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
 		
@@ -288,7 +287,6 @@ class BuildingsWindows(wx.Window):
 				
 			if int(p['max_count'])!=1:
 				dups.setdefault(bc, []).append(building)
-				#protos[bc] = p
 				continue
 				
 			img = image.getBcImage(bc, 20)
@@ -315,75 +313,48 @@ class BuildingsWindows(wx.Window):
 
 class PlanetPanel(wx.Panel):
 	def __init__(self, parent):
-		wx.Window.__init__(self, parent, -1, size=(120,200))
+		wx.Window.__init__(self, parent, -1)
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		
-		self.pos = wx.StaticText(self, wx.ID_ANY)
-		self.sizer.Add(self.pos)
-		
-		self.geo = PlanetGeoWindow(self)
-		self.sizer.Add(self.geo)
-		
-		self.owner = wx.StaticText(self, wx.ID_ANY)
-		self.sizer.Add(self.owner)
 
-		self.name = wx.StaticText(self, wx.ID_ANY)
-		self.sizer.Add(self.name)
-		
-		self.buildings = BuildingsWindows(self)
-		self.sizer.Add(self.buildings)
-		
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
-		
+
 	def select_coord(self, evt):
-		pos = evt.attr1
-		self.pos.SetLabel('%s:%s'%pos)
+		coord = evt.attr1
+		self.sizer.DeleteWindows()
 		
-		planet = db.get_planet(pos)
+		pos = wx.StaticText(self, wx.ID_ANY)
+		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, '%s:%s'%coord) )
+		
+		planet = db.get_planet(coord)
 		owner = None
 		name = None
-		if planet:
-			if 'owner_id' in planet:
-				owner_id = planet['owner_id']
-				if owner_id:
-					owner = db.get_player_name(owner_id)
-			if 'name' in planet:
-				name = planet['name']
-		
-		if owner:
-			self.owner.SetLabel(owner)
-			self.owner.Show()
-		else:
-			self.owner.Hide()
-
-		if name:
-			self.name.SetLabel(name)
-			self.name.Show()
-		else:
-			self.name.Hide()
-		
 		if not planet:
-			self.geo.text.SetLabel('')
-		else:
-			self.geo.text.SetLabel('o: %s, e: %s, m: %s, t: %s, s: %s'%(planet['o'], planet['e'], planet['m'], planet['t'], planet['s']))
-
-		planet = db.get_planet(pos)
-		if planet and 'owner_id' in planet and planet['owner_id'] and int(planet['owner_id']) in db.get_user_ids():
-			self.buildings.set_coord(pos)
-			self.buildings.Show()
-		else:
-			self.buildings.Hide()
+			return
+		
+		if 'o' in planet:
+			self.sizer.Add( wx.StaticText(self, wx.ID_ANY, 'o: %s, e: %s, m: %s, t: %s, s: %s'%(planet['o'], planet['e'], planet['m'], planet['t'], planet['s'])))
+		
+		if 'name' in planet and planet['name']:
+			self.sizer.Add( wx.StaticText(self, wx.ID_ANY, planet['name']) )
+		
+		if 'owner_id' not in planet:
+			return
+		owner_id = planet['owner_id']
+		if not owner_id:
+			return
+		owner_name = db.get_player_name(owner_id)
+		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, owner_name) )
+		
+		buildings = BuildingsWindows(self)
+		buildings.set_coord(coord)
+		self.sizer.Add(buildings)
 		self.sizer.Layout()
 		
 class GarrisonPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(120,200))
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		
-		#self.units = UnitsWindows(self)
-		#self.units.Hide()
-		#self.sizer.Add(self.units)
 		
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
@@ -394,7 +365,7 @@ class GarrisonPanel(wx.Panel):
 		self.sizer.DeleteWindows()
 		
 		planet = db.get_planet(coord)
-		if 'owner_id' not in planet:
+		if not planet or 'owner_id' not in planet:
 			return
 		
 		item_windows = {}
