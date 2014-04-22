@@ -50,9 +50,8 @@ users = {}
 user_id_dict = {}
 options = {
 		'data':{
-			'dir':'data',
 			'backup-dir':'backup',
-			'path':None,
+			'path': os.path.join(getOptionsDir(), 'data'),
 			'raw-dir':'raw',
 			'raw-xml-dir':'raw_xml',
 			'images':'img/buildings',
@@ -107,9 +106,13 @@ options = {
 			}
 		}
 
-config_file_name = 'dclord.json'
+config_file_name = 'dclord2.json'
 users_file_name = 'users.cfg'
 def loadOptions():
+	global options
+	global options_default
+	
+	print 'loading opts from %s'%(getOptionsDir(),)
 	path = os.path.join(getOptionsDir(), config_file_name)
 	if not os.path.exists(path):
 		return
@@ -130,7 +133,8 @@ def loadAccounts():
 	config = UnicodeConfigParser()
 	try:
 		config.readfp(codecs.open(os.path.join(getOptionsDir(), users_file_name), 'r', 'utf8'))
-	except IOError:
+	except IOError as e:
+		print 'Error loading accounts: %s'%(e,)
 		return
 	
 	global users
@@ -141,7 +145,8 @@ def loadAccounts():
 			acc[k] = v
 		if not 'login' in acc:
 			continue
-			
+		
+		print 'loading account %s'%(acc['login'],)
 		users[acc['login']] = acc
 		if 'id' in acc and acc['id']:
 			user_id_dict[int(acc['id'])] = acc
@@ -172,7 +177,7 @@ def saveUsers():
 
 def loadAll():
 	global options
-	options['data']['path'] = os.path.join(getOptionsDir(), options['data']['dir'])
+	#options['data']['path'] = os.path.join(getOptionsDir(), options['data']['dir'])
 	if not os.path.exists(options['data']['path']):
 		os.makedirs(options['data']['path'])
 	loadAccounts()

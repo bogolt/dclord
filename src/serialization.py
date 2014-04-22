@@ -414,6 +414,7 @@ def getLastTurn(cb = None):
 	if not os.path.exists(path):
 		if cb:
 			util.appendLog(cb, 'Data path specified "%s" does not exist'%(path,))
+		print 'Data path specified "%s" does not exist'%(path,)
 		return None
 		
 	for pt in os.listdir(path):
