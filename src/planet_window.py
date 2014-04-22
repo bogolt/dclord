@@ -17,6 +17,7 @@ def get_unit_name(carapace):
         2: 'comm shuttle',
         6: 'shuttle',
         11: 'probe',
+        13: 'governer',
         21: 'transport'
         }.get(carapace, '')
 
@@ -389,13 +390,22 @@ class GarrisonPanel(wx.Panel):
 		
 		for bc, item_list in items.iteritems():
 			p = protos[bc]
+			sz = wx.BoxSizer(wx.HORIZONTAL)
+			self.sizer.Add(sz)
 			if 'carapace' in p and p['carapace']:
 				img = image.getCarapaceImage(int(p['carapace']), int(p['color']), 20)
 			else:
-				img = image.getBcImage(bc, 20)
+				img = image.getBcImage(bc)
 			bmp = wx.StaticBitmap(self)
 			bmp.SetBitmap(img)
-			self.sizer.Add(bmp)
+			sz.Add(bmp)
+			n_str = ''
+			if len(item_list) > 1:
+				n_str = 'x %s'%(len(item_list),)
+			name = get_unit_name(bc)
+			if not name:
+				name = p['name']
+			sz.Add(wx.StaticText(self, -1, '%s %s'%(n_str, name,)))
 
 		self.sizer.Layout()
 	
