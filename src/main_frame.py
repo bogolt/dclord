@@ -184,6 +184,9 @@ class DcFrame(wx.Frame):
 		self.view = wx.Menu()
 		self.view_show_geo = self.view.Append(wx.ID_ANY, "Show geo", kind=wx.ITEM_CHECK)
 		self.view.Check(self.view_show_geo.GetId(), 1==int(config.options['map']['draw_geo']))
+
+		self.view_show_good_planets = self.view.Append(wx.ID_ANY, "Show good planets", kind=wx.ITEM_CHECK)
+		self.view.Check(self.view_show_good_planets.GetId(), 1==int(config.options['map']['show_good']))
 		
 		#actionMenu = wx.Menu()
 		#actionDefineArea = actionMenu.Append(
@@ -196,6 +199,7 @@ class DcFrame(wx.Frame):
 		self.SetMenuBar(panel)
 		
 		self.Bind(wx.EVT_MENU, self.onShowGeo, self.view_show_geo)
+		self.Bind(wx.EVT_MENU, self.onShowGood, self.view_show_good_planets)
 		self.Bind(wx.EVT_MENU, self.onShowUsers, usersMenu)
 		self.Bind(wx.EVT_MENU, self.onUpdate, self.updateMenu)
 		self.Bind(wx.EVT_MENU, self.onUpdateGeo, self.updateGeo)
@@ -254,7 +258,13 @@ class DcFrame(wx.Frame):
 		
 		#self.view.Check(self.view_show_geo.GetId(), bool())
 		self.map.update()
-		
+
+	def onShowGood(self, evt):
+		show_good = 1 == int(config.options['map']['show_good'])
+		show_good = 0 if show_good==1 else 1
+		config.options['map']['show_good'] = show_good
+		self.map.showGood(show_good)
+				
 	def showHidePane(self, paneObject):
 		pane = self._mgr.GetPane(paneObject)
 		if pane.IsShown():
@@ -417,7 +427,7 @@ class DcFrame(wx.Frame):
 				continue
 
 			self.pending_actions.user_id = user_id
-			print 'send scouts %s size %s'%(acc['login'], min_size)
+			log.info('send scouts %s size %s'%(acc['login'], min_size))
 					
 			# find units that can geo-explore
 			# find the ones that are already in fleets in one of our planets
@@ -426,26 +436,25 @@ class DcFrame(wx.Frame):
 			ready_scout_fleets = {}
 			# get all fleets over our planets
 			for planet in db.open_planets(user_id):
-				print 'open planet %s'%(planet,)
+				#print 'open planet %s'%(planet,)
 				coord = get_coord(planet)
 				for fleet in db.fleets(turn, filter_coord(coord)+['owner_id=%s'%(user_id,)]):
 					if value_in(self.exclude_fleet_names, fleet['name']):
 						continue
 					units = db.get_units(turn, ['fleet_id=%s'%(fleet['id'],)])
 					if len(units) != 1:
-						print 'fleet %s has wrong units count ( != 1 ) %s, skipping it'%(fleet, units)
-						
+						#print 'fleet %s has wrong units count ( != 1 ) %s, skipping it'%(fleet, units)						
 						continue
 					unit = units[0]
 					if int(unit['id']) in self.manual_control_units:
-						print 'unit %s reserved for manual control, skipping it'%(unit,)
+						#print 'unit %s reserved for manual control, skipping it'%(unit,)
 						continue
 
 					if not self.is_geo_scout(unit):
-						print 'unit %s is not geo-scout, skipping it'%(unit,)
+						#print 'unit %s is not geo-scout, skipping it'%(unit,)
 						continue
 					fly_range = max(fly_range, self.get_unit_range(unit))
-					print 'unit %s on planet %s for fleet %s is geo-scout'%(unit, coord, fleet)
+					#print 'unit %s on planet %s for fleet %s is geo-scout'%(unit, coord, fleet)
 					# ok, this is geo-scout, single unit in fleet, on our planet
 					#ready_scout_fleets.append((coord, fleet))
 					ready_scout_fleets.setdefault(coord, []).append((fleet, fly_range))
@@ -480,7 +489,7 @@ class DcFrame(wx.Frame):
 						# check if the fleet is geo-scout
 						if self.is_geo_scout_fleet(turn, fleet['id']):
 							has_flying_geo_scouts = True
-							print 'found another scout %s, skip planet %s'%(fleet, dest)
+							#print 'found another scout %s, skip planet %s'%(fleet, dest)
 					if has_flying_geo_scouts:
 						exclude.add(dest)
 						continue
@@ -496,7 +505,7 @@ class DcFrame(wx.Frame):
 						# ok fly to it
 						self.pending_actions.fleetMove(fleet['id'], planet)
 						exclude.add( planet )
-						print 'jump %s from %s to %s'%(fleet, coord, planet)
+						#print 'jump %s from %s to %s'%(fleet, coord, planet)
 						possible_planets.remove( (dist, planet ) )
 						break
 							
@@ -540,19 +549,19 @@ class DcFrame(wx.Frame):
 
 			units_classes = db.get_units_class(turn, ['carapace=%s'%(carapace,), 'owner_id=%s'%(user_id,)])
 			any_class = 'class in (%s)'%(','.join([str(cls) for cls in units_classes]),)
-			print 'testing user %s with class %s'%(user_id, any_class)
+			#print 'testing user %s with class %s'%(user_id, any_class)
 			
 			self.pending_actions.user_id = user_id
 			pending_units = []
 			
 			for planet in db.planets(turn, ['owner_id=%s'%(user_id,)]):
 				coord = get_coord(planet)
-				print 'checking harrison for planet %s'%(planet,)
+				#print 'checking harrison for planet %s'%(planet,)
 				for unit in db.garrison_units(turn, filter_coord(coord) + [any_class]):
-					print 'found unit %s on planet %s'%(unit, planet,)
+					#print 'found unit %s on planet %s'%(unit, planet,)
 					self.pending_actions.createNewFleet(coord, fleet_name)
 					pending_units.append( (self.pending_actions.get_action_id(), coord, unit['id'] ) )
-					print 'found unit %s on planet %s'%(unit, coord )
+					#print 'found unit %s on planet %s'%(unit, coord )
 			
 			if len(pending_units) == 0:
 				continue
@@ -566,21 +575,21 @@ class DcFrame(wx.Frame):
 		turn = db.getTurn()
 		self.pending_actions.user_id = user_id
 		at_least_one = False
-		print 'executing move_units_to_fleets with user %s, units %s'%(user_id, units)
+		#print 'executing move_units_to_fleets with user %s, units %s'%(user_id, units)
 		for act_id, coord, unit_id in units:
-			print 'action %s, coord %s, unit %s'%(act_id, coord, unit_id)
+			#print 'action %s, coord %s, unit %s'%(act_id, coord, unit_id)
 			# get fleet for these coords
 			res = db.get_action_result(act_id)
 			if not res:
-				print 'oops no result'
+				#print 'oops no result'
 				continue
 			ret_id, is_ok = res
-			print 'result is %s %s'%(ret_id, is_ok)
+			#print 'result is %s %s'%(ret_id, is_ok)
 			if not is_ok:
 				continue
 			
 			at_least_one = True
-			print 'moving unit %s to fleet %s'%(unit_id, ret_id)
+			#print 'moving unit %s to fleet %s'%(unit_id, ret_id)
 			self.pending_actions.moveUnitToFleet(ret_id, unit_id)
 			
 		if at_least_one:
@@ -627,7 +636,7 @@ class DcFrame(wx.Frame):
 				#print 'found fleet %s'%(fleet,)
 				if fleet['in_transit'] != 0:
 					continue
-				print 'fleet %s can be stopped'%(fleet,)
+				#print 'fleet %s can be stopped'%(fleet,)
 			
 				self.pending_actions.cancelJump(fleet['id'])
 			
@@ -639,7 +648,7 @@ class DcFrame(wx.Frame):
 		for acc in config.accounts():
 			user_id = int(acc['id'])
 			self.pending_actions.user_id = user_id
-			print 'fly home scouts for user %s %s'%(user_id, acc['login'])
+			#print 'fly home scouts for user %s %s'%(user_id, acc['login'])
 							
 			# fly scouts back to base
 			
@@ -652,22 +661,22 @@ class DcFrame(wx.Frame):
 			if fleet_name:
 				fleet_flt.append( 'name="%s"'%(fleet_name,) ) 
 			for fleet in db.fleets(turn, fleet_flt):
-				print 'found fleet %s'%(fleet,)
+				#print 'found fleet %s'%(fleet,)
 				# if fleet over empty planet - jump back home
 				coord = get_coord(fleet)
 				planet = db.get_planet( coord )
 				#TODO: allow jump on all open-planets ( not only owned by user )
 				if not planet or not planet['owner_id'] or int(planet['owner_id']) != user_id:
-					print 'fleet %s not at home'%(fleet['id'],)
+					#print 'fleet %s not at home'%(fleet['id'],)
 					units = []
 					for unit in db.units(turn, ['fleet_id=%s'%(fleet['id'],)]):
-						print 'fleet %s has unit %s'%(fleet['id'], unit)
+						#print 'fleet %s has unit %s'%(fleet['id'], unit)
 						units.append(unit)
 					
 					# not a scout fleet if more then one unit in fleet
 					# if zero units - don't care about empty fleet as well
 					if len(units) != 1:
-						print 'fleet %s has %s units, while required 1'%(fleet['id'], len(units))
+						#print 'fleet %s has %s units, while required 1'%(fleet['id'], len(units))
 						continue
 
 					if int(units[0]['id']) in self.manual_control_units:
@@ -675,28 +684,28 @@ class DcFrame(wx.Frame):
 
 					proto = db.get_prototype(units[0]['class'])
 					if proto['carapace'] != CARAPACE_PROBE:
-						print 'fleet %s unit %s is not a probe'%(fleet['id'], units[0])
+						#print 'fleet %s unit %s is not a probe'%(fleet['id'], units[0])
 						continue
 
 					#jump back
-					print 'fleet %s %s needs to get home'%(coord, fleet)
+					#print 'fleet %s %s needs to get home'%(coord, fleet)
 					fleets.append( (coord, fleet) )					
 
 			if not fleets:
-				print 'no scout fleets found not at home'
+				#print 'no scout fleets found not at home'
 				continue
 			
 			coords = []
 			for planet in db.planets(turn, ['owner_id=%s'%(user_id,)]):
 				coord = get_coord(planet)
 				coords.append( coord )
-				print 'possible home planet %s'%(coord,)
+				#print 'possible home planet %s'%(coord,)
 				
 			if coords == None or fleets == []:
-				print 'oops %s %s'%(coords, fleets)
+				#print 'oops %s %s'%(coords, fleets)
 				continue
 			
-			print 'looking for best route for %s fleets' %(len(fleets,),)
+			#print 'looking for best route for %s fleets' %(len(fleets,),)
 			for coord, fleet in fleets:
 				#find closest planet
 				closest_planet = coords[0]
@@ -707,7 +716,7 @@ class DcFrame(wx.Frame):
 						closest_planet = c
 				
 				# ok, found then jump
-				print 'Jump (%s) %s'%(closest_planet, fleet)
+				#print 'Jump (%s) %s'%(closest_planet, fleet)
 				self.pending_actions.fleetMove( fleet['id'], closest_planet )
 			
 			self.perform_actions()
@@ -738,7 +747,7 @@ class DcFrame(wx.Frame):
 			pl = {}
 			
 			for fleet in db.fleets(turn, ['owner_id=%s'%(acc['id'],)] ):
-				print 'got fleet %s'%(fleet,)
+				#print 'got fleet %s'%(fleet,)
 				coord = get_coord(fleet)
 				
 				if coord in pl:
@@ -749,19 +758,19 @@ class DcFrame(wx.Frame):
 				if planet:
 					# skip if occupied
 					if planet['owner_id'] and not explore_owned_planets:
-						print 'planet %s occupied, skip'%(planet,)
+						#print 'planet %s occupied, skip'%(planet,)
 						continue
 					if planet['o'] and planet['e'] and planet['m'] and planet['t']:
-						print 'planet %s explored, skip'%(planet,)
+						#print 'planet %s explored, skip'%(planet,)
 						continue
 				#check holes and stars
 				if not db.is_planet(coord):
-					print 'Coord %s not a planet'%(coord,)
+					#print 'Coord %s not a planet'%(coord,)
 					continue
 				if not coord in pl:
 					pl[coord] = set()
 				pl[ coord ].add(fleet['id'])
-				print 'Add to exploration list planet %s'%(planet,)
+				#print 'Add to exploration list planet %s'%(planet,)
 			
 			acts = {}
 			
@@ -769,7 +778,7 @@ class DcFrame(wx.Frame):
 			for coord, planet_fleets in pl.iteritems():
 				for fleet_id in planet_fleets:
 					for unit in db.units(turn, ['fleet_id=%s'%(fleet_id,)]):
-						print '%s %s unit %s'%(coord, fleet_id, unit)
+						#print '%s %s unit %s'%(coord, fleet_id, unit)
 						# ok unit
 						bc = unit['class']
 						
@@ -788,7 +797,7 @@ class DcFrame(wx.Frame):
 			
 			at_least_one = False
 			for coord, unit_id in acts.iteritems():
-				print 'explore (%s) %s'%(coord, unit_id)
+				#print 'explore (%s) %s'%(coord, unit_id)
 				self.pending_actions.explore_planet( coord, unit_id )
 				at_least_one = True
 			
@@ -862,7 +871,7 @@ class DcFrame(wx.Frame):
 		user_id = evt.attr1
 		#user_id = int(config.users[login]['id'])
 		#self.unit_list.setPlayer( user_id )
-		print 'selecting user %s'%(user_id, )
+		#print 'selecting user %s'%(user_id, )
 		self.map.selectUser( user_id) 
  
 	def onTurnSelected(self, evt):

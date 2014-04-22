@@ -1,4 +1,5 @@
 import wx
+import csv
 import platform
 import os
 import os.path
@@ -51,7 +52,7 @@ user_id_dict = {}
 options = {
 		'data':{
 			'backup-dir':'backup',
-			'path': os.path.join(getOptionsDir(), 'data'),
+			'path': None,
 			'raw-dir':'raw',
 			'raw-xml-dir':'raw_xml',
 			'images':'img/buildings',
@@ -88,6 +89,7 @@ options = {
 		 'route_found_color':'#00ff00',
 		 'route_direct_color':'#ff0000',
 		 'draw_geo':0,
+		 'show_good':0,
 		 
 		 'comma':0
 		 
@@ -108,12 +110,14 @@ options = {
 
 
 config_file_name = 'dclord2.json'
-users_file_name = 'users.cfg'
+users_file_name_old = 'users.cfg'
+users_file_name_old2 = users_file_name_old + '.old'
+users_file_name = 'users.json'
 def loadOptions():
 	global options
 	global options_default
-	
-	print 'loading opts from %s'%(getOptionsDir(),)
+		
+	#print 'loading opts from %s'%(getOptionsDir(),)
 	path = os.path.join(getOptionsDir(), config_file_name)
 	if not os.path.exists(path):
 		return
@@ -121,8 +125,8 @@ def loadOptions():
 	with open( path, 'rt') as f:
 		data = json.loads(f.read())
 		
-	global options
-	options.update(data)
+	for k,v in data.iteritems():
+		options[k].update(v)
 
 def saveOptions():
 	path = os.path.join(getOptionsDir(), config_file_name)
@@ -130,14 +134,14 @@ def saveOptions():
 	with open( path, 'wt') as f:
 		f.write( json.dumps(options, indent=4) )
 
-def loadAccounts():
+def loadAccountsOld():
 	config = UnicodeConfigParser()
 	try:
-		config.readfp(codecs.open(os.path.join(getOptionsDir(), users_file_name), 'r', 'utf8'))
+		config.readfp(codecs.open(os.path.join(getOptionsDir(), users_file_name_old2), 'r', 'utf8'))
 	except IOError as e:
 		print 'Error loading accounts: %s'%(e,)
 		return
-	
+       
 	global users
 	global user_id_dict
 	for u in config.sections():
@@ -146,11 +150,38 @@ def loadAccounts():
 			acc[k] = v
 		if not 'login' in acc:
 			continue
-		
-		print 'loading account %s'%(acc['login'],)
+
+		#print 'loading account %s'%(acc['login'],)
 		users[acc['login']] = acc
 		if 'id' in acc and acc['id']:
 			user_id_dict[int(acc['id'])] = acc
+			
+	saveUsers()
+	
+def loadAccounts():
+	old_name = os.path.join(getOptionsDir(), users_file_name_old)
+	if os.path.exists(old_name):
+		o2 = old_name+'.old'
+		os.rename(old_name, o2)
+		loadAccountsOld()
+		return
+	
+	new_name = os.path.join(getOptionsDir(), users_file_name)
+	if not os.path.exists(new_name):
+		return
+		
+	with open(new_name) as f:
+		user_list = json.loads(f.read())
+		
+	global users
+	for u in user_list:
+		user_id = None
+		if 'id' in u:
+			user_id = int(u['id'])
+			u['id'] = user_id
+			user_id_dict[user_id] = u
+		if 'login' in u and 'password' in u:
+			users[u['login']] = u
 
 def set_user_id(login, user_id):
 	global users
@@ -160,24 +191,16 @@ def set_user_id(login, user_id):
 	user_id_dict[int(user_id)] = acc
 
 def saveUsers():
-	conf = UnicodeConfigParser()
-	global users
-
-	for u,p in users.items():
-		conf.add_section(u)
-		for k,v in p.items():
-			conf.set(u, k, v)
-
 	path = os.path.join(getOptionsDir(), users_file_name)
-	util.assureDirExist(getOptionsDir())
-	try:
-		with open(os.path.join(getOptionsDir(), users_file_name), 'wt') as configfile:
-			conf.write(configfile)
-	except IOError, err:
-		log.error("unable to save users file: %s"%(err,))
+	with open(path, 'wt') as f:
+		f.write(json.dumps([user for user in users.itervalues()], indent=4))
 
 def loadAll():
 	global options
+	
+	if not options['data']['path']:
+		options['data']['path'] = os.path.join(getOptionsDir(), 'data')
+
 	#options['data']['path'] = os.path.join(getOptionsDir(), options['data']['dir'])
 	if not os.path.exists(options['data']['path']):
 		os.makedirs(options['data']['path'])

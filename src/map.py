@@ -55,8 +55,10 @@ class Map(util.BufferedWindow):
 		self.filterDrawFleets = bool(config.options['filter']['fleets'])
 		self.turn = 0
 		self.selected_user_id = 0
+		self.user_race = None
 		self.planet_filter_ptr = None
 		#self.filterDrawAreas = bool(config.options['filter']['areas'])
+		self.show_good_planets = None
 		
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
 		self.pf = None
@@ -200,24 +202,52 @@ class Map(util.BufferedWindow):
 
 		col = None
 		owner_id = planet.get('owner_id', 0)
+		dc.SetPen(wx.Pen(colour='black', width=1))
 		if not owner_id:
 			owner_id = 0
+			if self.show_good_planets and self.user_race:
+				if not 'o' in planet:
+					return
+				if not self.user_race:
+					return
+				if sz < 80:
+					return
+
+				B1 = float(self.user_race['population_growth'])
+				B2 = float(self.user_race['temperature_optimal'])
+				B3 = float(self.user_race['temperature_delta'])
+				B4 = 1 #governers count
+				A1 = float(planet['t'])
+
+				nature_value = int(planet[self.user_race['resource_nature']])
+				main_value = int(planet[self.user_race['resource_main']])
+				second_value = int(planet[self.user_race['resource_secondary']])
+				
+				A2 = float(nature_value)
+				A4 = float(sz)
+				
+				A5 = 5000 #colony or use 30000 for ark
+				
+				planet_population_growth = min(1, 2-A5/A4/1000) * min(1, 2-math.fabs(B2-A1)/B3) * A2 * 0.5 * (1+B1/100) / (B4+3)
+				if planet_population_growth >= 1.0:
+					dc.SetPen(wx.Pen(colour='green', width=3))
+					dc.DrawCircle(rx, ry, self.relSize(sz))
+					#print 'found planet %s with growth %s'%(planet, planet_population_growth)
 		else:
 			owner_id = int(owner_id)
 		if owner_id == self.selected_user_id:
 			col = config.options['map']['planet_selected_user_color']
+			dc.SetPen(wx.Pen(colour=col, width=1))
 		else:
 			col = getOwnerColor(owner_id)
-		
-		dc.SetPen(wx.Pen(colour=col, width=1))
-		
+			dc.SetPen(wx.Pen(colour=col, width=1))
 
 		if self.cell_size == 1:
 			dc.DrawPoint(rx, ry)
 		else:
 			if self.planet_filter_ptr and self.planet_filter_ptr.is_planet_shown(planetPos):
 				dc.SetBrush(wx.Brush('red'))
-				
+			
 			dc.DrawCircle(rx, ry, self.relSize(sz))
 			dc.SetBrush(wx.Brush('white'))
 				#dc.SetPen(wx.Pen(colour=col, width=2))
@@ -246,7 +276,7 @@ class Map(util.BufferedWindow):
 			offset += 6
 			
 		dc.SetBrush(wx.Brush('white'))
-				
+	
 	def visibleAreaFilter(self, xname='x', yname='y'):
 		f = []
 		f.append('%s>=%d'%(xname, int(self.offset_pos[0])))
@@ -391,6 +421,12 @@ class Map(util.BufferedWindow):
 		self.centerAt( pos )
 		serialization.load_geo_size_center( pos, 12 )
 		self.selected_user_id = user_id
+		self.user_race = db.get_user_race(self.selected_user_id)
+		self.update()
+		
+	def showGood(self, show_good):
+		self.show_good_planets = show_good
+		self.user_race = db.get_user_race(self.selected_user_id)
 		self.update()
 
 	def show_route(self, pf):

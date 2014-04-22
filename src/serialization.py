@@ -108,14 +108,14 @@ def load_sync_data():
 		
 	turns_path = os.path.join(sync_path, 'turns')
 	if not os.path.exists(turns_path):
-		print 'sync path %s not exist'%(turns_path,)
+		#print 'sync path %s not exist'%(turns_path,)
 		return
 	available_turns = []
 	for f in os.listdir(turns_path):
 		available_turns.append(int(f))
 	
 	if not available_turns:
-		print 'no sync data found in %s'%(turns_path,)
+		#print 'no sync data found in %s'%(turns_path,)
 		return
 	
 	load_turn = db.getTurn()
@@ -129,7 +129,7 @@ def load_sync_data():
 		if d == nick:
 			continue
 		acc_path = os.path.join(turn_path, d)
-		print 'load %s turn: %s'%(d, load_turn)
+		#print 'load %s turn: %s'%(d, load_turn)
 		db.prepareTurn(load_turn)
 		
 		# do load
@@ -162,7 +162,7 @@ def save_sync_data():
 	if not nick:
 		print 'no users found, nothing to save'
 		return
-	print 'user nick is %s'%(nick,)
+	#print 'user nick is %s'%(nick,)
 	
 	outp = os.path.join(turns_path, nick)
 	util.assureDirExist(outp)
@@ -176,7 +176,7 @@ def save_sync_data():
 
 def loadExternalTable(path, turn_n ):
 	table = os.path.basename(path)
-	print 'table name %s from path %s'%(table, path)
+	#print 'table name %s from path %s'%(table, path)
 	try:
 		for p in csv.DictReader(open(path, 'rt')):
 			for s in unicode_strings:
@@ -194,7 +194,7 @@ def loadExternalTable(path, turn_n ):
 		log.error('failed to load table %s: %s'%(table_name, e))
 
 def loadTable(table_name, turn_n = None, load_turn = None, cb = None, external_path = None):
-	print 'loading table %s at %s %s from %s'%(table_name, turn_n, load_turn, external_path)
+	#print 'loading table %s at %s %s from %s'%(table_name, turn_n, load_turn, external_path)
 	if cb:
 		util.appendLog(cb, 'loading "%s" from turn %s'%(table_name, turn_n))
 	try:
@@ -261,7 +261,7 @@ def in_rect(coord, left_top, size):
 
 def load_geo_size_all(path):
 	try:
-		print 'load all geo sizes from %s'%path
+		#print 'load all geo sizes from %s'%path
 		for p in csv.DictReader(open(path, 'rt')):
 			db.set_planet_geo_size(p)
 	except IOError, e:
@@ -271,10 +271,10 @@ geo_size_loaded = set()
 def load_geo_size(path, left_top, size):
 	global geo_size_loaded
 	if path in geo_size_loaded:
-		print 'no double loading %s'%path
+		#print 'no double loading %s'%path
 		return
 	try:
-		print 'loading geo %s'%path
+		#print 'loading geo %s'%path
 		for p in csv.DictReader(open(path, 'rt')):
 			x=int(p['x'])
 			y=int(p['y'])
@@ -297,7 +297,7 @@ def load_geo_size(path, left_top, size):
 
 def load_all_visible_geo(path ):
 	for f in os.listdir(path):
-		print 'loading %s'%(f,)
+		#print 'loading %s'%(f,)
 		try:
 			for p in csv.DictReader(open(os.path.join(path,f), 'rt')):
 				for s in unicode_strings:
@@ -325,7 +325,7 @@ def load_geo_size_rect(left_top, size):
 	px = (x-x%step) if x >= step else 0
 	py = (y-y%step) if y >= step else 0
 	
-	print 'was %s %s got %s %s'%(x,y, px, py)
+	#print 'was %s %s got %s %s'%(x,y, px, py)
 	
 	lx = x + size[0]
 	ly = y + size[0]
@@ -342,7 +342,7 @@ def load_geo_size_rect(left_top, size):
 	path = config.options['data']['geo-size']
 	x = px
 	y = py
-	print 'get rect %s %s : %s %s'%(px,py, dx, dy)
+	#print 'get rect %s %s : %s %s'%(px,py, dx, dy)
 	
 	for x in range(px, dx+step, step):
 		for y in range(py, dy+step, step):
@@ -414,7 +414,7 @@ def getLastTurn(cb = None):
 	if not os.path.exists(path):
 		if cb:
 			util.appendLog(cb, 'Data path specified "%s" does not exist'%(path,))
-		print 'Data path specified "%s" does not exist'%(path,)
+		#print 'Data path specified "%s" does not exist'%(path,)
 		return None
 		
 	for pt in os.listdir(path):
@@ -423,7 +423,7 @@ def getLastTurn(cb = None):
 			if turn:
 				db.db.turns[turn] = False
 				max_turn = max(max_turn, turn)
-	print 'loaded %s turns, max turn is %s'%(len(db.db.turns.keys()), max_turn)
+	#print 'loaded %s turns, max turn is %s'%(len(db.db.turns.keys()), max_turn)
 	if cb:
 		util.appendLog(cb, 'loaded %d turns, max turn is %d'%(len(db.db.turns.keys()), max_turn))
 	return max_turn
@@ -436,7 +436,7 @@ def load(turn_n = None, ev_cb = None):
 		turn_n = getLastTurn(ev_cb)
 		if not turn_n:
 			return
-	print 'loading turn %s'%(turn_n,)
+	#print 'loading turn %s'%(turn_n,)
 	if turn_n:
 		turn_n = str(turn_n)
 		

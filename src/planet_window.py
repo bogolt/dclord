@@ -310,9 +310,9 @@ class PlanetPanel(wx.Panel):
 			self.name.Hide()
 		
 		if not planet:
-			self.geo.SetLabel('')
+			self.geo.text.SetLabel('')
 		else:
-			self.geo.SetLabel(str(planet))
+			self.geo.text.SetLabel('%s %s %s %s %s'%(planet['o'], planet['e'], planet['m'], planet['t'], planet['s']))
 		
 		# buildings	if ours
 		

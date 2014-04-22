@@ -396,7 +396,6 @@ class Db:
 	def iterUsers(self):
 		self.cur.execute('select id,name,race_id from user')
 		for r in self.cur:
-			print 'got user %s'%(r,)
 			yield r
 	
 	def add_pending_action(self, act_id, table, action_type, data):
@@ -506,7 +505,8 @@ def items(table, flt, keys, turn_n = None, verbose = False):
 	ws = ''
 	if flt:
 		ws = 'WHERE %s'%(' AND '.join(flt),)
-	s = 'select %s from %s %s'%(','.join(keys), table_name, ws)
+	select_items = ','.join(keys) if keys else '*'
+	s = 'select %s from %s %s'%(select_items, table_name, ws)
 	if verbose:
 		log.debug('sql: %s'%(s,))
 	try:
@@ -524,6 +524,42 @@ def users(flt = None, keys = None):
 	k = ('id','name','race_id', 'login') if not keys else keys
 	for i in items('user', flt, k):
 		yield i
+
+def get_user_race(user_id):
+	race_id = 0
+	for u in users(['id=%s'%(user_id,)], ('race_id',)):
+		race_id = int(u['race_id'])
+	if race_id == 0:
+		raise 'User %s race not found'%(user_id,)
+		
+	for r in items(Db.RACE, ['id=%s'%(race_id,)], ('id', 'temperature_delta',  'temperature_optimal',  'resource_nature',  'population_growth', 'resource_main', 'resource_secondary', 'modifier_fly', 'modifier_build_war', 'modifier_build_peace', 'modifier_science', 'modifier_stealth', 'modifier_detection', 'modifier_mining', 'modifier_price', 'name')):
+		return r
+	raise 'Race %s not found for user %s'%(race_id, user_id)
+	
+def get_planet_growth(user_id, coord):
+	race = get_user_race(user_id)
+	B1 = float(race['population_growth'])
+	B2 = float(race['temperature_optimal'])
+	B3 = float(race['temperature_delta'])
+	B4 = 1 #governers count
+	
+	planet = get_planet(coord)
+	if not planet or not 'o' in planet:
+		return -1
+	
+	A1 = float(planet['t'])
+
+	nature_value = int(planet[race['resource_nature']])
+	main_value = int(planet[race['resource_main']])
+	second_value = int(planet[race['resource_secondary']])
+	
+	A2 = float(nature_value)
+	A4 = float(planet['s'])
+	
+	A5 = 5000 #colony or use 30000 for ark
+	
+	planet_population_growth = min(1, 2-A5/A4/1000) * min(1, 2-math.fabs(B2-A1)/B3) * A2 * 0.5 * (1+B1/100) / (B4+3)
+	return planet_population_growth
 
 def get_user_ids(flt = None):
 	ids = []
