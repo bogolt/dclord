@@ -381,7 +381,7 @@ class GarrisonPanel(wx.Panel):
 				items[bc].append(unit)
 				continue
 				
-			p = db.get_prototype(bc,('id', 'class', 'carapace', 'color', 'hp', 'name', 'is_building', 'fly_speed', 'fly_range', 'support_main', 'support_second'))
+			p = db.get_prototype(bc,('id', 'class', 'carapace', 'color', 'hp', 'name', 'is_building', 'transport_capacity', 'is_spaceship', 'is_serial', 'fly_speed', 'fly_range', 'support_main', 'support_second'))
 			if int(p['is_building']) == 1:
 				continue
 			items[bc] = [unit]
@@ -393,7 +393,7 @@ class GarrisonPanel(wx.Panel):
 			sz = wx.BoxSizer(wx.HORIZONTAL)
 			self.sizer.Add(sz)
 			if 'carapace' in p and p['carapace']:
-				img = image.getCarapaceImage(int(p['carapace']), int(p['color']), 20)
+				img = image.getCarapaceImage(int(p['carapace']), int(p['color']))
 			else:
 				img = image.getBcImage(bc)
 			bmp = wx.StaticBitmap(self)
@@ -405,7 +405,14 @@ class GarrisonPanel(wx.Panel):
 			name = get_unit_name(bc)
 			if not name:
 				name = p['name']
-			sz.Add(wx.StaticText(self, -1, '%s %s'%(n_str, name,)))
+			fly=''
+			transport = ''
+			if int(p['is_spaceship'])==1:
+				fly = '%.2f/%.2f'%(p['fly_speed'], p['fly_range'])
+				tc = int(p['transport_capacity'])
+				if tc > 0:
+					transport = '[%s]'%(tc,)
+			sz.Add(wx.StaticText(self, -1, '%s%s%s %s'%(fly, transport, n_str, name,)))
 
 		self.sizer.Layout()
 	
