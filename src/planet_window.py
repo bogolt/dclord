@@ -265,7 +265,7 @@ class PlanetGeoWindow(wx.Window):
 class BuildingsWindows(wx.Window):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(120,200))
-		self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
@@ -274,20 +274,43 @@ class BuildingsWindows(wx.Window):
 		
 		self.sizer.DeleteWindows()
 		
+		dsizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizer.Add(dsizer)
+		
+		dups = {}
+		protos = {}
 		# buildings	if ours
 		for building in db.garrison_units(db.getTurn(), db.filter_coord(coord)):
 			bc = building['class']
 			p = db.get_prototype(bc,('id', 'class', 'carapace', 'hp', 'name', 'is_building', 'max_count'))
-			if int(p['is_building']) != 1 or int(p['max_count'])!=1:
+			if int(p['is_building']) != 1:
 				continue
+				
+			if int(p['max_count'])!=1:
+				dups.setdefault(bc, []).append(building)
+				#protos[bc] = p
+				continue
+				
 			img = image.getBcImage(bc, 20)
 			if not img:
 				wnd = wx.StaticText(self, -1, text='Unknown building %s'%(bc,))
 			else:
 				wnd = wx.StaticBitmap(self, wx.ID_ANY)
 				wnd.SetBitmap(img)
-			self.sizer.Add(wnd)
-			#self.windows.append(wnd)
+			dsizer.Add(wnd)
+
+		for bc, builds in dups.iteritems():
+			img = image.getBcImage(bc, 20)
+			
+			wsizer = wx.BoxSizer(wx.HORIZONTAL)
+			self.sizer.Add(wsizer)
+			
+			wnd = wx.StaticBitmap(self, wx.ID_ANY)
+			wnd.SetBitmap(img)
+			wsizer.Add(wnd)
+			
+			txt = wx.StaticText(self, -1, 'x %s'%(len(builds),))
+			wsizer.Add(txt)
 		self.sizer.Layout()
 
 class PlanetPanel(wx.Panel):
