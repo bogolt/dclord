@@ -9,12 +9,15 @@ log = logging.getLogger('dclord')
 image_carapace_cache = {}
 image_bc_cache = {}
 
-def loadBitmap(rel_path):
+def loadBitmap(rel_path, dest_width = 0):
 	imgPath = os.path.join(config.options['data']['images'], rel_path)
 	if not os.path.exists(imgPath):
 		log.error('image %s does not exist'%(imgPath,))
 		return None
-	return wx.Image(imgPath).ConvertToBitmap()
+	img = wx.Image(imgPath)
+	if dest_width > 0:
+		img.Rescale(dest_width, dest_width)
+	return img.ConvertToBitmap()
 
 def loadCarapaceImage( carapace, color ):
 	img = loadBitmap( 'carps/%s_%s.gif'%(carapace,color) )
@@ -27,15 +30,15 @@ def getCarapaceImage(carapace, color = None):
 	global image_carapace_cache
 	return image_carapace_cache.setdefault(key, loadCarapaceImage(carapace, color))
 
-def loadBcImage(bc):	
-	img = loadBitmap( '%s.gif'%(bc,) )
+def loadBcImage(bc, dest_width = 0):
+	img = loadBitmap( '%s.gif'%(bc,), dest_width)
 	global image_bc_cache
-	image_bc_cache[ bc ] = img
+	image_bc_cache[ (bc, dest_width) ] = img
 	return img
 
-def getBcImage(bc):
+def getBcImage(bc, dest_width = 0):
 	global image_bc_cache
-	return image_bc_cache.setdefault(bc, loadBcImage(bc))
+	return image_bc_cache.setdefault( (bc, dest_width), loadBcImage(bc, dest_width))
 
 def smaller(bitmap, ratio = 2):
 	img = bitmap.ConvertToImage()

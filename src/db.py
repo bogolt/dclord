@@ -819,3 +819,6 @@ def get_fleet_speed_range(fleet_id):
 		min_range = min(rnge, min_range)
 		
 	return min_speed, min_range
+
+def filter_coord(coord):
+	return ['x=%s'%(coord[0],), 'y=%s'%(coord[1],)]

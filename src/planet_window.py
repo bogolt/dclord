@@ -260,8 +260,36 @@ class PlanetGeoWindow(wx.Window):
 	
 	def set_planet(self, planet_info):
 		self.text.SetText('%s'%(planet_info,))
-		#sizer.Add(wx.StaticText(self, -1, 'o: %s, e: %s, m: %s, t: %s, s: %s'%(
+
+
+class BuildingsWindows(wx.Window):
+	def __init__(self, parent):
+		wx.Window.__init__(self, parent, -1, size=(120,200))
+		self.sizer = wx.BoxSizer(wx.HORIZONTAL)
 		
+		self.SetSizer(self.sizer)
+		self.sizer.Layout()
+		
+	def set_coord(self, coord):
+		
+		self.sizer.DeleteWindows()
+		
+		# buildings	if ours
+		for building in db.garrison_units(db.getTurn(), db.filter_coord(coord)):
+			bc = building['class']
+			p = db.get_prototype(bc,('id', 'class', 'carapace', 'hp', 'name', 'is_building', 'max_count'))
+			if int(p['is_building']) != 1 or int(p['max_count'])!=1:
+				continue
+			img = image.getBcImage(bc, 20)
+			if not img:
+				wnd = wx.StaticText(self, -1, text='Unknown building %s'%(bc,))
+			else:
+				wnd = wx.StaticBitmap(self, wx.ID_ANY)
+				wnd.SetBitmap(img)
+			self.sizer.Add(wnd)
+			#self.windows.append(wnd)
+		self.sizer.Layout()
+
 class PlanetPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(120,200))
@@ -278,6 +306,9 @@ class PlanetPanel(wx.Panel):
 
 		self.name = wx.StaticText(self, wx.ID_ANY)
 		self.sizer.Add(self.name)
+		
+		self.buildings = BuildingsWindows(self)
+		self.sizer.Add(self.buildings)
 		
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
@@ -312,9 +343,30 @@ class PlanetPanel(wx.Panel):
 		if not planet:
 			self.geo.text.SetLabel('')
 		else:
-			self.geo.text.SetLabel('%s %s %s %s %s'%(planet['o'], planet['e'], planet['m'], planet['t'], planet['s']))
+			self.geo.text.SetLabel('o: %s, e: %s, m: %s, t: %s, s: %s'%(planet['o'], planet['e'], planet['m'], planet['t'], planet['s']))
+
+		planet = db.get_planet(pos)
+		if planet and 'owner_id' in planet and int(planet['owner_id']) in db.get_user_ids():
+			self.buildings.set_coord(pos)
+			self.buildings.Show()
+		else:
+			self.buildings.Hide()
+
+			
+			
+			
+			
+#			if not g_type in unit_types:
+#				
+#				unit_types[g_type] = p
+#			
+#			p = unit_types[g_type]
+#			p[]
+				#unit_types.setdefault(g_type, []).append(garrison_unit)
 		
-		# buildings	if ours
+		#for t, units in unit_types:
+			
+		
 		
 		#log.info('object select %s, updating'%(self.pos,))
 		self.sizer.Layout()
