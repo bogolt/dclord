@@ -305,7 +305,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.dip = True
 		elif XmlHandler.DipRelation == name and self.dip:
 			data = getAttrs(attrs, {'player':'player_id', 'name':'name'})
-			db.setData('player', data, self.turn)
+			db.setData(db.Db.PLAYER, data)
 		elif XmlHandler.UserFleets == name:
 			db.eraseObject(db.Db.FLEET, ['owner_id=%s'%(self.user['id'],),], self.turn)
 			db.eraseObject(db.Db.FLYING_FLEET, ['owner_id=%s'%(self.user['id'],),], self.turn)

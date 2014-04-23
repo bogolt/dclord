@@ -75,7 +75,7 @@ class PlanetWindow(scrolled.ScrolledPanel):
 		
 		owner_name = 'unknown'
 		if owner_id > 0:
-			for res in db.players(self.turn, ['player_id=%s'%(owner_id,)]):
+			for res in db.players(['player_id=%s'%(owner_id,)]):
 				owner_name = res['name']
 		else:
 			owner_name = '<empty>'
@@ -196,7 +196,7 @@ class FleetWindow(scrolled.ScrolledPanel):
 					else:
 						self.tree.AppendItem(tree_fleet, name)
 					
-		for user in db.alien_players(turn):
+		for user in db.alien_players():
 			user_id = int(user['player_id'])
 			tree_user = None
 			for fleet in db.fleets(turn, util.filter_coord(coord) + ['owner_id=%s'%(user_id,)]):

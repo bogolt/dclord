@@ -64,7 +64,7 @@ def saveUsers():
 	#'modifier_build_ground', 'modifier_build_space',
 	
 def savePlayers():
-	saveTable(db.Db.PLAYER, ('player_id', 'name'), None, db.getTurn())
+	saveTable(db.Db.PLAYER, ('player_id', 'name'), None)
 
 def save():
 	log.info('saving data for turn %s'%(db.getTurn(),))
@@ -119,32 +119,38 @@ def load_sync_data():
 		return
 	
 	load_turn = db.getTurn()
-	if not load_turn in available_turns:
-		load_turn = max(available_turns)
-	
+	available_turns.sort()
+
 	nick = get_user_nickname()
 	
-	turn_path = os.path.join(turns_path, str(load_turn))
-	for d in os.listdir(turn_path):
-		if d == nick:
-			continue
-		acc_path = os.path.join(turn_path, d)
-		#print 'load %s turn: %s'%(d, load_turn)
-		db.prepareTurn(load_turn)
+	total_load_turns = 0
+	for load_turn in available_turns[::-1]:
 		
-		# do load
-		unpack_dir = os.path.join(os.path.join(os.path.join( util.getTempDir(), 'unpack_sync' ), d), str(load_turn))
-		util.assureDirClean(unpack_dir)
-		for gz_file in os.listdir(acc_path):
-			outf = os.path.join(unpack_dir, gz_file)
-			if outf.endswith('.gz'):
-				outf = outf[:-len('.gz')]
-			util.unpack(os.path.join(acc_path, gz_file), outf)
-			table_name = os.path.basename(outf)[:-len('.csv')]
-			if table_name == db.Db.PROTO or table_name == db.Db.PROTO_ACTION or table_name == db.Db.OPEN_PLANET or table_name == db.Db.USER or table_name == db.Db.RACE:
-				loadTable(table_name, None, load_turn, None, os.path.dirname(outf))
-			else:
-				loadTable(table_name, load_turn, None, None, os.path.dirname(outf))
+		total_load_turns += 1
+		if total_load_turns > 3:
+			break
+	
+		turn_path = os.path.join(turns_path, str(load_turn))
+		for d in os.listdir(turn_path):
+			if d == nick:
+				continue
+			acc_path = os.path.join(turn_path, d)
+			#print 'load %s turn: %s'%(d, load_turn)
+			db.prepareTurn(load_turn)
+			
+			# do load
+			unpack_dir = os.path.join(os.path.join(os.path.join( util.getTempDir(), 'unpack_sync' ), d), str(load_turn))
+			util.assureDirClean(unpack_dir)
+			for gz_file in os.listdir(acc_path):
+				outf = os.path.join(unpack_dir, gz_file)
+				if outf.endswith('.gz'):
+					outf = outf[:-len('.gz')]
+				util.unpack(os.path.join(acc_path, gz_file), outf)
+				table_name = os.path.basename(outf)[:-len('.csv')]
+				if table_name == db.Db.PROTO or table_name == db.Db.PROTO_ACTION or table_name == db.Db.OPEN_PLANET or table_name == db.Db.USER or table_name == db.Db.RACE or table_name == db.Db.PLAYER:
+					loadTable(table_name, None, load_turn, None, os.path.dirname(outf))
+				else:
+					loadTable(table_name, load_turn, None, None, os.path.dirname(outf))
 				
 			
 
@@ -400,7 +406,7 @@ def loadUsers(turn_n = None, cb = None):
 	loadTable(db.Db.RACE, None, turn_n, cb=cb)
 	
 def loadPlayers(turn_n = None, cb = None):
-	loadTable(db.Db.PLAYER, turn_n, cb=cb)
+	loadTable(db.Db.PLAYER, None, turn_n, cb=cb)
 
 def get_turn_number(s):
 	try:

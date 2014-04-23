@@ -421,7 +421,10 @@ class Map(util.BufferedWindow):
 		self.centerAt( pos )
 		serialization.load_geo_size_center( pos, 12 )
 		self.selected_user_id = user_id
-		self.user_race = db.get_user_race(self.selected_user_id)
+		try:
+			self.user_race = db.get_user_race(self.selected_user_id)
+		except:
+			pass
 		self.update()
 		
 	def showGood(self, show_good):

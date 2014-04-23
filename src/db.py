@@ -77,6 +77,26 @@ class Db:
 #				modifier_build_ground real,
 #				modifier_build_space real,
 
+		cur.execute("""create table if not exists planet_size(
+				x integer(2) not null,
+				y integer(2) not null,
+				s integer(1),
+				image integer(1),
+				PRIMARY KEY (x, y))""")
+		
+		cur.execute("""create table if not exists requested_action(
+				id integer PRIMARY KEY,
+				user_id integer not null,
+				return_id integer default 0,
+				is_ok integer default 0
+				)""")
+				
+		cur.execute("""create table if not exists %s(
+				player_id integer PRIMARY KEY,
+				name text,
+				race_id integer
+				)"""%(Db.PLAYER, ))
+
 				
 	def init(self, turn_n):
 		self.cur = self.conn.cursor()
@@ -109,29 +129,10 @@ class Db:
 				name text,
 				is_open integer(1),
 				PRIMARY KEY (x, y))"""%(self.PLANET, turn_n))
-				
-		cur.execute("""create table if not exists planet_size(
-				x integer(2) not null,
-				y integer(2) not null,
-				s integer(1),
-				image integer(1),
-				PRIMARY KEY (x, y))""")
-		
-		cur.execute("""create table if not exists requested_action(
-				id integer PRIMARY KEY,
-				user_id integer not null,
-				return_id integer default 0,
-				is_ok integer default 0
-				)""")
+
 				
 		#what if approaching unknown fleet does not have an id?
 		#id integer primary key,
-
-		cur.execute("""create table if not exists %s_%s(
-				player_id integer PRIMARY KEY,
-				name text,
-				race_id integer
-				)"""%(Db.PLAYER, turn_n,))
 		
 		cur.execute("""create table if not exists dip_%s(
 				owner_id integer,
@@ -567,13 +568,13 @@ def get_user_ids(flt = None):
 		ids.append(u['id'])
 	return ids
 
-def players(turn_n, flt = None, keys = None):
+def players(flt = None, keys = None):
 	k = ('player_id','name') if not keys else keys
-	for i in items('player', flt, k, turn_n):
+	for i in items('player', flt, k):
 		yield i
 
 def get_player_name(player_id):
-	for p in players(getTurn(), ['player_id=%s'%(player_id,)]):
+	for p in players(['player_id=%s'%(player_id,)]):
 		return p['name']
 		
 	for u in users(['id=%s'%(player_id,)]):
@@ -581,9 +582,9 @@ def get_player_name(player_id):
 	
 	return '[unknown id %s]'%(player_id,)
 		
-def alien_players(turn_n):
+def alien_players():
 	user_ids = get_user_ids()
-	for p in players(turn_n, ['player_id not in (%s)'%(','.join([str(item) for item in user_ids]),)]):
+	for p in players(['player_id not in (%s)'%(','.join([str(item) for item in user_ids]),)]):
 		yield p
 
 def planets(turn_n, flt, keys = None):
