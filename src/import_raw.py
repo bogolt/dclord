@@ -100,7 +100,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			
 			if 'turn' in self.user:
 				self.turn = int(self.user['turn'])
-				db.prepareTurn(self.turn)
+				db.db.set_turn(self.turn)
 				print 'prepare turn %s'%(self.turn,)
 				
 		elif XmlHandler.Errors == name:

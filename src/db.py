@@ -46,7 +46,9 @@ class Db:
 		 
 		self.prepare()
 
-		
+	
+	def set_turn(self, turn):
+		self.max_turn = turn
 		
 	def prepare(self):
 		self.cur = self.conn.cursor()
@@ -529,7 +531,7 @@ class Db:
 	
 	def get_planet_owner(self, coord):
 		x,y = coord
-		self.cur.execute('select owner_id from %s_%s where x=:x and y=:y'%(Db.PLANET,), self.max_turn, (x,y))
+		self.cur.execute('select owner_id from %s_%s where x=:x and y=:y'%(Db.PLANET,), (x,y))
 		r = self.cur.fetchone()
 		if r and r[0]:
 			return int(r[0])
