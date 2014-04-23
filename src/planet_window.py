@@ -334,6 +334,8 @@ class PlanetPanel(wx.Panel):
 		self.sizer.DeleteWindows()
 		
 		pos = wx.StaticText(self, wx.ID_ANY)
+		self.sizer.Add( pos )
+		
 		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, '%s:%s'%coord) )
 		
 		planet = db.get_planet(coord)

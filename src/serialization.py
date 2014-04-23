@@ -31,18 +31,15 @@ def saveTable(table_name, keys, filters, turn_n = None):
 	except IOError, e:
 		log.error('failed writing data to csv file %s: %s'%(path, e))
 
-def save_table(table, keys, flt = {}):
+def save_table(table, keys):
 	pt = config.options['data']['path']
 	pt = os.path.join(pt, str(db.db.max_turn))
 	util.assureDirExist(pt)
 	path = os.path.join(pt, '%s.csv'%(table,))
 	if table in db.db.has_turn:
-		flt = {'=':{'turn': db.db.max_turn}}
-		#eq_turn = 
-		#if '=' in flt:
-		#	flt['='].update(eq_turn)
-		#else:
-		#	flt['='] = eq_turn
+		flt = {'=': {'turn': db.db.max_turn}}
+	else:
+		flt = {}
 		
 	try:
 		f = open(path, 'wt')
