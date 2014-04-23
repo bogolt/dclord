@@ -191,7 +191,10 @@ class FleetWindow(scrolled.ScrolledPanel):
 					name = proto['name']
 					if not name:
 						name = get_unit_name(int(proto['carapace']))
-					self.tree.AppendItem(tree_fleet, name, image=img_item)
+					if img_item:
+						self.tree.AppendItem(tree_fleet, name, image=img_item)
+					else:
+						self.tree.AppendItem(tree_fleet, name)
 					
 		for user in db.alien_players(turn):
 			user_id = int(user['player_id'])
@@ -211,7 +214,10 @@ class FleetWindow(scrolled.ScrolledPanel):
 						img_item = image.add_image(image_list, obj_carp)
 						img_list_data[obj_carp] = img_item
 
-					self.tree.AppendItem(tree_fleet, get_unit_name(int(unit['carapace'])), image=img_item)
+					if img_item:
+						self.tree.AppendItem(tree_fleet, get_unit_name(int(unit['carapace'])), image=img_item)
+					else:
+						self.tree.AppendItem(tree_fleet, get_unit_name(int(unit['carapace'])))
 				
 					
 		self.tree.ExpandAll()
@@ -294,7 +300,7 @@ class BuildingsWindows(wx.Frame):
 				
 			img = image.getBcImage(bc, 20)
 			if not img:
-				wnd = wx.StaticText(self, -1, text='Unknown building %s'%(bc,))
+				wnd = wx.StaticText(self, -1, 'Unknown building %s'%(bc,))
 			else:
 				wnd = wx.StaticBitmap(self, wx.ID_ANY)
 				wnd.SetBitmap(img)
@@ -307,7 +313,8 @@ class BuildingsWindows(wx.Frame):
 			self.sizer.Add(wsizer)
 			
 			wnd = wx.StaticBitmap(self, wx.ID_ANY)
-			wnd.SetBitmap(img)
+			if img:
+				wnd.SetBitmap(img)
 			wsizer.Add(wnd)
 			
 			txt = wx.StaticText(self, -1, 'x %s'%(len(builds),))
@@ -399,7 +406,8 @@ class GarrisonPanel(wx.Panel):
 			else:
 				img = image.getBcImage(bc)
 			bmp = wx.StaticBitmap(self)
-			bmp.SetBitmap(img)
+			if img:
+				bmp.SetBitmap(img)
 			sz.Add(bmp)
 			n_str = ''
 			if len(item_list) > 1:

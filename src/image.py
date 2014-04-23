@@ -15,6 +15,11 @@ def loadBitmap(rel_path, dest_width = 0):
 		log.error('image %s does not exist'%(imgPath,))
 		return None
 	img = wx.Image(imgPath)
+	if not img:
+		bmp = wx.Bitmap()
+		bmp.SetSize((dest_width, dest_width))
+		return bmp
+		
 	if dest_width > 0:
 		img.Rescale(dest_width, dest_width)
 	return img.ConvertToBitmap()

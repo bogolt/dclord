@@ -103,7 +103,9 @@ class BuildingCheckBox(wx.Window):
 		
 		sizer = wx.BoxSizer(wx.HORIZONTAL)
 		img = wx.StaticBitmap(self, wx.ID_ANY)
-		img.SetBitmap( image.smaller(image.getBcImage( uid ) ) )
+		bmp = image.getBcImage( uid, 20)
+		if bmp:
+			img.SetBitmap( bmp )
 		sizer.Add( img )
 		
 		self.cb = wx.CheckBox(self, label='' )
