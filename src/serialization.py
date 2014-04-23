@@ -229,14 +229,16 @@ def loadExternalTable(path, turn_n ):
 		log.error('failed to load table %s: %s'%(table_name, e))
 
 
-def load_table(table_name, turn, cb = None, external_path = None):
+def load_table(table_name, turn, external_path = None):
 	#if cb:
 	#	util.appendLog(cb, 'loading "%s" from turn %s'%(table_name, turn))
 	try:
-
-		path = os.path.join(os.path.join(external_path if external_path else config.options['data']['path'], str(turn)), '%s.csv'%(table_name,))
+		p = external_path
+		if not p:
+			p = os.path.join(config.options['data']['path'], str(turn))
+		path = os.path.join(p, '%s.csv'%(table_name,))
 	
-		print 'loading %s'%(path,)
+		print 'load_table %s'%(path,)
 		for p in csv.DictReader(open(path, 'rt')):
 			for s in unicode_strings:
 				if s in p and p[s]:
@@ -250,8 +252,9 @@ def load_table(table_name, turn, cb = None, external_path = None):
 				
 			db.db.smart_update_object(table_name, turn, p)
 	except IOError, e:
-		#print 'failed to load table %s'%(table_name, )
-		log.error('failed to load table %s'%(table_name, ))
+		#print e
+		#print 'failed to load table %s %s'%(table_name, unicode(e).decode('utf-8'))
+		log.error('failed to load table %s: %s'%(table_name, e))
 		#if cb:
 		#	util.appendLog(cb, 'Error loading "%s" from turn %s'%(table_name, turn_n))
 	#if cb:
@@ -488,6 +491,7 @@ def getLastTurn(cb = None):
 				db.db.turns[turn] = False
 				max_turn = max(max_turn, turn)
 	#print 'loaded %s turns, max turn is %s'%(len(db.db.turns.keys()), max_turn)
+	db.db.max_turn = max_turn
 	if cb:
 		util.appendLog(cb, 'loaded %d turns, max turn is %d'%(len(db.db.turns.keys()), max_turn))
 	return max_turn
