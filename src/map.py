@@ -340,12 +340,12 @@ class Map(util.BufferedWindow):
 			
 	def paint(self, dc, rect=None):
 		
-		if self.turn and self.turn > 0:
-			self.drawPlanets(dc, rect)
-			if self.filterDrawFleets:
-				self.drawFleets(dc, rect)
-		else:
-			print 'wrong turn %s'%(self.turn,)
+		#if self.turn and self.turn > 0:
+		self.drawPlanets(dc, rect)
+		if self.filterDrawFleets:
+			self.drawFleets(dc, rect)
+		#else:
+		#	print 'wrong turn %s'%(self.turn,)
 		self.drawCoordinates(dc)
 		
 		if self.pf:

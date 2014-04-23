@@ -147,10 +147,13 @@ def load_sync_data():
 					outf = outf[:-len('.gz')]
 				util.unpack(os.path.join(acc_path, gz_file), outf)
 				table_name = os.path.basename(outf)[:-len('.csv')]
-				if table_name == db.Db.PROTO or table_name == db.Db.PROTO_ACTION or table_name == db.Db.OPEN_PLANET or table_name == db.Db.USER or table_name == db.Db.RACE or table_name == db.Db.PLAYER:
-					loadTable(table_name, None, load_turn, None, os.path.dirname(outf))
-				else:
-					loadTable(table_name, load_turn, None, None, os.path.dirname(outf))
+				
+				load_table(table_name, load_turn, os.path.dirname(outf))
+				
+				#if table_name == db.Db.PROTO or table_name == db.Db.PROTO_ACTION or table_name == db.Db.OPEN_PLANET or table_name == db.Db.USER or table_name == db.Db.RACE or table_name == db.Db.PLAYER:
+				#	loadTable(table_name, None, load_turn, None, os.path.dirname(outf))
+				#else:
+				#	loadTable(table_name, load_turn, None, None, os.path.dirname(outf))
 				
 			
 
@@ -199,6 +202,34 @@ def loadExternalTable(path, turn_n ):
 	except IOError, e:
 		log.error('failed to load table %s: %s'%(table_name, e))
 
+
+def load_table(table_name, turn, cb = None, external_path = None):
+	#if cb:
+	#	util.appendLog(cb, 'loading "%s" from turn %s'%(table_name, turn))
+	try:
+
+		path = os.path.join(os.path.join(external_path if external_path else config.options['data']['path'], str(turn)), '%s.csv'%(table_name,))
+	
+		print 'loading %s'%(path,)
+		for p in csv.DictReader(open(path, 'rt')):
+			for s in unicode_strings:
+				if s in p and p[s]:
+					p[s] = p[s].decode('utf-8')
+			todel = []
+			for k,v in p.iteritems():
+				if v == '' or v==unicode(''):
+					todel.append(k)
+			for td in todel:
+				del p[td]
+				
+			db.db.smart_update_object(table_name, turn, p)
+	except IOError, e:
+		log.error('failed to load table %s: %s'%(table_name, e))
+		#if cb:
+		#	util.appendLog(cb, 'Error loading "%s" from turn %s'%(table_name, turn_n))
+	#if cb:
+	#	util.appendLog(cb, '"%s" from turn %s loaded'%(table_name, turn_n))
+		
 def loadTable(table_name, turn_n = None, load_turn = None, cb = None, external_path = None):
 	#print 'loading table %s at %s %s from %s'%(table_name, turn_n, load_turn, external_path)
 	if cb:

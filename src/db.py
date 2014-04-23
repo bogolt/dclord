@@ -25,6 +25,7 @@ class Db:
 	PROTO = 'proto'
 	PROTO_ACTION = 'proto_action'
 	RACE = 'race'
+	DIP = 'dip'
 	
 	def __init__(self, dbpath=":memory:"):
 		self.conn = sqlite3.connect(dbpath)
@@ -33,8 +34,19 @@ class Db:
 		self.pending_actions = {}
 				
 		self.cur = self.conn.cursor()
+			
+		self.has_turn = [Db.PLANET, Db.FLEET, Db.FLYING_FLEET, Db.FLYING_ALIEN_FLEET, Db.ALIEN_UNIT]
+		self.has_coord_keys = [Db.PLANET, Db.FLYING_ALIEN_FLEET, Db.GARRISON_UNIT, Db.GARRISON_QUEUE_UNIT]
 		
+		# table Db.FLYING_ALIEN_FLEET has no primary key
+		self.primary_keys = {Db.USER:['id'], Db.OPEN_PLANET:['x','y', 'user_id'], Db.RACE:['id'], Db.PLAYER: ['player_id'],
+		 Db.PLANET:['x','y'], Db.DIP:['owner_id', 'player_id'], Db.HW:['player_id'], Db.FLEET:['id'], Db.FLYING_FLEET:['id'], 
+		 Db.UNIT:['id'],Db.GARRISON_UNIT:['id'],Db.GARRISON_QUEUE_UNIT:['id'],Db.ALIEN_UNIT:['id'],Db.PROTO:['id'], Db.PROTO_ACTION:['id']}
+		 
+		 
 		self.prepare()
+
+		
 		
 	def prepare(self):
 		self.cur = self.conn.cursor()
@@ -96,28 +108,8 @@ class Db:
 				name text,
 				race_id integer
 				)"""%(Db.PLAYER, ))
-
-				
-	def init(self, turn_n):
-		self.cur = self.conn.cursor()
-		cur = self.cur
 		
-		turn_n = int(turn_n)
-		
-		self.max_turn = max(self.max_turn, turn_n)
-		
-		log.info('db init turn %s'%(turn_n,))
-		
-		# check if turn is known and catched
-		if turn_n in self.turns and self.turns[turn_n]:
-			log.info('turn %s is alredy known to db'%(turn_n,))
-			return
-			
-		# set turn exists
-		self.turns[turn_n] = True
-		log.info('creating tables for turn %s, max turn is %s'%(turn_n, self.max_turn))
-		
-		cur.execute("""create table if not exists %s_%s(
+		cur.execute("""create table if not exists %s(
 				x integer(2) not null,
 				y integer(2) not null,
 				o integer(1),
@@ -128,25 +120,27 @@ class Db:
 				owner_id integer,
 				name text,
 				is_open integer(1),
-				PRIMARY KEY (x, y))"""%(self.PLANET, turn_n))
+				turn integer default 0,
+				PRIMARY KEY (x, y))"""%(self.PLANET,))
 
 				
 		#what if approaching unknown fleet does not have an id?
 		#id integer primary key,
 		
-		cur.execute("""create table if not exists dip_%s(
+		cur.execute("""create table if not exists %s(
 				owner_id integer,
 				player_id integer,
-				status integer(1)				
-				)"""%(turn_n,))
+				status integer(1),
+				PRIMARY KEY(owner_id, player_id)			
+				)"""%(Db.DIP,))
 		
-		cur.execute("""create table if not exists %s_%s(
+		cur.execute("""create table if not exists %s(
 				player_id integer PRIMARY KEY,
 				hw_x integer(2),
 				hw_y integer(2)
-				)"""%(Db.HW, turn_n,))
+				)"""%(Db.HW,))
 		
-		cur.execute("""create table if not exists %s_%s(
+		cur.execute("""create table if not exists %s(
 				id integer PRIMARY KEY,
 				x integer(2) not null,
 				y integer(2) not null,
@@ -155,10 +149,10 @@ class Db:
 				weight integer,
 				is_hidden integer(1) default 0,
 				times_spotted integer(1),
-				turn integer(2)
-				)"""%(self.FLEET, turn_n))
+				turn integer(2) default 0
+				)"""%(self.FLEET,))
 
-		cur.execute("""create table if not exists %s_%s(
+		cur.execute("""create table if not exists %s(
 				id integer PRIMARY KEY,
 				x integer(2) not null,
 				y integer(2) not null,
@@ -170,10 +164,11 @@ class Db:
 				weight integer,
 				is_hidden integer(1),
 				times_spotted integer(1),
-				in_transit integer(1)
-				)"""%(self.FLYING_FLEET, turn_n))
+				in_transit integer(1),
+				turn integer default 0
+				)"""%(self.FLYING_FLEET, ))
 						
-		cur.execute("""create table if not exists %s_%s(
+		cur.execute("""create table if not exists %s(
 				x integer(2) not null,
 				y integer(2) not null,
 				user_id interger,
@@ -181,44 +176,46 @@ class Db:
 				from_y integer(2),
 				arrival_turn integer(2),
 				weight integer,
-				is_hidden integer(1)
-				)"""%(self.FLYING_ALIEN_FLEET, turn_n))
+				is_hidden integer(1),
+				turn integer default 0
+				)"""%(self.FLYING_ALIEN_FLEET,))
 				
 		
-		cur.execute("""create table if not exists %s_%s(
+		cur.execute("""create table if not exists %s(
 				id integer PRIMARY KEY,
 				fleet_id integer not null,
 				class integer not null,
 				hp integer not null
-				)"""%(self.UNIT, turn_n))
+				)"""%(self.UNIT,))
 				
 		
-		cur.execute("""create table if not exists %s_%s(
+		cur.execute("""create table if not exists %s(
 				id integer PRIMARY KEY,
 				fleet_id integer not null,
 				carapace integer not null,
 				color integer(1),
 				weight integer,
-				class integer
-				)"""%(self.ALIEN_UNIT, turn_n))
+				class integer,
+				turn integer default 0
+				)"""%(self.ALIEN_UNIT,))
 
 	
-		cur.execute("""create table if not exists %s_%s(
+		cur.execute("""create table if not exists %s(
 				id integer PRIMARY KEY,
 				x integer(2) not null,
 				y integer(2) not null,
 				class integer not null,
 				hp integer not null
-				)"""%(self.GARRISON_UNIT, turn_n))
+				)"""%(self.GARRISON_UNIT,))
 		
 	
-		cur.execute("""create table if not exists %s_%s(
+		cur.execute("""create table if not exists %s(
 				id integer PRIMARY KEY,
 				x integer(2) not null,
 				y integer(2) not null,
 				class integer not null,
 				done integer
-				)"""%(self.GARRISON_QUEUE_UNIT, turn_n))
+				)"""%(self.GARRISON_QUEUE_UNIT,))
 		
 		cur.execute("""create table if not exists %s(
 				id integer PRIMARY KEY,
@@ -298,10 +295,12 @@ class Db:
 				planet_can_be text
 				)"""%(Db.PROTO_ACTION,))
 		
-	def addObject(self, table, data, turn_n = None):
+		self.conn.commit()		
+			
+	def addObject(self, table_name, data, turn_n = None):
 		keys=tuple(data.keys())
 		
-		table_name = '%s_%s'%(table, turn_n) if turn_n else table
+		#table_name = '%s_%s'%(table, turn_n) if turn_n else table
 		try:
 			self.cur.execute('insert or replace into %s%s values(%s)'%(table_name, keys,','.join('?'*len(keys))),tuple(data.values()))
 			self.conn.commit()
@@ -309,10 +308,97 @@ class Db:
 			log.error('Error "%s", when executing: insert or replace into %s%s values%s'%(e, table_name,keys,tuple(data.values())))
 			print traceback.format_stack()
 	
+
+	def get_objects_list(self, table, flt, keys):
+		'get single object from db'
+		self.cur.execute('select %s from %s where %s'%(','.join(data.keys()), table_name, ','.join(['%s=?'%(key,) for key in flt])), tuple(flt.values()))
+		rv = []
+		for r in self.cur.fetchall():
+			rv.append( dict(zip(keys, r)) )
+		return rv
+	
+	def iter_objects_list(self, table, flt, keys):
+		'get single object from db'
+		self.cur.execute('select %s from %s where %s'%(','.join(data.keys()), table_name, ','.join(['%s=?'%(key,) for key in flt.iterkeys()])), tuple(flt.values()))
+		for r in self.cur.fetchall():
+			yield dict(zip(keys, r))
+	
+	def select(self, table, flt, keys):
+		c = self.conn.cursor()
+		if not flt:
+			c.execute('select %s from %s'%(','.join(keys), table))
+			return c
+		
+		where_str = ''
+		values_dict = {}
+		for cond, key_pairs in flt.iteritems():
+			where_str += ' and '.join(['%s %s :%s'%(key, cond, key) for key in key_pairs.iterkeys()])
+			values_dict.update(key_pairs)
+			
+			#values_list += key_pairs.values()
+		#del keys[0]
+		s = 'select %s from %s WHERE %s'%(','.join(keys), table, where_str)
+		#print '"%s" . items: %s'%(s, values_dict)
+		c.execute(s, values_dict)
+		return c
+		
+	def get_object(self, table, flt, keys):
+		'get single object from db'
+		#self.cur.execute('select %s from %s where %s'%(','.join(data.keys()), table_name, ','.join(['%s=?'%(key,) for key in flt])), tuple(flt.values()))
+		r = self.select(table, flt, keys).fetchone()
+		if not r:
+			return None
+		return dict(zip(keys, r))
+	
+	def smart_update_object(self, table_name, turn, p):
+		if not table_name in self.primary_keys:
+			return
+		if table_name in self.has_turn:
+			p['turn'] = turn
+			keys = self.primary_keys[table_name]
+			#try:
+			self.update_object(table_name, {'=':dict(zip(keys, [p[key] for key in keys]))}, p)
+			#except:
+			#	print 'error in smart_update_object %s %s %s calling with %s'%(table_name, turn, p, {'=':dict(zip(keys, [p[key] for key in keys]))})
+			#	raise
+		else:
+			s = 'insert or replace into %s (%s) values(%s)'%(table_name, ','.join(p.keys()), ','.join('?'*len(p)))
+			self.cur.execute(s, tuple(p.values()))
+			self.conn.commit()
+			
+		#if table_name in [Db.PLANET, Db.FLEET]:
+			
+	def update_object(self, table, flt, data):
+		obj = self.get_object(table, flt, data.keys())
+		if obj:
+			if 'turn' in data:
+				t_cur = int(data['turn'])
+				t_db = int(obj['turn'])
+				if t_cur <= t_db:
+					return None
+				# ok update
+				obj = None
+		if not obj:
+			try:
+				
+				self.cur.execute('insert or replace into %s (%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key,) for key in data.keys()])), data)
+			except sqlite3.OperationalError as e:
+				print 'Update error: %s, table %s, filter %s, data %s'%(e, table, flt, data)
+				c = self.select(table, {}, data.keys())
+				print c.fetchone()
+				raise
+			self.conn.commit()
+			return True
+			
+		return None
+		
+	def add_planet(self, turn, data):
+		self.update_object(Db.PLANET, {'=':{'x':data['x'], 'y':data['y']}}, data)
+	
 	def set_planet_geo_size(self, data):
 		x = int(data['x'])
 		y = int(data['y'])
-		self.cur.execute('select s from planet_%s WHERE x=:x and y=:y'%(self.max_turn,), (x,y))
+		self.cur.execute('select s from %s WHERE x=:x and y=:y'%(Db.PLANET,), (x,y))
 		r = self.cur.fetchone()
 		if r and r[0]:
 			return
@@ -327,8 +413,8 @@ class Db:
 		self.cur.execute('insert or replace into planet_size (x,y,image,s) values(:x, :y, :image, :s)', (x,y,image,s))
 		self.conn.commit()
 
-	def eraseObject(self, table, data, turn_n = None):
-		table_name = '%s_%s'%(table, turn_n) if turn_n else table
+	def eraseObject(self, table_name, data, turn_n = None):
+		#table_name = '%s_%s'%(table, turn_n) if turn_n else table
 		try:
 			self.cur.execute('delete from %s WHERE %s'%(table_name, ' AND '.join(data)))
 			self.conn.commit()
@@ -336,8 +422,8 @@ class Db:
 			log.error('Error "%s", when executing: delete from %s WHERE %s'%(e, table_name, ' AND '.join(data)))
 			print traceback.format_stack()
 			
-	def updateObject(self, table, flt, values, turn_n = None):
-		table_name = '%s_%s'%(table, turn_n) if turn_n else table
+	def updateObject(self, table_name, flt, values, turn_n = None):
+		#table_name = '%s_%s'%(table, turn_n) if turn_n else table
 		try:
 			self.cur.execute('update %s SET %s WHERE %s'%(table_name, ','.join(['%s=%s'%(k,v) for k,v in values.iteritems()]), ' AND '.join(flt)))
 			self.conn.commit()
@@ -491,18 +577,17 @@ def set_planet_geo_size(data):
 	global db
 	db.set_planet_geo_size(data)
 	
-def prepareTurn(turn_n):
-	global db
-	db.init(turn_n)
+def prepareTurn(_):
+	pass
 
 def add_player(player):
 	global db
 	db.add_player(player)
 
-def items(table, flt, keys, turn_n = None, verbose = False):
+def items(table_name, flt, keys, _ = None, verbose = False):
 	global db
 	c = db.conn.cursor()
-	table_name = '%s_%s'%(table, turn_n) if turn_n else table
+	#table_name = '%s_%s'%(table, turn_n) if turn_n else table
 	ws = ''
 	if flt:
 		ws = 'WHERE %s'%(' AND '.join(flt),)
