@@ -31,6 +31,30 @@ def saveTable(table_name, keys, filters, turn_n = None):
 	except IOError, e:
 		log.error('failed writing data to csv file %s: %s'%(path, e))
 
+def save_table(table, keys, turn, flt = {}):
+	pt = config.options['data']['path']
+	pt = os.path.join(pt, str(turn))
+	util.assureDirExist(pt)
+	path = os.path.join(pt, '%s.csv'%(table,))
+	if table in db.db.has_turn:
+		flt.setdefault('=', {}).update('turn', turn)
+		
+	try:
+		f = open(path, 'wt')
+		writer = csv.DictWriter(f, keys)
+		writer.writeheader()
+		for p in db.db.iter_objects_list(table, flt):
+			try:
+				for s in unicode_strings:
+					if s in p and p[s]:
+						p[s] = p[s].encode('utf-8')
+				writer.writerow(p)
+			except UnicodeEncodeError, e:
+				log.error('failed convert data %s - %s'%(p, e))
+	except IOError, e:
+		log.error('failed writing data to csv file %s: %s'%(path, e))
+	
+
 #def saveGeoPlanets():
 #	saveTable(db.Db.PLANET, ('x','y','o','e','m','t','s'), None, 'planets_geo', db.getTurn())
 

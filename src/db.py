@@ -311,16 +311,17 @@ class Db:
 
 	def get_objects_list(self, table, flt, keys):
 		'get single object from db'
-		self.cur.execute('select %s from %s where %s'%(','.join(data.keys()), table_name, ','.join(['%s=?'%(key,) for key in flt])), tuple(flt.values()))
+		c = self.select(table, flt, keys)
 		rv = []
-		for r in self.cur.fetchall():
+		for r in c.fetchall():
 			rv.append( dict(zip(keys, r)) )
 		return rv
 	
 	def iter_objects_list(self, table, flt, keys):
 		'get single object from db'
-		self.cur.execute('select %s from %s where %s'%(','.join(data.keys()), table_name, ','.join(['%s=?'%(key,) for key in flt.iterkeys()])), tuple(flt.values()))
-		for r in self.cur.fetchall():
+		
+		c = self.select(table, flt, keys)
+		for r in c.fetchall():
 			yield dict(zip(keys, r))
 	
 	def select(self, table, flt, keys):
@@ -848,7 +849,7 @@ def setPlanet(data, turn_n = None):
 	
 	joinedData = joinInfo(data, pl)
 	if joinedData != pl:
-		return updateRow('planet_%s'%(turn_n,), conds, joinedData)
+		return updateRow(Db.PLANET, conds, joinedData)
 
 def all_ownedUnits(turn_n, coord):
 	conds = ['x=%s'%(coord[0],), 'y=%s'%(coord[1],)]
