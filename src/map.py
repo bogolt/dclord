@@ -62,6 +62,7 @@ class Map(util.BufferedWindow):
 		
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
 		self.pf = None
+		self.draw_geo = 1==int(config.options['map']['draw_geo'])
 
 		util.BufferedWindow.__init__(self, parent)
 
@@ -70,7 +71,7 @@ class Map(util.BufferedWindow):
 		self.click_timer = wx.Timer(self, wx.ID_ANY)
 		self.motionEvent = []
 		
-		self.draw_geo = 1==int(config.options['map']['draw_geo'])
+		
 		
 		self.Bind(wx.EVT_LEFT_UP, self.onLeftUp)
 		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)		

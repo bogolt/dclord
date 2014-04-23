@@ -250,7 +250,8 @@ def load_table(table_name, turn, cb = None, external_path = None):
 				
 			db.db.smart_update_object(table_name, turn, p)
 	except IOError, e:
-		log.error('failed to load table %s: %s'%(table_name, e))
+		#print 'failed to load table %s'%(table_name, )
+		log.error('failed to load table %s'%(table_name, ))
 		#if cb:
 		#	util.appendLog(cb, 'Error loading "%s" from turn %s'%(table_name, turn_n))
 	#if cb:
