@@ -16,9 +16,11 @@ def get_unit_name(carapace):
         1: 'shuttle',
         2: 'comm shuttle',
         6: 'shuttle',
+        7: 'colony',
         11: 'probe',
         13: 'governer',
-        21: 'transport'
+        21: 'transport',
+        40: 'ark'
         }.get(carapace, '')
 
 class StackedObject(wx.Window):
