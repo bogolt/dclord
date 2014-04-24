@@ -254,7 +254,10 @@ def load_table(table_name, turn, external_path = None):
 	except IOError, e:
 		#print e
 		#print 'failed to load table %s %s'%(table_name, unicode(e).decode('utf-8'))
-		log.error('failed to load table %s: %s'%(table_name, e))
+		try:
+			log.error('failed to load table %s: %s'%(table_name, e))
+		except:
+			pass
 		#if cb:
 		#	util.appendLog(cb, 'Error loading "%s" from turn %s'%(table_name, turn_n))
 	#if cb:
