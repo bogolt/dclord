@@ -11,26 +11,6 @@ log = logging.getLogger('dclord')
 
 unicode_strings = ['name', 'description']
 
-def saveTable(table_name, keys, filters, turn_n = None):
-	pt = config.options['data']['path']
-	pt = os.path.join(pt, str(db.getTurn()))
-	util.assureDirExist(pt)
-	path = os.path.join(pt, '%s.csv'%(table_name,))
-	try:
-		f = open(path, 'wt')
-		writer = csv.DictWriter(f, keys)
-		writer.writeheader()
-		for p in db.items(table_name, filters, keys, turn_n):
-			try:
-				for s in unicode_strings:
-					if s in p and p[s]:
-						p[s] = p[s].encode('utf-8')
-				writer.writerow(p)
-			except UnicodeEncodeError, e:
-				log.error('failed convert data %s - %s'%(p, e))
-	except IOError, e:
-		log.error('failed writing data to csv file %s: %s'%(path, e))
-
 def save_table(table, keys):
 	pt = config.options['data']['path']
 	pt = os.path.join(pt, str(db.db.max_turn))
@@ -57,53 +37,11 @@ def save_table(table, keys):
 		log.error('failed writing data to csv file %s: %s'%(path, e))
 	
 
-#def saveGeoPlanets():
-#	saveTable(db.Db.PLANET, ('x','y','o','e','m','t','s'), None, 'planets_geo', db.getTurn())
-
-def saveProto():
-	save_table(db.Db.PROTO, ('owner_id', 'fly_speed', 'aim_bomb', 'color', 'build_speed', 'require_people', 'carapace', 'fly_range', 'id', 'class', 'cost_second', 'cost_main', 'cost_money', 'is_transportable', 'require_tech_level', 'support_second', 'name', 'stealth_level', 'bonus_s', 'bonus_m', 'bonus_o', 'max_count', 'bonus_e', 'support_main', 'weight', 'damage_laser', 'is_ground_unit', 'is_serial', 'aim_laser', 'is_spaceship', 'transport_capacity', 'is_offensive', 'detect_range', 'damage_bomb', 'bonus_production', 'description', 'scan_strength', 'hp', 'defence_laser', 'defence_bomb', 'carrier_capacity', 'laser_number', 'is_building', 'cost_people', 'bomb_number', 'is_war'))
-	save_table(db.Db.PROTO_ACTION, ('id', 'type', 'proto_id', 'proto_owner_id', 'max_count', "cost_people", "cost_main", "cost_money", "cost_second", "planet_can_be"))
-
-def savePlanets():
-	save_table(db.Db.PLANET, ('x','y','o','e','m','t','s','owner_id', 'name', 'is_open'))
-	save_table(db.Db.OPEN_PLANET, ('x','y','user_id'))
-	#saveTable('planet', ('x','y','owner_id', 'name', 'is_open'), ['owner_id is not null'], 'planets')
-
-def saveFleets():
-	save_table(db.Db.FLEET, ('id', 'x','y','owner_id', 'is_hidden','name','weight'))
-	save_table(db.Db.FLYING_FLEET, ('id', 'x','y','in_transit', 'owner_id','from_x','from_y','weight', 'arrival_turn','is_hidden'))
-	save_table(db.Db.FLYING_ALIEN_FLEET, ('x','y','user_id','from_x','from_y','weight', 'arrival_turn','is_hidden'))
-		
-def saveUnits():
-	save_table(db.Db.UNIT, ('id', 'hp','class', 'fleet_id'))
-
-def saveGarrisonUnits():
-	save_table(db.Db.GARRISON_UNIT, ('id', 'hp','class', 'x', 'y'))
-
-def saveAlienUnits():
-	save_table(db.Db.ALIEN_UNIT, ('id', 'carapace','color','weight','fleet_id'))
-	
-def saveUsers():
-	save_table(db.Db.USER, ('id', 'name', 'race_id', 'login'))
-	save_table(db.Db.HW, ('hw_x', 'hw_y', 'player_id'))
-	save_table(db.Db.RACE, ('id', 'temperature_delta',  'temperature_optimal',  'resource_nature',  'population_growth', 'resource_main', 'resource_secondary', 'modifier_fly', 'modifier_build_war', 'modifier_build_peace', 'modifier_science', 'modifier_stealth', 'modifier_detection', 'modifier_mining', 'modifier_price', 'name'))
-	#'modifier_build_ground', 'modifier_build_space',
-	
-def savePlayers():
-	save_table(db.Db.PLAYER, ('player_id', 'name'))
-
 def save():
 	log.info('saving data for turn %s'%(db.getTurn(),))
-	savePlanets()
-	saveFleets()
-	saveUnits()
-	saveGarrisonUnits()
-	saveAlienUnits()
-	saveProto()
-	saveUsers()
-	savePlayers()
 	
-	save_sync_data()
+	for table, keys in db.Db.table_keys_serialize.iteritems():
+		save_table(table, keys)
 
 def get_user_nickname():
 	nick = config.options['user']['nick']
@@ -175,13 +113,6 @@ def load_sync_data():
 				table_name = os.path.basename(outf)[:-len('.csv')]
 				
 				load_table(table_name, load_turn, os.path.dirname(outf))
-				
-				#if table_name == db.Db.PROTO or table_name == db.Db.PROTO_ACTION or table_name == db.Db.OPEN_PLANET or table_name == db.Db.USER or table_name == db.Db.RACE or table_name == db.Db.PLAYER:
-				#	loadTable(table_name, None, load_turn, None, os.path.dirname(outf))
-				#else:
-				#	loadTable(table_name, load_turn, None, None, os.path.dirname(outf))
-				
-			
 
 # ~/Dropbox/sync_kingdom_name/turns/47/user_vasya/data.csv.gz
 def save_sync_data():
@@ -208,25 +139,6 @@ def save_sync_data():
 		
 	for f in os.listdir(pt):
 		util.pack(os.path.join(pt, f), os.path.join(outp, f+".gz"))
-
-def loadExternalTable(path, turn_n ):
-	table = os.path.basename(path)
-	#print 'table name %s from path %s'%(table, path)
-	try:
-		for p in csv.DictReader(open(path, 'rt')):
-			for s in unicode_strings:
-				if s in p and p[s]:
-					p[s] = p[s].decode('utf-8')
-					
-			todel = []
-			for k,v in p.iteritems():
-				if v == '' or v==unicode(''):
-					todel.append(k)
-			for td in todel:
-				del p[td]
-			db.setData(table, p, turn_n)
-	except IOError, e:
-		log.error('failed to load table %s: %s'%(table_name, e))
 
 
 def load_table(table_name, turn, external_path = None):
@@ -262,43 +174,6 @@ def load_table(table_name, turn, external_path = None):
 		#	util.appendLog(cb, 'Error loading "%s" from turn %s'%(table_name, turn_n))
 	#if cb:
 	#	util.appendLog(cb, '"%s" from turn %s loaded'%(table_name, turn_n))
-		
-def loadTable(table_name, turn_n = None, load_turn = None, cb = None, external_path = None):
-	#print 'loading table %s at %s %s from %s'%(table_name, turn_n, load_turn, external_path)
-	if cb:
-		util.appendLog(cb, 'loading "%s" from turn %s'%(table_name, turn_n))
-	try:
-		if turn_n:
-			load_turn = turn_n
-
-		if external_path:
-			path = external_path
-		else:
-			path = config.options['data']['path']
-			if load_turn:
-				path = os.path.join(path, str(load_turn))
-
-		path = os.path.join(path, '%s.csv'%(table_name,))
-		for p in csv.DictReader(open(path, 'rt')):
-			for s in unicode_strings:
-				if s in p and p[s]:
-					p[s] = p[s].decode('utf-8')
-			todel = []
-			for k,v in p.iteritems():
-				if v == '' or v==unicode(''):
-					todel.append(k)
-			for td in todel:
-				del p[td]
-			#print 'setting data for table %s %s %s'%(table_name, p, turn_n)
-			db.setData(table_name, p, turn_n)
-	except IOError, e:
-		log.error('failed to load table %s: %s'%(table_name, e))
-		if cb:
-			util.appendLog(cb, 'Error loading "%s" from turn %s'%(table_name, turn_n))
-		return
-	if cb:
-		util.appendLog(cb, '"%s" from turn %s loaded'%(table_name, turn_n))
-
 		
 def loadCsv(file_name, turn_n = None):
 	path = config.options['data']['path']
@@ -439,38 +314,6 @@ def loadGeoPlanets(turn_n = None, cb = None):
 	
 	for p in loadCsv('planets_geo', turn_n):
 		db.smartUpdate('planet', ['x=%s'%(p['x'],), 'y=%s'%(p['y'],)], p, turn_n)
-	
-def loadPlanets(turn_n = None, cb = None):
-	loadTable(db.Db.PLANET, turn_n, cb=cb)
-	loadTable(db.Db.OPEN_PLANET, None, turn_n, cb=cb)
-	if int(config.options['filter']['inhabited_planets'])==0:
-		loadGeoPlanets(turn_n)
-
-def loadFleets(turn_n = None, cb = None):
-	loadTable(db.Db.FLEET, turn_n)
-	loadTable(db.Db.FLYING_FLEET, turn_n)
-	loadTable(db.Db.FLYING_ALIEN_FLEET, turn_n)
-	
-def loadUnits(turn_n = None, cb = None):
-	loadTable(db.Db.UNIT, turn_n, cb=cb)
-
-def loadGarrisonUnits(turn_n = None, cb = None):
-	loadTable(db.Db.GARRISON_UNIT, turn_n, cb=cb)
-
-def loadAlienUnits(turn_n = None, cb = None):
-	loadTable(db.Db.ALIEN_UNIT, turn_n, cb=cb)
-	
-def loadProto(turn_n = None, cb = None):
-	loadTable(db.Db.PROTO, None, turn_n, cb=cb)
-	loadTable(db.Db.PROTO_ACTION, None, turn_n, cb=cb)
-	
-def loadUsers(turn_n = None, cb = None):
-	loadTable(db.Db.USER, None, turn_n, cb=cb)
-	loadTable(db.Db.HW, turn_n, cb=cb)
-	loadTable(db.Db.RACE, None, turn_n, cb=cb)
-	
-def loadPlayers(turn_n = None, cb = None):
-	loadTable(db.Db.PLAYER, None, turn_n, cb=cb)
 
 def get_turn_number(s):
 	try:
@@ -501,31 +344,9 @@ def getLastTurn(cb = None):
 
 def load(turn_n = None, ev_cb = None):
 	#TODO: make async ( other thread )
+	
+	turn = getLastTurn(ev_cb)
+	for table, keys in db.Db.table_keys.iteritems():
+		load_table(table, turn)
+
 	load_sync_data()
-	
-	if not turn_n:
-		turn_n = getLastTurn(ev_cb)
-		if not turn_n:
-			return
-	#print 'loading turn %s'%(turn_n,)
-	if turn_n:
-		turn_n = str(turn_n)
-		
-	if ev_cb:
-		util.appendLog(ev_cb, 'loading %s turn'%(turn_n,))
-	db.prepareTurn(turn_n)
-
-	loadPlanets(turn_n, ev_cb)
-	loadFleets(turn_n, ev_cb)
-	loadUnits(turn_n, ev_cb)
-	loadGarrisonUnits(turn_n, ev_cb)
-	loadAlienUnits(turn_n, ev_cb)
-	loadProto(turn_n, ev_cb)
-	loadUsers(turn_n, ev_cb)
-	loadPlayers(turn_n, ev_cb)
-	
-	save_sync_data()
-
-#def asyncLoad():
-#	import thread
-#	thread.start_new_thread(load, () )

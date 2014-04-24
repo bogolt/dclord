@@ -63,7 +63,7 @@ options = {
 			},
 		'network':{
 		  'host':'www.the-game.ru',
-		  'debug':2
+		  'debug':0
 		 },
 		 'user':{'nick':''},
 		'map':{

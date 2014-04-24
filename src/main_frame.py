@@ -72,7 +72,7 @@ class DcFrame(wx.Frame):
 		self.object_filter = object_filter.FilterPanel(self)
 		self.planet_filter = object_filter.FilterFrame(self)
 		#self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
-		self.history = history.HistoryPanel(self)
+		#self.history = history.HistoryPanel(self)
 		#self.area_list = area_panel.AreaListWindow(self)
 
 		self.sync_path = config.options['data']['sync_path']
@@ -107,7 +107,7 @@ class DcFrame(wx.Frame):
 		info.CaptionVisible(False)
 		
 		self._mgr.AddPane(self.map, info)
-		self._mgr.AddPane(self.history, wx.RIGHT, "Turn")
+		#self._mgr.AddPane(self.history, wx.RIGHT, "Turn")
 		self._mgr.AddPane(self.info_panel, wx.RIGHT, "Info")
 		self._mgr.AddPane(self.planet_panel, wx.RIGHT, "Planet")
 		self._mgr.AddPane(self.garrison_panel, wx.RIGHT, "Garrison")
@@ -157,7 +157,7 @@ class DcFrame(wx.Frame):
 		#todo - restore previous state
 		#self.Maximize()
 		
-		self.history.updateTurns(self.map.turn)
+		#self.history.updateTurns(self.map.turn)
 		
 	def onObjectSelect(self, evt):
 		self.planet_panel.select_coord(evt)
@@ -870,7 +870,7 @@ class DcFrame(wx.Frame):
 		self.map.turn = db.db.max_turn
 		self.map.update()
 		self.object_filter.update()
-		self.history.updateTurns(self.map.turn)
+		#self.history.updateTurns(self.map.turn)
 		
 		self.started = False
 		self.perform_next_action()

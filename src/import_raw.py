@@ -126,8 +126,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			d = getAttrs(attrs, {'homeworldx':'hw_x', 'homeworldy':'hw_y', 'race-id':'race_id', 'login':"login"})
 			self.user.update( d )
 			print 'update user %s'%(self.user,)
-			db.setData('hw', {'hw_x':d['hw_x'], 'hw_y':d['hw_y'], 'player_id':self.user['id']}, self.turn)
-			db.setData('user', {'id':self.user['id'], 'login':d['login'], 'race_id':d['race_id'], 'name':self.user['name']})
+			
+			db.db.set_object('hw', {'hw_x':d['hw_x'], 'hw_y':d['hw_y'], 'player_id':self.user['id']})
+			db.db.set_object('user', {'id':self.user['id'], 'login':d['login'], 'race_id':d['race_id'], 'name':self.user['name']})
 			config.set_user_id(d['login'], self.user['id'])
 			config.saveUsers()
 		
@@ -156,7 +157,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				
 					})
 
-			db.setData(db.Db.RACE, d)
+			db.db.set_object(db.Db.RACE, d)
 			# race-nature	  (nature)
 			# industry-nature ( first )
 			# unused-resource ( second )
@@ -200,10 +201,15 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				db.set_open_planet(get_coord(data), self.user['id'])
 
 			if 'age' in data:
-				#don't need this for now
-				#data['turn'] = self.turn - int(data['age'])
+				actual_turn = self.turn
+				if data['age']:
+					actual_turn = self.turn - int(data['age'])
 				del data['age']
-			db.setPlanet(data, self.turn)
+				print 'import planet %s at turn %s'%(data, actual_turn)
+				db.db.smart_update_object(db.Db.PLANET, actual_turn, data)
+			else:
+				print 'import planet %s'%(data,)
+				db.db.set_object(db.Db.PLANET, data)
 			
 		elif XmlHandler.Fleet == name:
 			fleetDict = {'x':'x','y':'y','id':'id','in-transit':'in_transit','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
@@ -224,10 +230,12 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			data['owner_id'] = self.user['id']
 				
 			if tta>0:
-				db.setData(db.Db.FLYING_FLEET, data, self.turn)
+				#data['turn'] = turn
+				db.db.set_object(db.Db.FLYING_FLEET, data)
 			elif 'in_transit' in data:
 				safeRemove(data, ['from_x', 'from_y', 'tta', 'in_transit'])
-				db.setData(db.Db.FLEET, data, self.turn)
+				#data['turn'] = turn
+				db.db.set_object(db.Db.FLEET, data)
 				
 		elif XmlHandler.AlienFleet == name:
 			#TODO: alien fleet / flying or not here ( 1st delete all alien fleets visible by user before adding any of them
@@ -247,7 +255,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 					print 'got owner of flying alient fleet: %s'%(data,)
 					del data['owner_id']
 				self.obj_id = None
-				db.setData(db.Db.FLYING_ALIEN_FLEET, data, self.turn)
+				#data['turn']=self.turn
+				db.db.set_object(db.Db.FLYING_ALIEN_FLEET, data)
 			else:
 				safeRemove(data, ['from_x', 'from_y', 'tta'])
 				#save fleet-id to fill alien-unit table

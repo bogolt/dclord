@@ -8,6 +8,23 @@ def to_pos(a,b):
 
 log = logging.getLogger('dclord')
 
+KEYS_PLANET = ('x','y','o','e','m','t','s','owner_id', 'name', 'is_open')
+KEYS_OPEN_PLANET = ('x','y','user_id')
+KEYS_FLEET = ('id', 'x','y','owner_id', 'is_hidden','name','weight')
+KEYS_FLYING_FLEET = ('id', 'x','y','in_transit', 'owner_id','from_x','from_y','weight', 'arrival_turn','is_hidden')
+KEYS_FLYING_ALIEN_FLEET = ('x','y','user_id','from_x','from_y','weight', 'arrival_turn','is_hidden')
+KEYS_UNIT = ('id', 'hp','class', 'fleet_id')
+KEYS_GARRISON_UNIT = ('id', 'hp','class', 'x', 'y')
+KEYS_GARRISON_QUEUE_UNIT = ('id', 'class', 'x', 'y')
+KEYS_ALIEN_UNIT = ('id', 'carapace','color','weight','fleet_id')
+KEYS_USER = ('id', 'name', 'race_id', 'login')
+KEYS_HW = ('hw_x', 'hw_y', 'player_id')
+KEYS_RACE = ('id', 'temperature_delta',  'temperature_optimal',  'resource_nature',  'population_growth', 'resource_main', 'resource_secondary', 'modifier_fly', 'modifier_build_war', 'modifier_build_peace', 'modifier_science', 'modifier_stealth', 'modifier_detection', 'modifier_mining', 'modifier_price', 'name')
+KEYS_PLAYER = ('player_id', 'name')
+KEYS_PROTO = ('owner_id', 'fly_speed', 'aim_bomb', 'color', 'build_speed', 'require_people', 'carapace', 'fly_range', 'id', 'class', 'cost_second', 'cost_main', 'cost_money', 'is_transportable', 'require_tech_level', 'support_second', 'name', 'stealth_level', 'bonus_s', 'bonus_m', 'bonus_o', 'max_count', 'bonus_e', 'support_main', 'weight', 'damage_laser', 'is_ground_unit', 'is_serial', 'aim_laser', 'is_spaceship', 'transport_capacity', 'is_offensive', 'detect_range', 'damage_bomb', 'bonus_production', 'description', 'scan_strength', 'hp', 'defence_laser', 'defence_bomb', 'carrier_capacity', 'laser_number', 'is_building', 'cost_people', 'bomb_number', 'is_war')
+KEYS_PROTO_ACTION = ('id', 'type', 'proto_id', 'proto_owner_id', 'max_count', "cost_people", "cost_main", "cost_money", "cost_second", "planet_can_be")
+KEYS_DIPLOMACY = ('owner_id', 'player_id', 'status')
+
 class Db:
 	PLANET = 'planet'
 	OPEN_PLANET = 'open_planet'
@@ -27,16 +44,31 @@ class Db:
 	RACE = 'race'
 	DIP = 'dip'
 	
+	table_keys = {PLANET:KEYS_PLANET, OPEN_PLANET:KEYS_OPEN_PLANET, USER: KEYS_USER, PLAYER:KEYS_PLAYER, HW:KEYS_HW, FLEET:KEYS_FLEET, UNIT:KEYS_UNIT,
+	 ALIEN_UNIT:KEYS_ALIEN_UNIT, FLYING_FLEET:KEYS_FLYING_FLEET, FLYING_ALIEN_FLEET:KEYS_FLYING_ALIEN_FLEET, GARRISON_UNIT:KEYS_GARRISON_UNIT,
+	 GARRISON_QUEUE_UNIT:KEYS_GARRISON_QUEUE_UNIT, PROTO:KEYS_PROTO, PROTO_ACTION:KEYS_PROTO_ACTION, RACE:KEYS_RACE, DIP: KEYS_DIPLOMACY}
+	 
+	table_keys_serialize = table_keys.copy()
+	
 	def __init__(self, dbpath=":memory:"):
 		self.conn = sqlite3.connect(dbpath)
 		self.turns = {}
 		self.max_turn = 0
 		self.pending_actions = {}
-				
+						
 		self.cur = self.conn.cursor()
 			
 		self.has_turn = [Db.PLANET, Db.FLEET, Db.FLYING_FLEET, Db.FLYING_ALIEN_FLEET, Db.ALIEN_UNIT]
 		self.has_coord_keys = [Db.PLANET, Db.FLYING_ALIEN_FLEET, Db.GARRISON_UNIT, Db.GARRISON_QUEUE_UNIT]
+		
+		for table, keys in self.table_keys.iteritems():
+			if table in self.has_turn:
+				self.table_keys[table] = tuple(list(keys)+['turn'])
+				#keys = tuple(
+
+		for table, keys in self.table_keys.iteritems():
+			print '%s %s'%(table, keys)
+
 		
 		# table Db.FLYING_ALIEN_FLEET has no primary key
 		self.primary_keys = {Db.USER:['id'], Db.OPEN_PLANET:['x','y', 'user_id'], Db.RACE:['id'], Db.PLAYER: ['player_id'],
@@ -304,6 +336,8 @@ class Db:
 		
 		#table_name = '%s_%s'%(table, turn_n) if turn_n else table
 		try:
+			#if str(table_name) == Db.PLANET:
+			#	print 'insert old %s %s'%(table_name, data)
 			self.cur.execute('insert or replace into %s%s values(%s)'%(table_name, keys,','.join('?'*len(keys))),tuple(data.values()))
 			self.conn.commit()
 		except sqlite3.Error, e:
@@ -311,25 +345,33 @@ class Db:
 			print traceback.format_stack()
 	
 
-	def get_objects_list(self, table, flt, keys):
+	def get_objects_list(self, table, flt):
 		'get single object from db'
-		c = self.select(table, flt, keys)
+		c = self.select(table, flt)
 		rv = []
 		for r in c.fetchall():
 			rv.append( dict(zip(keys, r)) )
 		return rv
 	
-	def iter_objects_list(self, table, flt, keys):
+	def iter_objects_list(self, table, flt, keys = None):
 		'get single object from db'
-		
+		if not keys:
+			keys = self.table_keys[table]
 		c = self.select(table, flt, keys)
 		for r in c.fetchall():
 			yield dict(zip(keys, r))
 	
-	def select(self, table, flt, keys):
+	def select(self, table, flt, keys = None):
+		if not keys:
+			keys = self.table_keys[table]
 		c = self.conn.cursor()
 		if not flt:
-			c.execute('select %s from %s'%(','.join(keys), table))
+			try:
+				c.execute('select %s from %s'%(','.join(keys), table))
+			except sqlite3.OperationalError as e:
+				print 'Select %s from %s, error: %s'%(keys, table, e)
+				raise
+
 			return c
 		
 		where_str = ''
@@ -342,13 +384,22 @@ class Db:
 		#del keys[0]
 		s = 'select %s from %s WHERE %s'%(','.join(keys), table, where_str)
 		#print '"%s" . items: %s'%(s, values_dict)
-		c.execute(s, values_dict)
+		try:
+			c.execute(s, values_dict)
+		except sqlite3.OperationalError as e:
+			print 'Select %s with %s, error: %s'%(s, values_dict, e)
+			raise
 		return c
 		
-	def get_object(self, table, flt, keys):
+	def get_object(self, table, flt):
 		'get single object from db'
 		#self.cur.execute('select %s from %s where %s'%(','.join(data.keys()), table_name, ','.join(['%s=?'%(key,) for key in flt])), tuple(flt.values()))
-		r = self.select(table, flt, keys).fetchone()
+		try:
+			keys = self.table_keys[table]
+			r = self.select(table, flt, keys).fetchone()
+		except TypeError as e:
+			print 'get object failed: with %s %s, error: %s'%(table, flt, e)
+			return None
 		if not r:
 			return None
 		return dict(zip(keys, r))
@@ -359,6 +410,9 @@ class Db:
 		if table_name in self.has_turn:
 			p['turn'] = turn
 			keys = self.primary_keys[table_name]
+			if not keys:
+				self.set_object(table_name, p)
+				return
 			#try:
 			self.update_object(table_name, {'=':dict(zip(keys, [p[key] for key in keys]))}, p)
 			#except:
@@ -366,34 +420,42 @@ class Db:
 			#	raise
 		else:
 			s = 'insert or replace into %s (%s) values(%s)'%(table_name, ','.join(p.keys()), ','.join('?'*len(p)))
+			#if str(table_name) == Db.PLANET:
+			#	print 'insert %s %s %s'%(table_name, turn, p)
 			self.cur.execute(s, tuple(p.values()))
 			self.conn.commit()
 			
 		#if table_name in [Db.PLANET, Db.FLEET]:
-			
+	
+	def set_object(self, table, data):
+		if table in self.has_turn and not 'turn' in data:
+			data['turn'] = self.max_turn
+		try:
+			self.cur.execute('insert or replace into %s (%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key,) for key in data.keys()])), data)
+			self.conn.commit()
+		except sqlite3.OperationalError as e:
+			print 'Update error: %s, table %s, filter %s, data %s'%(e, table, flt, data)
+		
 	def update_object(self, table, flt, data):
-		obj = self.get_object(table, flt, data.keys())
-		if obj:
-			if 'turn' in data:
+		if flt and 'turn' in data:
+			obj = self.get_object(table, flt)
+			if obj:
 				t_cur = int(data['turn'])
 				t_db = int(obj['turn'])
-				if t_cur <= t_db:
+				if t_cur < t_db:
 					return None
-				# ok update
-				obj = None
-		if not obj:
-			try:
-				
-				self.cur.execute('insert or replace into %s (%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key,) for key in data.keys()])), data)
-			except sqlite3.OperationalError as e:
-				print 'Update error: %s, table %s, filter %s, data %s'%(e, table, flt, data)
-				c = self.select(table, {}, data.keys())
-				print c.fetchone()
-				raise
-			self.conn.commit()
-			return True
-			
-		return None
+				#if t_cur ==  t_db:
+		try:
+			#if str(table_name) == Db.PLANET:
+			#	print 'insert %s %s'%(table,p)
+			self.cur.execute('insert or replace into %s (%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key,) for key in data.keys()])), data)
+		except sqlite3.OperationalError as e:
+			print 'Update error: %s, table %s, filter %s, data %s'%(e, table, flt, data)
+			c = self.select(table, {}, data.keys())
+			print c.fetchone()
+			raise
+		self.conn.commit()
+		return True
 		
 	def add_planet(self, turn, data):
 		self.update_object(Db.PLANET, {'=':{'x':data['x'], 'y':data['y']}}, data)
@@ -690,9 +752,11 @@ def get_planet_size(coord):
 		return p
 			
 def get_planet(coord):
-	for pl in planets(getTurn(), ['x=%s'%(coord[0],), 'y=%s'%(coord[1],)]):
-		return pl
-	return None
+	return db.get_object(Db.PLANET, {'=':{'x':coord[0], 'y':coord[1]}})
+	
+	#for pl in planets(getTurn(), ['x=%s'%(coord[0],), 'y=%s'%(coord[1],)]):
+	#	return pl
+	#return None
 
 def fleets(turn_n, flt, keys = None):
 	k = ('id', 'name', 'x','y','owner_id', 'is_hidden') if not keys else keys

@@ -296,8 +296,7 @@ class Map(util.BufferedWindow):
 	def drawPlanets(self, dc, rect):
 		flt = self.rectFilter(rect) if rect else self.visibleAreaFilter()
 		cond = ['owner_id is not null'] if int(config.options['filter']['inhabited_planets'])==1 else []
-		#print 'request planets with turn %s'%(self.turn,)
-		for p in db.planets(self.turn, self.planet_filter + flt + cond):
+		for p in db.db.iter_objects_list(db.Db.PLANET, {}):#{'!=':{'owner_id':'0'}}):
 			self.drawPlanet(dc, p)
 			if self.draw_geo:
 				self.drawPlanetGeo(dc, p)
