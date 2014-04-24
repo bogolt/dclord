@@ -333,27 +333,27 @@ class PlanetPanel(wx.Panel):
 		coord = evt.attr1
 		self.sizer.DeleteWindows()
 		
-		pos = wx.StaticText(self, wx.ID_ANY)
-		self.sizer.Add( pos )
-		
 		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, '%s:%s'%coord) )
 		
 		planet = db.get_planet(coord)
 		owner = None
 		name = None
 		if not planet:
+			self.sizer.Layout()
 			return
 		
 		if 'o' in planet:
-			self.sizer.Add( wx.StaticText(self, wx.ID_ANY, 'o: %s, e: %s, m: %s, t: %s, s: %s'%(planet['o'], planet['e'], planet['m'], planet['t'], planet['s'])))
+			self.sizer.Add( wx.StaticText(self, wx.ID_ANY, 'o: %s, e: %s, m: %s, t: %s, s: %s'%(planet['o'], planet['e'], planet['m'], planet['t'], planet['s'])) )
 		
 		if 'name' in planet and planet['name']:
 			self.sizer.Add( wx.StaticText(self, wx.ID_ANY, planet['name']) )
 		
 		if 'owner_id' not in planet:
+			self.sizer.Layout()
 			return
 		owner_id = planet['owner_id']
 		if not owner_id:
+			self.sizer.Layout()
 			return
 		owner_name = db.get_player_name(owner_id)
 		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, owner_name) )
