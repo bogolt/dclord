@@ -42,6 +42,8 @@ def save():
 	
 	for table, keys in db.Db.table_keys.iteritems():
 		save_table(table, keys)
+		
+	save_sync_data()
 
 def get_user_nickname():
 	nick = config.options['user']['nick']
@@ -150,7 +152,7 @@ def load_table(table_name, turn, external_path = None):
 			p = os.path.join(config.options['data']['path'], str(turn))
 		path = os.path.join(p, '%s.csv'%(table_name,))
 	
-		print 'load_table %s'%(path,)
+		#print 'load_table %s'%(path,)
 		for p in csv.DictReader(open(path, 'rt')):
 			for s in unicode_strings:
 				if s in p and p[s]:
