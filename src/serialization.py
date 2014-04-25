@@ -16,16 +16,16 @@ def save_table(table, keys):
 	pt = os.path.join(pt, str(db.db.max_turn))
 	util.assureDirExist(pt)
 	path = os.path.join(pt, '%s.csv'%(table,))
-	if table in db.db.has_turn:
-		flt = {'=': {'turn': db.db.max_turn}}
-	else:
-		flt = {}
+	#if table in db.db.has_turn:
+	#	flt = {'=': {'turn': db.db.max_turn}}
+	#else:
+	#	flt = {}
 		
 	try:
 		f = open(path, 'wt')
 		writer = csv.DictWriter(f, keys)
 		writer.writeheader()
-		for p in db.db.iter_objects_list(table, flt, keys):
+		for p in db.db.iter_objects_list(table):
 			try:
 				for s in unicode_strings:
 					if s in p and p[s]:
@@ -40,7 +40,7 @@ def save_table(table, keys):
 def save():
 	log.info('saving data for turn %s'%(db.getTurn(),))
 	
-	for table, keys in db.Db.table_keys_serialize.iteritems():
+	for table, keys in db.Db.table_keys.iteritems():
 		save_table(table, keys)
 
 def get_user_nickname():
@@ -161,8 +161,13 @@ def load_table(table_name, turn, external_path = None):
 					todel.append(k)
 			for td in todel:
 				del p[td]
-				
-			db.db.smart_update_object(table_name, turn, p)
+			
+			if 'turn' in p:
+				t = int(p['turn'])
+			else:
+				t = turn
+			
+			db.db.smart_update_object(table_name, t, p)
 	except IOError, e:
 		#print e
 		#print 'failed to load table %s %s'%(table_name, unicode(e).decode('utf-8'))

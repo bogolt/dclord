@@ -43,12 +43,15 @@ class Db:
 	PROTO_ACTION = 'proto_action'
 	RACE = 'race'
 	DIP = 'dip'
+	PLANET_SIZE ='planet_size'
 	
 	table_keys = {PLANET:KEYS_PLANET, OPEN_PLANET:KEYS_OPEN_PLANET, USER: KEYS_USER, PLAYER:KEYS_PLAYER, HW:KEYS_HW, FLEET:KEYS_FLEET, UNIT:KEYS_UNIT,
 	 ALIEN_UNIT:KEYS_ALIEN_UNIT, FLYING_FLEET:KEYS_FLYING_FLEET, FLYING_ALIEN_FLEET:KEYS_FLYING_ALIEN_FLEET, GARRISON_UNIT:KEYS_GARRISON_UNIT,
-	 GARRISON_QUEUE_UNIT:KEYS_GARRISON_QUEUE_UNIT, PROTO:KEYS_PROTO, PROTO_ACTION:KEYS_PROTO_ACTION, RACE:KEYS_RACE, DIP: KEYS_DIPLOMACY}
+	 GARRISON_QUEUE_UNIT:KEYS_GARRISON_QUEUE_UNIT, PROTO:KEYS_PROTO, PROTO_ACTION:KEYS_PROTO_ACTION, RACE:KEYS_RACE, DIP: KEYS_DIPLOMACY
+	 , PLANET_SIZE : ('x','y', 's', 'image')}
 	 
 	table_keys_serialize = table_keys.copy()
+	del table_keys_serialize[PLANET_SIZE]
 	
 	def __init__(self, dbpath=":memory:"):
 		self.conn = sqlite3.connect(dbpath)
@@ -73,7 +76,8 @@ class Db:
 		# table Db.FLYING_ALIEN_FLEET has no primary key
 		self.primary_keys = {Db.USER:['id'], Db.OPEN_PLANET:['x','y', 'user_id'], Db.RACE:['id'], Db.PLAYER: ['player_id'],
 		 Db.PLANET:['x','y'], Db.DIP:['owner_id', 'player_id'], Db.HW:['player_id'], Db.FLEET:['id'], Db.FLYING_FLEET:['id'], 
-		 Db.UNIT:['id'],Db.GARRISON_UNIT:['id'],Db.GARRISON_QUEUE_UNIT:['id'],Db.ALIEN_UNIT:['id'],Db.PROTO:['id'], Db.PROTO_ACTION:['id']}
+		 Db.UNIT:['id'],Db.GARRISON_UNIT:['id'],Db.GARRISON_QUEUE_UNIT:['id'],Db.ALIEN_UNIT:['id']
+		 ,Db.PROTO:['id'], Db.PROTO_ACTION:['id'], Db.PLANET_SIZE:['x','y']}
 		 
 		 
 		self.prepare()
@@ -353,7 +357,7 @@ class Db:
 			rv.append( dict(zip(keys, r)) )
 		return rv
 	
-	def iter_objects_list(self, table, flt, keys = None):
+	def iter_objects_list(self, table, flt = None, keys = None):
 		'get single object from db'
 		if not keys:
 			keys = self.table_keys[table]
@@ -361,7 +365,7 @@ class Db:
 		for r in c.fetchall():
 			yield dict(zip(keys, r))
 	
-	def select(self, table, flt, keys = None):
+	def select(self, table, flt = None, keys = None):
 		if not keys:
 			keys = self.table_keys[table]
 		c = self.conn.cursor()
@@ -374,19 +378,27 @@ class Db:
 
 			return c
 		
-		where_str = ''
+		where_conds = []
 		values_dict = {}
 		for cond, key_pairs in flt.iteritems():
-			where_str += ' and '.join(['%s %s :%s'%(key, cond, key) for key in key_pairs.iterkeys()])
-			values_dict.update(key_pairs)
+			if cond == 'between':
+				where_conds.append(' and '.join(['%s between :%s and :%s'%(key, key+'1', key+'2') for key in key_pairs]))
+				for k,v in key_pairs.iteritems():
+					values_dict[k+'1'] = v[0]
+					values_dict[k+'2'] = v[1]
+			else:
+				where_conds.append(' and '.join(['%s %s :%s'%(key, cond, key) for key in key_pairs.iterkeys()]))
+				values_dict.update(key_pairs)
 			
-			#values_list += key_pairs.values()
-		#del keys[0]
+		where_str = ' and '.join(where_conds)
 		s = 'select %s from %s WHERE %s'%(','.join(keys), table, where_str)
 		#print '"%s" . items: %s'%(s, values_dict)
 		try:
 			c.execute(s, values_dict)
 		except sqlite3.OperationalError as e:
+			print 'Select %s with %s, error: %s'%(s, values_dict, e)
+			raise
+		except sqlite3.ProgrammingError as e:
 			print 'Select %s with %s, error: %s'%(s, values_dict, e)
 			raise
 		return c
@@ -664,7 +676,7 @@ def items(table_name, flt, keys, _ = None, verbose = False):
 		c.execute(s)
 	except sqlite3.Error, e:
 		print traceback.format_stack()
-		log.error('Error %s, when executing: %s\ntable %s, filter: %s, turn %s'%(e, s, table, flt, turn_n))
+		log.error('Error %s, when executing: %s\ntable %s, filter: %s'%(e, s, table_name, flt,))
 	for r in c:
 		yield dict(zip(keys,r))
 

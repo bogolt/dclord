@@ -9,6 +9,10 @@ import serialization
 
 log = logging.getLogger('dclord')
 
+def vis_area_filter(ps, sz):
+	return {'>=':{'x':ps[0], 'y':ps[1]}, '<=':{'x':ps[0]+sz[0], 'y':ps[1]+sz[1]}}
+
+
 def bestFit(obj, length):
 	if obj < length:
 		return 1
@@ -293,15 +297,19 @@ class Map(util.BufferedWindow):
 		sz = util.add(sz, (1,1))
 		return ['x>=%d AND y>=%d AND x<=%d AND y<=%d'%(ps[0], ps[1], ps[0]+sz[0], ps[1]+sz[1])]
 		
+		
 	def drawPlanets(self, dc, rect):
-		flt = self.rectFilter(rect) if rect else self.visibleAreaFilter()
-		cond = ['owner_id is not null'] if int(config.options['filter']['inhabited_planets'])==1 else []
-		for p in db.db.iter_objects_list(db.Db.PLANET, {}):#{'!=':{'owner_id':'0'}}):
+		#cond = ['owner_id is not null'] if int(config.options['filter']['inhabited_planets'])==1 else []
+		x = self.offset_pos[0], self.offset_pos[0]+self.screen_size[0]
+		y = self.offset_pos[1], self.offset_pos[1]+self.screen_size[1]
+		area = {'between':{'x':x, 'y':y}}
+		for p in db.db.iter_objects_list(db.Db.PLANET, area):# {'=':{'owner_id':601172}}):
+			#print 'got plnaet %s'%(p,)
 			self.drawPlanet(dc, p)
 			if self.draw_geo:
 				self.drawPlanetGeo(dc, p)
 
-		for p in db.items('planet_size', flt, ('x', 'y', 's')):
+		for p in db.db.iter_objects_list(db.Db.PLANET_SIZE, area):
 			self.drawPlanet(dc, p)
 			
 	def drawFleets(self, dc, rect):

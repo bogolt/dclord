@@ -196,21 +196,20 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			if XmlHandler.UserPlanets == self.read_level:
 				data['owner_id'] = self.user['id']
 				db.set_open_planet(get_coord(data), self.user['id'])
-				#log.info('load owner planet %s'%(data,))
-			elif 'is_open' in data and int(data['is_open']) == 1:
-				db.set_open_planet(get_coord(data), self.user['id'])
-
-			if 'age' in data:
-				actual_turn = self.turn
-				if data['age']:
+				db.db.set_object(db.Db.PLANET, data)
+			else:
+				if 'is_open' in data and int(data['is_open']) == 1:
+					db.set_open_planet(get_coord(data), self.user['id'])
+				
+				actual_turn = 0
+				if 'turn' in data:
+					actual_turn = int(data['turn'])
+					del data['turn']
+				if 'age' in data:
 					actual_turn = self.turn - int(data['age'])
-				del data['age']
+					del data['age']
 				print 'import planet %s at turn %s'%(data, actual_turn)
 				db.db.smart_update_object(db.Db.PLANET, actual_turn, data)
-			else:
-				print 'import planet %s'%(data,)
-				db.db.set_object(db.Db.PLANET, data)
-			
 		elif XmlHandler.Fleet == name:
 			fleetDict = {'x':'x','y':'y','id':'id','in-transit':'in_transit','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
 			data = getAttrs(attrs, fleetDict)
