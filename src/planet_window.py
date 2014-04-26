@@ -155,12 +155,6 @@ class FleetWindow(scrolled.ScrolledPanel):
 		self.SetSizer( self.vbox )
 		self.SetAutoLayout( 1 )
 		self.SetupScrolling()
-				
-		self.Bind(wx.EVT_SIZE, self.onSize, self)
-				
-	def onSize(self, evt):
-		if self.GetAutoLayout():
-			self.Layout()
 	
 	def setUnits(self, coord, turn):
 		units = {}
@@ -258,16 +252,28 @@ class FleetWindow(scrolled.ScrolledPanel):
 				uwindow.update()
 				self.vbox.Add( uwindow)
 
-class FleetPanel(wx.Panel):
+class FleetPanel(scrolled.ScrolledPanel):
 	def __init__(self, parent):
-		wx.Window.__init__(self, parent, -1, size=(120,200))
+		scrolled.ScrolledPanel.__init__(self, parent)
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		
+		self.fleets = {}
 				
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
 	
+		self.Bind(wx.EVT_SIZE, self.onSize, self)	
+		self.SetAutoLayout( 1 )
+		self.SetupScrolling()
+				
+				
+	def onSize(self, evt):
+		if self.GetAutoLayout():
+			self.Layout()
+			
 	def set_fleets(self, evt):
 		self.sizer.DeleteWindows()
+		self.fleets = {}
 		
 		x,y = evt.attr1
 		for fleet in db.db.iter_objects_list(db.Db.FLEET, {'=':{'x':x, 'y':y}}):
@@ -282,11 +288,11 @@ class FleetPanel(wx.Panel):
 		owner_name = db.get_player_name(fleet['owner_id'])
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		sizer.Add(wx.StaticText(pane, label='owner: %s'%(owner_name,)), 1, wx.EXPAND)
-
+		
 		for unit in db.db.iter_objects_list(db.Db.UNIT,{'=':{'fleet_id':fleet['id']}}):
 			
 			hbox = wx.BoxSizer(wx.HORIZONTAL)
-			sizer.Add(hbox)
+			sizer.Add(hbox, 1, wx.EXPAND)
 			
 			proto = db.db.get_object(db.Db.PROTO, {'=':{'id':unit['class']}})
 			obj_carp = int(unit['class']), int(proto['carapace']), int(proto['color'])
@@ -296,14 +302,14 @@ class FleetPanel(wx.Panel):
 			if img:
 				bitmap = wx.StaticBitmap(pane)
 				bitmap.SetBitmap(img)
-				hbox.Add(bitmap)
+				hbox.Add(bitmap, 1, wx.EXPAND)
 			else:
 				print 'image not found for unit %s, bc %s, carp %s, color %s'%(unit['id'], int(unit['class']), int(proto['carapace']), int(proto['color']) )
 
 			name = proto['name']
 			if not name:
 				name = get_unit_name(int(proto['carapace']))
-			hbox.Add(wx.StaticText(pane, label=name))
+			hbox.Add(wx.StaticText(pane, label=name), 1, wx.EXPAND)
 
 		border = wx.BoxSizer()
 		border.Add(sizer, 1, wx.EXPAND|wx.ALL)
@@ -312,8 +318,14 @@ class FleetPanel(wx.Panel):
 		self.sizer.Layout()
 		
 		self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnPaneChanged, cp)
+		cp.Expand()
+		
+		self.fleets[int(fleet['id'])] = border
+
 	
 	def OnPaneChanged(self, evt=None):
+		for sz in self.fleets.itervalues():
+			sz.Layout()
 		self.sizer.Layout()
 
 
@@ -512,5 +524,5 @@ class InfoPanel(wx.Panel):
 		log.info('updating info panel, pos %s turn %d'%(self.pos, self.turn))
 		self.sizer.DeleteWindows()
 		self.sizer.Add( PlanetWindow(self, self.pos, self.turn, True) )
-		self.sizer.Add( FleetWindow(self, self.pos, self.turn), 1, flag=wx.EXPAND | wx.ALL)
+		#self.sizer.Add( FleetWindow(self, self.pos, self.turn), 1, flag=wx.EXPAND | wx.ALL)
 		self.sizer.Layout()
