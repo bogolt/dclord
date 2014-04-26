@@ -421,6 +421,7 @@ class Db:
 		#self.cur.execute('select %s from %s where %s'%(','.join(data.keys()), table_name, ','.join(['%s=?'%(key,) for key in flt])), tuple(flt.values()))
 		try:
 			keys = self.table_keys[table]
+			#print 'get %s %s'%(table, flt)
 			r = self.select(table, flt, keys).fetchone()
 		except TypeError as e:
 			print 'get object failed: with %s %s, error: %s'%(table, flt, e)

@@ -267,9 +267,11 @@ class FleetPanel(wx.Panel):
 		self.sizer.Layout()
 	
 	def set_fleets(self, evt):
+		self.sizer.DeleteWindows()
 		
 		x,y = evt.attr1
 		for fleet in db.db.iter_objects_list(db.Db.FLEET, {'=':{'x':x, 'y':y}}):
+			print 'draw fleet %s'%(fleet,)
 			self.add_fleet(fleet)
 
 	def add_fleet(self, fleet):
@@ -280,6 +282,28 @@ class FleetPanel(wx.Panel):
 		owner_name = db.get_player_name(fleet['owner_id'])
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		sizer.Add(wx.StaticText(pane, label='owner: %s'%(owner_name,)), 1, wx.EXPAND)
+
+		for unit in db.db.iter_objects_list(db.Db.UNIT,{'=':{'fleet_id':fleet['id']}}):
+			
+			hbox = wx.BoxSizer(wx.HORIZONTAL)
+			sizer.Add(hbox)
+			
+			proto = db.db.get_object(db.Db.PROTO, {'=':{'id':unit['class']}})
+			obj_carp = int(unit['class']), int(proto['carapace']), int(proto['color'])
+
+			img = image.get_image( int(unit['class']), int(proto['carapace']), int(proto['color']) )
+			
+			if img:
+				bitmap = wx.StaticBitmap(pane)
+				bitmap.SetBitmap(img)
+				hbox.Add(bitmap)
+			else:
+				print 'image not found for unit %s, bc %s, carp %s, color %s'%(unit['id'], int(unit['class']), int(proto['carapace']), int(proto['color']) )
+
+			name = proto['name']
+			if not name:
+				name = get_unit_name(int(proto['carapace']))
+			hbox.Add(wx.StaticText(pane, label=name))
 
 		border = wx.BoxSizer()
 		border.Add(sizer, 1, wx.EXPAND|wx.ALL)
