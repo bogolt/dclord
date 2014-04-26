@@ -106,8 +106,11 @@ class DcFrame(wx.Frame):
 		info.Resizable(True)
 		info.CaptionVisible(False)
 		
+		self.fleets = planet_window.FleetPanel(self)
+		
 		self._mgr.AddPane(self.map, info)
 		#self._mgr.AddPane(self.history, wx.RIGHT, "Turn")
+		self._mgr.AddPane(self.fleets, wx.RIGHT, "Colpane")
 		self._mgr.AddPane(self.info_panel, wx.RIGHT, "Info")
 		self._mgr.AddPane(self.planet_panel, wx.RIGHT, "Planet")
 		self._mgr.AddPane(self.garrison_panel, wx.RIGHT, "Garrison")
@@ -163,6 +166,7 @@ class DcFrame(wx.Frame):
 		self.planet_panel.select_coord(evt)
 		self.garrison_panel.select_coord(evt)
 		self.info_panel.selectObject(evt)
+		self.fleets.set_fleets(evt)
 		
 	def makeMenu(self):
 		fileMenu = wx.Menu()

@@ -258,6 +258,41 @@ class FleetWindow(scrolled.ScrolledPanel):
 				uwindow.update()
 				self.vbox.Add( uwindow)
 
+class FleetPanel(wx.Panel):
+	def __init__(self, parent):
+		wx.Window.__init__(self, parent, -1, size=(120,200))
+		self.sizer = wx.BoxSizer(wx.VERTICAL)
+				
+		self.SetSizer(self.sizer)
+		self.sizer.Layout()
+	
+	def set_fleets(self, evt):
+		
+		x,y = evt.attr1
+		for fleet in db.db.iter_objects_list(db.Db.FLEET, {'=':{'x':x, 'y':y}}):
+			self.add_fleet(fleet)
+
+	def add_fleet(self, fleet):
+		cp = wx.CollapsiblePane(self, label=fleet['name'], style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
+		self.sizer.Add(cp)
+		pane = cp.GetPane()
+		
+		owner_name = db.get_player_name(fleet['owner_id'])
+		sizer = wx.BoxSizer(wx.VERTICAL)
+		sizer.Add(wx.StaticText(pane, label='owner: %s'%(owner_name,)), 1, wx.EXPAND)
+
+		border = wx.BoxSizer()
+		border.Add(sizer, 1, wx.EXPAND|wx.ALL)
+		pane.SetSizer(border)
+		
+		self.sizer.Layout()
+		
+		self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnPaneChanged, cp)
+	
+	def OnPaneChanged(self, evt=None):
+		self.sizer.Layout()
+
+
 class PlanetGeoWindow(wx.Window):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(120,200))
