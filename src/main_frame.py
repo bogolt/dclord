@@ -110,7 +110,7 @@ class DcFrame(wx.Frame):
 		
 		self._mgr.AddPane(self.map, info)
 		#self._mgr.AddPane(self.history, wx.RIGHT, "Turn")
-		self._mgr.AddPane(self.fleets, wx.RIGHT, "Colpane")
+		self._mgr.AddPane(self.fleets, wx.RIGHT, "Fleets")
 		self._mgr.AddPane(self.info_panel, wx.RIGHT, "Info")
 		self._mgr.AddPane(self.planet_panel, wx.RIGHT, "Planet")
 		self._mgr.AddPane(self.garrison_panel, wx.RIGHT, "Garrison")
