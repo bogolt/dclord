@@ -8,7 +8,8 @@ def to_pos(a,b):
 
 log = logging.getLogger('dclord')
 
-KEYS_PLANET = ('x','y','o','e','m','t','s','owner_id', 'name', 'is_open')
+KEYS_PLANET = ('x','y','o','e','m','t','s','owner_id', 'name')
+KEYS_USER_PLANET = ('x','y','corruption','population','owner_id','is_open')
 KEYS_OPEN_PLANET = ('x','y','user_id')
 KEYS_FLEET = ('id', 'x','y','owner_id', 'is_hidden','name','weight')
 KEYS_FLYING_FLEET = ('id', 'x','y','in_transit', 'owner_id','from_x','from_y','weight', 'arrival_turn','is_hidden')
@@ -27,6 +28,7 @@ KEYS_DIPLOMACY = ('owner_id', 'player_id', 'status')
 
 class Db:
 	PLANET = 'planet'
+	USER_PLANET = 'user_planet'
 	OPEN_PLANET = 'open_planet'
 	USER = 'user'
 	PLAYER = 'player'
@@ -48,7 +50,7 @@ class Db:
 	table_keys = {PLANET:KEYS_PLANET, OPEN_PLANET:KEYS_OPEN_PLANET, USER: KEYS_USER, PLAYER:KEYS_PLAYER, HW:KEYS_HW, FLEET:KEYS_FLEET, UNIT:KEYS_UNIT,
 	 ALIEN_UNIT:KEYS_ALIEN_UNIT, FLYING_FLEET:KEYS_FLYING_FLEET, FLYING_ALIEN_FLEET:KEYS_FLYING_ALIEN_FLEET, GARRISON_UNIT:KEYS_GARRISON_UNIT,
 	 GARRISON_QUEUE_UNIT:KEYS_GARRISON_QUEUE_UNIT, PROTO:KEYS_PROTO, PROTO_ACTION:KEYS_PROTO_ACTION, RACE:KEYS_RACE, DIP: KEYS_DIPLOMACY
-	 , PLANET_SIZE : ('x','y', 's', 'image')}
+	 , PLANET_SIZE : ('x','y', 's', 'image'), USER_PLANET:KEYS_USER_PLANET}
 	 
 	table_keys_serialize = table_keys.copy()
 	del table_keys_serialize[PLANET_SIZE]
@@ -61,8 +63,8 @@ class Db:
 						
 		self.cur = self.conn.cursor()
 			
-		self.has_turn = [Db.PLANET, Db.FLEET, Db.FLYING_FLEET, Db.FLYING_ALIEN_FLEET, Db.ALIEN_UNIT]
-		self.has_coord_keys = [Db.PLANET, Db.FLYING_ALIEN_FLEET, Db.GARRISON_UNIT, Db.GARRISON_QUEUE_UNIT]
+		self.has_turn = [Db.PLANET, Db.USER_PLANET, Db.FLEET, Db.FLYING_FLEET, Db.FLYING_ALIEN_FLEET, Db.ALIEN_UNIT]
+		#self.has_coord_keys = [Db.PLANET,  Db.FLYING_ALIEN_FLEET, Db.GARRISON_UNIT, Db.GARRISON_QUEUE_UNIT]
 		
 		for table, keys in self.table_keys.iteritems():
 			if table in self.has_turn:
@@ -146,7 +148,8 @@ class Db:
 				name text,
 				race_id integer
 				)"""%(Db.PLAYER, ))
-		
+
+		#TODO; delete is_open field ( after several versions, when noone has it anymore )
 		cur.execute("""create table if not exists %s(
 				x integer(2) not null,
 				y integer(2) not null,
@@ -160,6 +163,16 @@ class Db:
 				is_open integer(1),
 				turn integer default 0,
 				PRIMARY KEY (x, y))"""%(self.PLANET,))
+
+		cur.execute("""create table if not exists %s(
+				x integer(2) not null,
+				y integer(2) not null,
+				corruption integer(1),
+				population integer,
+				owner_id integer,
+				is_open integer(1),
+				turn integer default 0,
+				PRIMARY KEY (x, y))"""%(self.USER_PLANET,))
 
 				
 		#what if approaching unknown fleet does not have an id?

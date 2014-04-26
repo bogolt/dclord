@@ -191,12 +191,15 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.KnownPlanets == name:
 			db.eraseObject(db.Db.OPEN_PLANET, ['user_id=%s'%(self.user['id'],),])
 		elif XmlHandler.Planet == name:
-			data = getAttrs(attrs, {'x':'x', 'open':'is_open', 'owner-id':'owner_id', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s', 'age':'age'})
+			data = getAttrs(attrs, {'x':'x', 'owner-id':'owner_id', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s', 'age':'age'})
 			
 			if XmlHandler.UserPlanets == self.read_level:
 				data['owner_id'] = self.user['id']
-				db.set_open_planet(get_coord(data), self.user['id'])
 				db.db.set_object(db.Db.PLANET, data)
+				data = getAttrs(attrs, {'x':'x', 'y':'y', 'population':'population', 'corruption':'corruption', 'open':'is_open'})
+				data['owner_id'] = self.user['id']
+				db.set_open_planet(get_coord(data), self.user['id'])
+				db.db.set_object(db.Db.USER_PLANET, data)
 			else:
 				if 'is_open' in data and int(data['is_open']) == 1:
 					db.set_open_planet(get_coord(data), self.user['id'])
