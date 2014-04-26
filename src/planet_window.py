@@ -289,8 +289,9 @@ class FleetPanel(scrolled.ScrolledPanel):
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		sizer.Add(wx.StaticText(pane, label='owner: %s'%(owner_name,)), 1, wx.EXPAND)
 		
+		our_fleet = False
 		for unit in db.db.iter_objects_list(db.Db.UNIT,{'=':{'fleet_id':fleet['id']}}):
-			
+			our_fleet = True
 			hbox = wx.BoxSizer(wx.HORIZONTAL)
 			sizer.Add(hbox, 1, wx.EXPAND)
 			
@@ -310,6 +311,23 @@ class FleetPanel(scrolled.ScrolledPanel):
 			if not name:
 				name = get_unit_name(int(proto['carapace']))
 			hbox.Add(wx.StaticText(pane, label=name), 1, wx.EXPAND)
+		
+		if not our_fleet:
+			for unit in db.db.iter_objects_list(db.Db.ALIEN_UNIT,{'=':{'fleet_id':fleet['id']}}):
+				hbox = wx.BoxSizer(wx.HORIZONTAL)
+				sizer.Add(hbox, 1, wx.EXPAND)
+			
+				img = image.getCarapaceImage(int(unit['carapace']), int(unit['color']) )
+				
+				if img:
+					bitmap = wx.StaticBitmap(pane)
+					bitmap.SetBitmap(img)
+					hbox.Add(bitmap, 1, wx.EXPAND)
+				else:
+					print 'image not found for unit %s, carp %s, color %s'%(unit['id'],  int(unit['carapace']), int(unit['color']) )
+
+				name = get_unit_name(int(unit['carapace']))
+				hbox.Add(wx.StaticText(pane, label=name), 1, wx.EXPAND)
 
 		border = wx.BoxSizer()
 		border.Add(sizer, 1, wx.EXPAND|wx.ALL)
