@@ -338,13 +338,17 @@ class FleetPanel(scrolled.ScrolledPanel):
 		self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnPaneChanged, cp)
 		cp.Expand()
 		
-		self.fleets[int(fleet['id'])] = border
-
+		cp.Bind(wx.EVT_LEFT_DOWN, self.onFleetSelect)
+		self.fleets[cp] = fleet
 	
 	def OnPaneChanged(self, evt=None):
-		for sz in self.fleets.itervalues():
-			sz.Layout()
 		self.sizer.Layout()
+	
+	def onFleetSelect(self, evt):
+		obj = evt.GetEventObject()
+		print 'down %s'%(obj,)
+		fleet = self.fleets[obj]
+		print fleet
 
 
 class PlanetGeoWindow(wx.Window):
@@ -456,14 +460,28 @@ class GarrisonPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(120,200))
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.units = {}
+		self.coord = None
+		self.selected_units = set()
 		
+		self.button_fleet = wx.Button(self, label='to fleet')
+		self.sizer.Add(self.button_fleet)
+		self.button_fleet.Disable()
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
 		
 	def select_coord(self, evt):
 		coord = evt.attr1
+		self.coord = coord
 		
-		self.sizer.DeleteWindows()
+		self.button_fleet.Disable()
+		
+		self.selected_units = set()
+		
+		for wnd in self.units.iterkeys():
+			wnd.Destroy()
+		self.sizer.Layout()
+		self.units = {}
 		
 		planet = db.get_planet(coord)
 		if not planet or 'owner_id' not in planet:
@@ -475,7 +493,7 @@ class GarrisonPanel(wx.Panel):
 		protos = {}
 
 		items = {}
-		for unit in db.garrison_units(db.getTurn(), db.filter_coord(coord)):
+		for unit in db.db.iter_objects_list(db.Db.GARRISON_UNIT, {'=':{'x':coord[0], 'y':coord[1]}}):
 			bc = unit['class']
 			if bc in items:
 				items[bc].append(unit)
@@ -490,19 +508,21 @@ class GarrisonPanel(wx.Panel):
 		
 		for bc, item_list in items.iteritems():
 			p = protos[bc]
+			wnd = wx.Window(self, style=wx.SUNKEN_BORDER)
 			sz = wx.BoxSizer(wx.HORIZONTAL)
-			self.sizer.Add(sz)
+			wnd.SetSizer(sz)
+			self.sizer.Add(wnd)
 			if 'carapace' in p and p['carapace']:
 				img = image.getCarapaceImage(int(p['carapace']), int(p['color']))
 			else:
 				img = image.getBcImage(bc)
-			bmp = wx.StaticBitmap(self)
+			bmp = wx.StaticBitmap(wnd)
 			if img:
 				bmp.SetBitmap(img)
 			sz.Add(bmp)
 			n_str = ''
 			if len(item_list) > 1:
-				n_str = 'x %s'%(len(item_list),)
+				n_str = ' x%s'%(len(item_list),)
 			name = get_unit_name(bc)
 			if not name:
 				name = p['name']
@@ -513,9 +533,36 @@ class GarrisonPanel(wx.Panel):
 				tc = int(p['transport_capacity'])
 				if tc > 0:
 					transport = '[%s]'%(tc,)
-			sz.Add(wx.StaticText(self, -1, '%s%s%s %s'%(fly, transport, n_str, name,)))
+			text = wx.StaticText(wnd, -1, '%s%s%s %s'%(fly, transport, n_str, name,))
+			sz.Add(text)
+			sz.Layout()
+			
+			wnd.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
+			bmp.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
+			text.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
+			self.units[wnd] = bc
 
 		self.sizer.Layout()
+		
+	def onLeftDown(self, evt):
+		wnd = obj = evt.GetEventObject()
+		if 'wxStaticText' == obj.GetClassName() or 'wxStaticBitmap' == obj.GetClassName():
+			wnd = obj.GetParent()
+		
+		if wnd in self.selected_units:
+			print 'reset bg color'
+			wnd.SetBackgroundColour(wx.NullColor)
+			self.selected_units.remove(wnd)
+		else:
+			bc = self.units[wnd]
+			self.selected_units.add(wnd)
+			selected_unit_color = '#008800'
+			wnd.SetBackgroundColour(selected_unit_color)
+		
+		if self.selected_units:	
+			self.button_fleet.Enable()
+		else:
+			self.button_fleet.Disable()
 	
 class InfoPanel(wx.Panel):
 	def __init__(self, parent):

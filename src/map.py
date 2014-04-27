@@ -299,16 +299,19 @@ class Map(util.BufferedWindow):
 		
 		
 	def drawPlanets(self, dc, rect):
-		#cond = ['owner_id is not null'] if int(config.options['filter']['inhabited_planets'])==1 else []
+		#cond = ['owner_id is not null'] 
 		x = self.offset_pos[0], self.offset_pos[0]+self.screen_size[0]
 		y = self.offset_pos[1], self.offset_pos[1]+self.screen_size[1]
-		area = {'between':{'x':x, 'y':y}}
-		for p in db.db.iter_objects_list(db.Db.PLANET, area):# {'=':{'owner_id':601172}}):
+		area = {}
+		area['between'] = {'x':x, 'y':y}
+		#if int(config.options['filter']['inhabited_planets'])==1:
+		#area['>'] = {'owner_id': 10}
+		for p in db.db.iter_objects_list(db.Db.PLANET, area):
 			#print 'got plnaet %s'%(p,)
 			self.drawPlanet(dc, p)
 			if self.draw_geo:
 				self.drawPlanetGeo(dc, p)
-
+		
 		for p in db.db.iter_objects_list(db.Db.PLANET_SIZE, area):
 			self.drawPlanet(dc, p)
 			

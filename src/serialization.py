@@ -93,7 +93,7 @@ def load_sync_data():
 	for load_turn in available_turns[::-1]:
 		
 		total_load_turns += 1
-		if total_load_turns > 3:
+		if total_load_turns > 1:
 			break
 	
 		turn_path = os.path.join(turns_path, str(load_turn))
