@@ -173,6 +173,7 @@ class DcFrame(wx.Frame):
 		exit_action = fileMenu.Append(wx.ID_ANY, "E&xit")
 		self.Bind(wx.EVT_MENU, self.onClose, exit_action)
 		self.Bind(wx.EVT_MENU, self.onAbout, fileMenu.Append(wx.ID_ANY, "&About dcLord"))
+		self.Bind(wx.EVT_MENU, self.onExport, fileMenu.Append(wx.ID_ANY, "Export planets to clipboard"))
 		
 		gameMenu = wx.Menu()
 		self.updateMenu = gameMenu.Append(wx.ID_ANY, "&Download from sever")
@@ -227,6 +228,15 @@ class DcFrame(wx.Frame):
 	
 		self.Bind(wx.EVT_CLOSE, self.onClose, self)
 
+	def onExport(self, evt):
+		
+		dlg = wx.DirDialog(self, 'Set export csv file')
+		if dlg.ShowModal() == wx.ID_OK:
+			serialization.export_planets_csv(dlg.GetPath())
+		
+		str_export = ''
+		for planet in db.db.iter_objects_list(db.Db.PLANET):
+			str_export += '%s'
 	
 	def onSetSyncPath(self, evt):
 		dlg = wx.DirDialog(self, 'Set sync directory path', os.path.join('/home/xar/Dropbox', 'the-game-sync'))
@@ -420,8 +430,10 @@ class DcFrame(wx.Frame):
 		return False
 	
 	def get_unit_range(self, unit):
-		for proto in db.prototypes(['id=%s'%(unit['class'],)]):
+		proto = db.db.get_object(db.Db.PROTO, {'=':{'id':unit['class']}})
+		if proto:
 			return float(proto['fly_range'])
+		return None
 
 	def onSendScouts(self, _):
 		turn = db.getTurn()
@@ -448,34 +460,36 @@ class DcFrame(wx.Frame):
 			fly_range = 0.0
 			ready_scout_fleets = {}
 			# get all fleets over our planets
-			for planet in db.open_planets(user_id):
-				#print 'open planet %s'%(planet,)
+			for planet in db.db.iter_objects_list(db.Db.OPEN_PLANET, {'=':{'user_id':user_id}}):
+				print 'open planet %s'%(planet,)
 				coord = get_coord(planet)
-				for fleet in db.fleets(turn, filter_coord(coord)+['owner_id=%s'%(user_id,)]):
+				for fleet in db.db.iter_objects_list(db.Db.FLEET, {'=':{'owner_id':user_id, 'x':coord[0], 'y':coord[1]}}):
 					if value_in(self.exclude_fleet_names, fleet['name']):
 						continue
-					units = db.get_units(turn, ['fleet_id=%s'%(fleet['id'],)])
+					units = db.db.get_objects_list(db.Db.UNIT, {'=':{'fleet_id':fleet['id']}})
 					if len(units) != 1:
-						#print 'fleet %s has wrong units count ( != 1 ) %s, skipping it'%(fleet, units)						
+						print 'fleet %s has wrong units count ( != 1 ) %s, skipping it'%(fleet, units)						
 						continue
 					unit = units[0]
 					if int(unit['id']) in self.manual_control_units:
-						#print 'unit %s reserved for manual control, skipping it'%(unit,)
+						print 'unit %s reserved for manual control, skipping it'%(unit,)
 						continue
 
 					if not self.is_geo_scout(unit):
-						#print 'unit %s is not geo-scout, skipping it'%(unit,)
+						print 'unit %s is not geo-scout, skipping it'%(unit,)
 						continue
-					fly_range = max(fly_range, self.get_unit_range(unit))
-					#print 'unit %s on planet %s for fleet %s is geo-scout'%(unit, coord, fleet)
+					#fly_range = max(fly_range, )
+					print 'unit %s on planet %s for fleet %s is geo-scout'%(unit, coord, fleet)
 					# ok, this is geo-scout, single unit in fleet, on our planet
 					#ready_scout_fleets.append((coord, fleet))
-					ready_scout_fleets.setdefault(coord, []).append((fleet, fly_range))
+					r = self.get_unit_range(unit)
+					fly_range = max(fly_range, r)
+					ready_scout_fleets.setdefault(coord, []).append((fleet, r))
 					
 			
 			# get possible planets to explore in nearest distance
 			for coord in ready_scout_fleets.keys():
-				serialization.load_geo_size_center(coord, 10)
+				serialization.load_geo_size_center(coord, int(fly_range))
 			
 			# jump to nearest/biggest unexplored planet
 			exclude = set()
@@ -484,7 +498,9 @@ class DcFrame(wx.Frame):
 				
 				possible_planets = []
 				#s<=99 - skip stars
-				for p in db.planets_size(['s>=%s'%(min_size,), 's<=%s'%(max_size,)] + planet_area_filter( lt, (int(fly_range*2), int(fly_range*2)))):
+				dx = lt[0]-fly_range, lt[0]+fly_range
+				dy = lt[1]-fly_range, lt[1]+fly_range
+				for p in db.db.iter_objects_list(db.Db.PLANET_SIZE, {'between':{'s':(min_size,max_size), 'x':dx, 'y':dy}}):
 					dest = get_coord(p)
 					if dest in exclude:
 						continue
@@ -498,11 +514,11 @@ class DcFrame(wx.Frame):
 					
 					has_flying_geo_scouts = False
 					# get list of all flying fleets ( or our allies and mults ) to this planet 
-					for fleet in db.flyingFleets(turn, filter_coord(dest) + ['owner_id in(%s)'%','.join(friend_geo_scout_ids)]):
+					for fleet in db.db.iter_objects_list(db.Db.FLYING_FLEET, {'=':{'x':dest[0], 'y':dest[1]}, 'in': {'owner_id':friend_geo_scout_ids}}):
 						# check if the fleet is geo-scout
 						if self.is_geo_scout_fleet(turn, fleet['id']):
 							has_flying_geo_scouts = True
-							#print 'found another scout %s, skip planet %s'%(fleet, dest)
+							print 'found another scout %s, skip planet %s'%(fleet, dest)
 					if has_flying_geo_scouts:
 						exclude.add(dest)
 						continue
@@ -518,7 +534,7 @@ class DcFrame(wx.Frame):
 						# ok fly to it
 						self.pending_actions.fleetMove(fleet['id'], planet)
 						exclude.add( planet )
-						#print 'jump %s from %s to %s'%(fleet, coord, planet)
+						print 'jump %s from %s to %s'%(fleet, coord, planet)
 						possible_planets.remove( (dist, planet ) )
 						break
 							

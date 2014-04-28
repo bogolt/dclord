@@ -367,7 +367,7 @@ class Db:
 		c = self.select(table, flt)
 		rv = []
 		for r in c.fetchall():
-			rv.append( dict(zip(keys, r)) )
+			rv.append( dict(zip(self.table_keys[table], r)) )
 		return rv
 	
 	def iter_objects_list(self, table, flt = None, keys = None):
@@ -399,6 +399,11 @@ class Db:
 				for k,v in key_pairs.iteritems():
 					values_dict[k+'1'] = v[0]
 					values_dict[k+'2'] = v[1]
+			elif cond == 'in':
+				where_conds.append(' and '.join(['%s in (%s)'%(key, ','.join(value_list)) for key, value_list in key_pairs.iteritems()]))
+				#for k,v in key_pairs.iteritems():
+				#	values_dict[k+'1'] = v[0]
+				#	values_dict[k+'2'] = v[1]				
 			else:
 				where_conds.append(' and '.join(['%s %s :%s'%(key, cond, key) for key in key_pairs.iterkeys()]))
 				values_dict.update(key_pairs)

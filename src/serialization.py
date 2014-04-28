@@ -141,6 +141,38 @@ def save_sync_data():
 		
 	for f in os.listdir(pt):
 		util.pack(os.path.join(pt, f), os.path.join(outp, f+".gz"))
+		
+	export_planets_csv(pt)
+	
+def export_planets_csv(pt):
+	path = os.path.join(pt, 'dc_map_export.csv')
+	keys = list(db.KEYS_PLANET)
+	keys.remove('owner_id')
+	keys.append('owner')
+	keys.append('turn')
+	keys = tuple(keys)
+	try:
+		f = open(path, 'wt')
+		writer = csv.DictWriter(f, keys)
+		writer.writeheader()
+		for planet in db.db.iter_objects_list(db.Db.PLANET):
+			owner = ''
+			if 'owner_id' in planet and planet['owner_id']:
+				o = db.db.get_object(db.Db.PLAYER, {'=':{'player_id':planet['owner_id']}})
+				if o:
+					owner = o['name']
+			planet['owner'] = owner
+			if 'owner_id':
+				del planet['owner_id']
+			try:
+				for s in ['owner', 'name']:
+					if s in planet and planet[s]:
+						planet[s] = planet[s].encode('utf-8')
+				writer.writerow(planet)
+			except UnicodeEncodeError, e:
+				log.error('failed convert data %s - %s'%(planet, e))
+	except IOError, e:
+		log.error('failed writing data to csv file %s: %s'%(path, e))
 
 
 def load_table(table_name, turn, external_path = None):
