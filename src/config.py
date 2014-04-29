@@ -104,6 +104,7 @@ options = {
 		 'filter':
 			{
 			'inhabited_planets':0,
+			'size_planets':1,
 			'fleets':1
 			}
 		}

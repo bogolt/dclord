@@ -254,6 +254,7 @@ class Map(util.BufferedWindow):
 				dc.SetBrush(wx.Brush('red'))
 			
 			dc.DrawCircle(rx, ry, self.relSize(sz))
+			#dc.FloodFill(rx, ry, col)
 			dc.SetBrush(wx.Brush('white'))
 				#dc.SetPen(wx.Pen(colour=col, width=2))
 				#dc.DrawCircle(rx, ry, self.relSize(sz))
@@ -302,18 +303,20 @@ class Map(util.BufferedWindow):
 		#cond = ['owner_id is not null'] 
 		x = self.offset_pos[0], self.offset_pos[0]+self.screen_size[0]
 		y = self.offset_pos[1], self.offset_pos[1]+self.screen_size[1]
-		area = {}
-		area['between'] = {'x':x, 'y':y}
-		#if int(config.options['filter']['inhabited_planets'])==1:
-		#area['>'] = {'owner_id': 10}
+
+		area = {'between':{'x':x, 'y':y}}
+		if int(config.options['filter']['inhabited_planets'])==1:
+			area['>'] = {'owner_id': 0}
 		for p in db.db.iter_objects_list(db.Db.PLANET, area):
 			#print 'got plnaet %s'%(p,)
 			self.drawPlanet(dc, p)
 			if self.draw_geo:
 				self.drawPlanetGeo(dc, p)
 		
-		for p in db.db.iter_objects_list(db.Db.PLANET_SIZE, area):
-			self.drawPlanet(dc, p)
+		if int(config.options['filter']['inhabited_planets'])==0 and int(config.options['filter']['size_planets'])==1:
+			area = {'between':{'x':x, 'y':y}}
+			for p in db.db.iter_objects_list(db.Db.PLANET_SIZE, area):
+				self.drawPlanet(dc, p)
 			
 	def drawFleets(self, dc, rect):
 		self.fleets = {}
