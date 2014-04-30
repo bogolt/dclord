@@ -202,6 +202,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				db.db.set_object(db.Db.USER_PLANET, data)
 			else:
 				if 'is_open' in data and int(data['is_open']) == 1:
+					print 'import raw planet %s'%(data,)
 					db.set_open_planet(get_coord(data), self.user['id'])
 				
 				actual_turn = 0
