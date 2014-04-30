@@ -66,7 +66,7 @@ class DcFrame(wx.Frame):
 		self.log_dlg.SetBackgroundColour('WHITE')
 		serialization.load(ev_cb = self)
 		
-		self.info_panel = planet_window.InfoPanel(self)
+		#self.info_panel = planet_window.InfoPanel(self)
 		self.planet_panel = planet_window.PlanetPanel(self)
 		self.garrison_panel = planet_window.GarrisonPanel(self)
 		self.object_filter = object_filter.FilterPanel(self)
@@ -76,7 +76,7 @@ class DcFrame(wx.Frame):
 		#self.area_list = area_panel.AreaListWindow(self)
 
 		self.sync_path = config.options['data']['sync_path']
-		self.info_panel.turn = db.getTurn()
+		#self.info_panel.turn = db.getTurn()
 		print 'db max turn is %s'%(db.getTurn(),)
 		
 		self.map = map.Map(self)
@@ -111,7 +111,7 @@ class DcFrame(wx.Frame):
 		self._mgr.AddPane(self.map, info)
 		#self._mgr.AddPane(self.history, wx.RIGHT, "Turn")
 		self._mgr.AddPane(self.fleets, wx.RIGHT, "Fleets")
-		self._mgr.AddPane(self.info_panel, wx.RIGHT, "Info")
+		#self._mgr.AddPane(self.info_panel, wx.RIGHT, "Info")
 		self._mgr.AddPane(self.planet_panel, wx.RIGHT, "Planet")
 		self._mgr.AddPane(self.garrison_panel, wx.RIGHT, "Garrison")
 		self._mgr.AddPane(self.planet_filter, wx.LEFT, "Planets")
@@ -148,7 +148,7 @@ class DcFrame(wx.Frame):
 		self.Bind(event.EVT_USER_SELECT, self.onSelectUser)
 		self.Bind(event.EVT_ACTIONS_REPLY, self.onActionsReply)
 		self.Bind(event.EVT_SELECT_OBJECT, self.onObjectSelect)
-		# self.info_panel.selectObject)
+		#self.info_panel.selectObject)
 		#self.Bind(event.EVT_SELECT_OBJECT, self.planet_panel.select_coord)
 		#self.Bind(event.EVT_SELECT_OBJECT, self.garrison_panel.select_coord)
 		self.Bind(event.EVT_TURN_SELECTED, self.onTurnSelected)
@@ -165,7 +165,7 @@ class DcFrame(wx.Frame):
 	def onObjectSelect(self, evt):
 		self.planet_panel.select_coord(evt)
 		self.garrison_panel.select_coord(evt)
-		self.info_panel.selectObject(evt)
+		#self.info_panel.selectObject(evt)
 		self.fleets.set_fleets(evt)
 		
 	def makeMenu(self):
@@ -911,4 +911,4 @@ class DcFrame(wx.Frame):
 		self.map.turn = turn
 		self.map.update()
 		log.info('update info panel with turn %s'%(self.map.turn,))
-		self.info_panel.update(self.map.turn)
+		#self.info_panel.update(self.map.turn)
