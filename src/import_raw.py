@@ -191,7 +191,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.KnownPlanets == name:
 			db.eraseObject(db.Db.OPEN_PLANET, ['user_id=%s'%(self.user['id'],),])
 		elif XmlHandler.Planet == name:
-			data = getAttrs(attrs, {'x':'x', 'owner-id':'owner_id', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s', 'age':'age'})
+			data = getAttrs(attrs, {'x':'x', 'owner-id':'owner_id', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s', 'age':'age', 'open':'is_open'})
 			
 			if XmlHandler.UserPlanets == self.read_level:
 				data['owner_id'] = self.user['id']
