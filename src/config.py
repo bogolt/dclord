@@ -103,8 +103,12 @@ options = {
 			},
 		 'filter':
 			{
-			'inhabited_planets':0,
+			'inhabited_planets':0, #only
 			'size_planets':1,
+			'owned_planets':0,
+			'access_planets':0,
+			
+			#'planet_owner_type':'any', #can be 'owned', 'access', 'ihabited',
 			'fleets':1
 			}
 		}

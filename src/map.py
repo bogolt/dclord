@@ -307,6 +307,13 @@ class Map(util.BufferedWindow):
 		area = {'between':{'x':x, 'y':y}}
 		if int(config.options['filter']['inhabited_planets'])==1:
 			area['>'] = {'owner_id': 0}
+			
+		if int(config.options['filter']['owned_planets'])==1:
+			area['in'] = {'owner_id':config.user_id_dict.keys()}
+			
+		if int(config.options['filter']['access_planets'])==1:
+			area['in'] = {'owner_id':db.get_objects_list(db.Db.USER)}
+			
 		for p in db.db.iter_objects_list(db.Db.PLANET, area):
 			#print 'got plnaet %s'%(p,)
 			self.drawPlanet(dc, p)
