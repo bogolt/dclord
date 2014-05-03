@@ -394,10 +394,12 @@ class Db:
 			yield dict(zip(keys, r))
 	
 	def select(self, table, flt = None, keys = None, join_info = None):
+		if not keys:
+			keys = self.table_keys[table]
 		return self.query(table, 'select %s from'%(','.join(keys),), flt, keys, join_info)
 		
 	def query(self, table, query_type, flt, keys = None, join_info = None):
-		
+		#print 'query %s %s %s %s %s'%(table, query_type, flt, keys, join_info)
 		if not keys:
 			keys = self.table_keys[table]
 			
@@ -431,10 +433,16 @@ class Db:
 					values_dict[k+'1'] = v[0]
 					values_dict[k+'2'] = v[1]
 			elif cond == 'in':
+				
 				where_conds.append(' and '.join(['%s in (%s)'%(key, ','.join(to_str_list(value_list))) for key, value_list in key_pairs.iteritems()]))
+				#print 'WHERE IN: %s'%(where_conds,)
 				#for k,v in key_pairs.iteritems():
 				#	values_dict[k+'1'] = v[0]
-				#	values_dict[k+'2'] = v[1]				
+				#	values_dict[k+'2'] = v[1]
+			elif cond == 'not in':
+				#print 'check not in %s %s'%(cond, key_pairs)
+				where_conds.append(' and '.join(['%s not in (%s)'%(key, ','.join(to_str_list(value_list))) for key, value_list in key_pairs.iteritems()]))
+				print 'WHERE COND: %s, filter: %s'%(where_conds, flt)
 			else:
 				where_conds.append(' and '.join(['%s %s :%s'%(key, cond, key) for key in key_pairs.iterkeys()]))
 				values_dict.update(key_pairs)

@@ -46,9 +46,10 @@ def save_table(table, keys = None, flt = None, out_dir = None, join_info = None,
 	
 
 def save():
-
 	for table, keys in db.Db.table_keys.iteritems():
 		save_table(table)
+		
+
 	
 
 def save_owned_users():
@@ -198,6 +199,13 @@ def save_sync_data():
 		
 	export_planets_csv(pt)
 	
+
+def export_owner_planets(players_list):
+	player_ids = [p['player_id'] for p in players_list]
+	for planet in db.db.iter_objects_list(db.Db.PLANET, {'in':{'owner_id':player_ids}}):
+		player = db.db.get_object(db.Db.PLAYER, {'=':{'player_id':planet['owner_id']}})
+		print '%s:%s %s'%(planet['x'], planet['y'], player['name'])
+
 def export_planets_csv(pt):
 	path = os.path.join(pt, 'dc_map_export.csv')
 	keys = list(db.KEYS_PLANET)
@@ -445,4 +453,8 @@ def load(turn_n = None, ev_cb = None):
 		
 	#save_owned_users()
 
-	#load_sync_data()
+	owned_ids = [obj['id'] for obj in db.db.iter_objects_list(db.Db.USER)]
+	print 'got owned ids: %s'%(owned_ids,)
+	players = db.db.get_objects_list(db.Db.PLAYER, {'not in':{'player_id':owned_ids}})
+	#export_owner_planets(players)
+	load_sync_data()
