@@ -128,7 +128,11 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			print 'update user %s'%(self.user,)
 			
 			db.db.set_object('hw', {'hw_x':d['hw_x'], 'hw_y':d['hw_y'], 'player_id':self.user['id']})
-			db.db.set_object('user', {'id':self.user['id'], 'login':d['login'], 'race_id':d['race_id'], 'name':self.user['name']})
+			user_obj = db.db.get_object(db.Db.USER, {'=':{'id':self.user['id']}})
+			if user_obj and int(user_obj['turn']) > self.turn:
+				#should not normally happen ( unless you loading old xml files)
+				pass
+			db.db.set_object('user', {'id':self.user['id'], 'turn':self.turn, 'login':d['login'], 'race_id':d['race_id'], 'name':self.user['name']})
 			config.set_user_id(d['login'], self.user['id'])
 			config.saveUsers()
 		
@@ -202,7 +206,6 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				db.db.set_object(db.Db.USER_PLANET, data)
 			else:
 				if 'is_open' in data and int(data['is_open']) == 1:
-					print 'import raw planet %s'%(data,)
 					db.set_open_planet(get_coord(data), self.user['id'])
 				
 				actual_turn = 0
@@ -212,12 +215,10 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				if 'age' in data:
 					actual_turn = self.turn - int(data['age'])
 					del data['age']
-				print 'import planet %s at turn %s'%(data, actual_turn)
 				db.db.smart_update_object(db.Db.PLANET, actual_turn, data)
 		elif XmlHandler.Fleet == name:
 			fleetDict = {'x':'x','y':'y','id':'id','in-transit':'in_transit','fleet-id':'id','player-id':'owner_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
 			data = getAttrs(attrs, fleetDict)
-
 			db.eraseObject(db.Db.UNIT, ['fleet_id=%s'%(fleetDict['id'],),], self.turn)
 			
 			#save fleet-id to fill unit table
@@ -318,6 +319,10 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.DipRelation == name and self.dip:
 			data = getAttrs(attrs, {'player':'player_id', 'name':'name'})
 			db.setData(db.Db.PLAYER, data)
+			
+			dip_data = getAttrs(attrs, {'player':'player_id', 'type':'status'})
+			dip_data['owner_id'] = self.user['id']
+			db.setData(db.Db.DIP, dip_data)
 		elif XmlHandler.UserFleets == name:
 			db.eraseObject(db.Db.FLEET, ['owner_id=%s'%(self.user['id'],),], self.turn)
 			db.eraseObject(db.Db.FLYING_FLEET, ['owner_id=%s'%(self.user['id'],),], self.turn)

@@ -5,6 +5,10 @@ import serialization
 
 def to_pos(a,b):
 	return int(a),int(b)
+	
+def to_str_list(lst):
+	return [str(x) for x in lst]
+
 
 log = logging.getLogger('dclord')
 
@@ -18,13 +22,17 @@ KEYS_UNIT = ('id', 'hp','class', 'fleet_id')
 KEYS_GARRISON_UNIT = ('id', 'hp','class', 'x', 'y')
 KEYS_GARRISON_QUEUE_UNIT = ('id', 'class', 'x', 'y')
 KEYS_ALIEN_UNIT = ('id', 'carapace','color','weight','fleet_id')
-KEYS_USER = ('id', 'name', 'race_id', 'login')
+KEYS_USER = ('id', 'name', 'race_id', 'login','turn')
 KEYS_HW = ('hw_x', 'hw_y', 'player_id')
 KEYS_RACE = ('id', 'temperature_delta',  'temperature_optimal',  'resource_nature',  'population_growth', 'resource_main', 'resource_secondary', 'modifier_fly', 'modifier_build_war', 'modifier_build_peace', 'modifier_science', 'modifier_stealth', 'modifier_detection', 'modifier_mining', 'modifier_price', 'name')
 KEYS_PLAYER = ('player_id', 'name')
 KEYS_PROTO = ('owner_id', 'fly_speed', 'aim_bomb', 'color', 'build_speed', 'require_people', 'carapace', 'fly_range', 'id', 'class', 'cost_second', 'cost_main', 'cost_money', 'is_transportable', 'require_tech_level', 'support_second', 'name', 'stealth_level', 'bonus_s', 'bonus_m', 'bonus_o', 'max_count', 'bonus_e', 'support_main', 'weight', 'damage_laser', 'is_ground_unit', 'is_serial', 'aim_laser', 'is_spaceship', 'transport_capacity', 'is_offensive', 'detect_range', 'damage_bomb', 'bonus_production', 'description', 'scan_strength', 'hp', 'defence_laser', 'defence_bomb', 'carrier_capacity', 'laser_number', 'is_building', 'cost_people', 'bomb_number', 'is_war')
 KEYS_PROTO_ACTION = ('id', 'type', 'proto_id', 'proto_owner_id', 'max_count', "cost_people", "cost_main", "cost_money", "cost_second", "planet_can_be")
 KEYS_DIPLOMACY = ('owner_id', 'player_id', 'status')
+
+UNKNOWN =-1
+ENEMY   = 0
+NEUTRAL = 1
 
 class Db:
 	PLANET = 'planet'
@@ -95,7 +103,8 @@ class Db:
 				id integer PRIMARY KEY,
 				name text not null,
 				race_id integer not null,
-				login text
+				login text,
+				turn integer default 0
 				)"""%(Db.USER,))
 				
 		# each user may have it's own list of open planets ( consider Mobile Portal here )
@@ -182,7 +191,7 @@ class Db:
 				owner_id integer,
 				player_id integer,
 				status integer(1),
-				PRIMARY KEY(owner_id, player_id)			
+				PRIMARY KEY(owner_id, player_id)		
 				)"""%(Db.DIP,))
 		
 		cur.execute("""create table if not exists %s(
@@ -369,22 +378,44 @@ class Db:
 		for r in c.fetchall():
 			rv.append( dict(zip(self.table_keys[table], r)) )
 		return rv
-	
-	def iter_objects_list(self, table, flt = None, keys = None):
+	def iter_objects_list(self, table, flt = None, keys = None, join_info = None):
 		'get single object from db'
 		if not keys:
 			keys = self.table_keys[table]
-		c = self.select(table, flt, keys)
+		c = self.select(table, flt, ['%s.%s'%(table, key) for key in keys], join_info)
 		for r in c.fetchall():
 			yield dict(zip(keys, r))
 	
-	def select(self, table, flt = None, keys = None):
+	def iter_join(self, table, table_join, key, key_join):
+		c = self.conn.cursor()
+		c.execute('select %s from %s JOIN %s ON %s=%s'%(table, table_join, key, key_join))
+		keys = self.table_keys[table]
+		for r in c.fetchall():
+			yield dict(zip(keys, r))
+	
+	def select(self, table, flt = None, keys = None, join_info = None):
+		return self.query(table, 'select %s from'%(','.join(keys),), flt, keys, join_info)
+		
+	def query(self, table, query_type, flt, keys = None, join_info = None):
+		
 		if not keys:
 			keys = self.table_keys[table]
+			
 		c = self.conn.cursor()
+		
+		suffix = ''
+		if join_info:
+			table_other = join_info[0]
+			key_list = join_info[1]
+			#key_my = join_info[1]
+			#key_other = join_info[2]
+			print 'join %s %s %s'%(table, flt, join_info)
+			suffix = ' JOIN %s ON (%s)'%(table_other, ' AND '.join(['%s.%s=%s.%s'%(table, key_my, table_other, key_other) for key_my, key_other in key_list]))
+			print suffix
+			
 		if not flt:
 			try:
-				c.execute('select %s from %s'%(','.join(keys), table))
+				c.execute('%s %s%s'%(query_type, table, suffix))
 			except sqlite3.OperationalError as e:
 				print 'Select %s from %s, error: %s'%(keys, table, e)
 				raise
@@ -400,7 +431,7 @@ class Db:
 					values_dict[k+'1'] = v[0]
 					values_dict[k+'2'] = v[1]
 			elif cond == 'in':
-				where_conds.append(' and '.join(['%s in (%s)'%(key, ','.join(value_list)) for key, value_list in key_pairs.iteritems()]))
+				where_conds.append(' and '.join(['%s in (%s)'%(key, ','.join(to_str_list(value_list))) for key, value_list in key_pairs.iteritems()]))
 				#for k,v in key_pairs.iteritems():
 				#	values_dict[k+'1'] = v[0]
 				#	values_dict[k+'2'] = v[1]				
@@ -409,7 +440,7 @@ class Db:
 				values_dict.update(key_pairs)
 			
 		where_str = ' and '.join(where_conds)
-		s = 'select %s from %s WHERE %s'%(','.join(keys), table, where_str)
+		s = 'select %s from %s%s WHERE %s'%(','.join(keys), table, suffix, where_str)
 		#print '"%s" . items: %s'%(s, values_dict)
 		try:
 			c.execute(s, values_dict)
@@ -509,6 +540,9 @@ class Db:
 		self.cur.execute('insert or replace into planet_size (x,y,image,s) values(:x, :y, :image, :s)', (x,y,image,s))
 		self.conn.commit()
 
+	def delete_objects(self, table, flt, join_info = None):
+		self.query(table, 'delete from', flt, join_info)
+			
 	def eraseObject(self, table_name, data, turn_n = None):
 		#table_name = '%s_%s'%(table, turn_n) if turn_n else table
 		try:

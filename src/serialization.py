@@ -11,21 +11,28 @@ log = logging.getLogger('dclord')
 
 unicode_strings = ['name', 'description']
 
-def save_table(table, keys):
-	pt = config.options['data']['path']
-	pt = os.path.join(pt, str(db.db.max_turn))
-	util.assureDirExist(pt)
+def save_table(table, keys = None, flt = None, out_dir = None, join_info = None, f_handler = None):
+	pt = out_dir
+	if not pt:
+		pt = config.options['data']['path']
+		pt = os.path.join(pt, str(db.db.max_turn))
+		util.assureDirExist(pt)
+		
+	if not keys:
+		keys = db.db.table_keys[table]
+	
+	print '%s %s'%(pt, table)
 	path = os.path.join(pt, '%s.csv'%(table,))
-	#if table in db.db.has_turn:
-	#	flt = {'=': {'turn': db.db.max_turn}}
-	#else:
-	#	flt = {}
 		
 	try:
-		f = open(path, 'wt')
-		writer = csv.DictWriter(f, keys)
-		writer.writeheader()
-		for p in db.db.iter_objects_list(table):
+
+		if not f_handler:
+			writer = csv.DictWriter(open(path, 'wt'), keys)
+			writer.writeheader()
+		else:
+			writer = f_handler
+			
+		for p in db.db.iter_objects_list(table, flt, join_info=join_info):
 			try:
 				for s in unicode_strings:
 					if s in p and p[s]:
@@ -33,17 +40,64 @@ def save_table(table, keys):
 				writer.writerow(p)
 			except UnicodeEncodeError, e:
 				log.error('failed convert data %s - %s'%(p, e))
+		return writer
 	except IOError, e:
 		log.error('failed writing data to csv file %s: %s'%(path, e))
 	
 
 def save():
-	log.info('saving data for turn %s'%(db.getTurn(),))
+
+	for table, keys in db.Db.table_keys.iteritems():
+		save_table(table)
+	
+
+def save_owned_users():
+	for user_id, user in config.user_id_dict.iteritems():
+		save_user(user)
+	
+def save_user(user_info):
+	
+	print 'saving user %s'%(user_info,)
+	user = db.db.get_object(db.Db.USER, {'=':{'id':user_info['id']}})
+	if not user:
+		print 'no data found for user %s'%(user_info,)
+		return
+	
+	pt = '/tmp/out/' #  config.options['data']['path']
+	#pt = os.path.join(pt, str(db.db.max_turn))
+	pt = os.path.join(pt, os.path.join('%s_%s'%(user['id'], user['name'])))
+	util.assureDirExist(pt)
+		
+	# save all known planets first
+	# include turn key
+	save_table(db.Db.PLANET, db.db.table_keys[db.Db.PLANET], out_dir=pt)
 	
 	for table, keys in db.Db.table_keys.iteritems():
-		save_table(table, keys)
+		# saved separately
+		if table == db.Db.PLANET:
+			continue
+			
+		if 'owner_id' in keys:
+			save_table(table, keys, {'=':{'owner_id':user['id']}}, pt)
+		elif 'user_id' in keys:
+			save_table(table, keys, {'=':{'user_id':user['id']}}, pt)
+	
+	# owned units
+	# need to write two tables (join) into single file
+	
+	# start with units in fleets
+	f = save_table(db.Db.UNIT, flt={'=':{'owner_id':user['id']}}, join_info=(db.Db.FLEET, [('fleet_id', 'id')]), out_dir=pt)	
+	# then units in flying fleets
+	save_table(db.Db.UNIT, db.db.table_keys[db.Db.UNIT], {'=':{'owner_id':user['id']}}, join_info=(db.Db.FLYING_FLEET, [('fleet_id', 'id')]), out_dir=pt, f_handler = f)
+	
+	# then garrison units
+	save_table(db.Db.GARRISON_UNIT, db.db.table_keys[db.Db.GARRISON_UNIT], {'=':{'owner_id':user['id']}}, join_info=(db.Db.PLANET, [('x', 'x'), ('y', 'y')]), out_dir=pt)
+	
+	save_table(db.Db.PROTO_ACTION, flt={'=':{'owner_id':user['id']}}, join_info=(db.Db.PROTO, [('proto_id', 'id')]), out_dir=pt)
+	
+	
 		
-	save_sync_data()
+	#save_sync_data()
 
 def get_user_nickname():
 	nick = config.options['user']['nick']
@@ -386,6 +440,9 @@ def load(turn_n = None, ev_cb = None):
 	
 	turn = getLastTurn(ev_cb)
 	for table, keys in db.Db.table_keys.iteritems():
+		print 'load table %s'%(table,)
 		load_table(table, turn)
+		
+	#save_owned_users()
 
-	load_sync_data()
+	#load_sync_data()
