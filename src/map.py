@@ -221,7 +221,7 @@ class Map(util.BufferedWindow):
 				B1 = float(self.user_race['population_growth'])
 				B2 = float(self.user_race['temperature_optimal'])
 				B3 = float(self.user_race['temperature_delta'])
-				B4 = 1 #governers count
+				B4 = 3 #governers count
 				A1 = float(planet['t'])
 
 				nature_value = int(planet[self.user_race['resource_nature']])
@@ -240,15 +240,22 @@ class Map(util.BufferedWindow):
 					#print 'found planet %s with growth %s'%(planet, planet_population_growth)
 		else:
 			owner_id = int(owner_id)
+			
 		if owner_id == self.selected_user_id:
 			col = config.options['map']['planet_selected_user_color']
 			dc.SetPen(wx.Pen(colour=col, width=1))
+			dc.SetBrush(wx.Brush(col))
 		else:
 			col = getOwnerColor(owner_id)
+			brush = wx.Brush(col)
 			dc.SetPen(wx.Pen(colour=col, width=1))
+			if owner_id == 0:
+				brush.SetStyle(wx.TRANSPARENT)
+			dc.SetBrush(brush)
 
 		if self.cell_size == 1:
-			dc.DrawPoint(rx, ry)
+			#dc.DrawPoint(rx, ry)
+			pass
 		else:
 			if self.planet_filter_ptr and self.planet_filter_ptr.is_planet_shown(planetPos):
 				dc.SetBrush(wx.Brush('red'))
@@ -303,6 +310,11 @@ class Map(util.BufferedWindow):
 		#cond = ['owner_id is not null'] 
 		x = self.offset_pos[0], self.offset_pos[0]+self.screen_size[0]
 		y = self.offset_pos[1], self.offset_pos[1]+self.screen_size[1]
+		
+		if int(config.options['filter']['inhabited_planets'])==0 and int(config.options['filter']['size_planets'])==1:
+			area = {'between':{'x':x, 'y':y}}
+			for p in db.db.iter_objects_list(db.Db.PLANET_SIZE, area):
+				self.drawPlanet(dc, p)
 
 		area = {'between':{'x':x, 'y':y}}
 		if int(config.options['filter']['inhabited_planets'])==1:
@@ -319,11 +331,6 @@ class Map(util.BufferedWindow):
 			self.drawPlanet(dc, p)
 			if self.draw_geo:
 				self.drawPlanetGeo(dc, p)
-		
-		if int(config.options['filter']['inhabited_planets'])==0 and int(config.options['filter']['size_planets'])==1:
-			area = {'between':{'x':x, 'y':y}}
-			for p in db.db.iter_objects_list(db.Db.PLANET_SIZE, area):
-				self.drawPlanet(dc, p)
 			
 	def drawFleets(self, dc, rect):
 		self.fleets = {}

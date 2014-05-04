@@ -82,7 +82,7 @@ options = {
 		 'planet_color':'#0000dd',
 		 'planet_inhabited_color':'#aadd00',
 		 'planet_owned_color':'#aa2200',
-		 'planet_uninhabited_color':'#000000',
+		 'planet_uninhabited_color':'#888888',
 		 'planet_selected_user_color':'#fdab00',
 		 'planet_route_possible_color':'#ffdd00',
 		 'route_test_color':'#dfdd00',
