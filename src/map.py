@@ -246,7 +246,11 @@ class Map(util.BufferedWindow):
 			dc.SetPen(wx.Pen(colour=col, width=1))
 			dc.SetBrush(wx.Brush(col))
 		else:
-			col = getOwnerColor(owner_id)
+			user_open_planet = db.db.get_object(db.Db.OPEN_PLANET, {'=':{'x':planet['x'], 'y':planet['y'], 'user_id':self.selected_user_id}})
+			if user_open_planet:
+				col = 'blue' #open
+			else:
+				col = getOwnerColor(owner_id)
 			brush = wx.Brush(col)
 			dc.SetPen(wx.Pen(colour=col, width=1))
 			if owner_id == 0:
@@ -254,8 +258,7 @@ class Map(util.BufferedWindow):
 			dc.SetBrush(brush)
 
 		if self.cell_size == 1:
-			#dc.DrawPoint(rx, ry)
-			pass
+			dc.DrawPoint(rx, ry)
 		else:
 			if self.planet_filter_ptr and self.planet_filter_ptr.is_planet_shown(planetPos):
 				dc.SetBrush(wx.Brush('red'))

@@ -30,7 +30,7 @@ KEYS_PROTO = ('owner_id', 'fly_speed', 'aim_bomb', 'color', 'build_speed', 'requ
 KEYS_PROTO_ACTION = ('id', 'type', 'proto_id', 'proto_owner_id', 'max_count', "cost_people", "cost_main", "cost_money", "cost_second", "planet_can_be")
 KEYS_DIPLOMACY = ('owner_id', 'player_id', 'status')
 
-UNKNOWN =-1
+UNSPECIFIED =-1
 ENEMY   = 0
 NEUTRAL = 1
 

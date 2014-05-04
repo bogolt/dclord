@@ -695,37 +695,40 @@ class DcFrame(wx.Frame):
 				coord = get_coord(fleet)
 				planet = db.get_planet( coord )
 				#TODO: allow jump on all open-planets ( not only owned by user )
-				if not planet or not planet['owner_id'] or int(planet['owner_id']) != user_id:
-					#print 'fleet %s not at home'%(fleet['id'],)
-					units = []
-					for unit in db.units(turn, ['fleet_id=%s'%(fleet['id'],)]):
-						#print 'fleet %s has unit %s'%(fleet['id'], unit)
-						units.append(unit)
-					
-					# not a scout fleet if more then one unit in fleet
-					# if zero units - don't care about empty fleet as well
-					if len(units) != 1:
-						#print 'fleet %s has %s units, while required 1'%(fleet['id'], len(units))
-						continue
+				user_open_planet = db.db.get_object(db.Db.OPEN_PLANET, {'=':{'x':coord[0], 'y':coord[1], 'user_id':user_id}})
+				if user_open_planet:
+					continue
 
-					if int(units[0]['id']) in self.manual_control_units:
-						continue
+				#print 'fleet %s not at home'%(fleet['id'],)
+				units = []
+				for unit in db.units(turn, ['fleet_id=%s'%(fleet['id'],)]):
+					#print 'fleet %s has unit %s'%(fleet['id'], unit)
+					units.append(unit)
+				
+				# not a scout fleet if more then one unit in fleet
+				# if zero units - don't care about empty fleet as well
+				if len(units) != 1:
+					#print 'fleet %s has %s units, while required 1'%(fleet['id'], len(units))
+					continue
 
-					proto = db.get_prototype(units[0]['class'])
-					if proto['carapace'] != CARAPACE_PROBE:
-						#print 'fleet %s unit %s is not a probe'%(fleet['id'], units[0])
-						continue
+				if int(units[0]['id']) in self.manual_control_units:
+					continue
 
-					#jump back
-					#print 'fleet %s %s needs to get home'%(coord, fleet)
-					fleets.append( (coord, fleet) )					
+				proto = db.get_prototype(units[0]['class'])
+				if proto['carapace'] != CARAPACE_PROBE:
+					#print 'fleet %s unit %s is not a probe'%(fleet['id'], units[0])
+					continue
+
+				#jump back
+				#print 'fleet %s %s needs to get home'%(coord, fleet)
+				fleets.append( (coord, fleet) )					
 
 			if not fleets:
 				#print 'no scout fleets found not at home'
 				continue
 			
 			coords = []
-			for planet in db.planets(turn, ['owner_id=%s'%(user_id,)]):
+			for planet in db.db.iter_objects_list(db.Db.OPEN_PLANET, {'=':{'user_id':user_id}}):
 				coord = get_coord(planet)
 				coords.append( coord )
 				#print 'possible home planet %s'%(coord,)
@@ -901,7 +904,7 @@ class DcFrame(wx.Frame):
 		#user_id = int(config.users[login]['id'])
 		#self.unit_list.setPlayer( user_id )
 		#print 'selecting user %s'%(user_id, )
-		self.map.selectUser( user_id) 
+		self.map.selectUser( user_id)
  
 	def onTurnSelected(self, evt):
 		turn = evt.attr1
