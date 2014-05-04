@@ -18,8 +18,7 @@ KEYS_OPEN_PLANET = ('x','y','user_id')
 KEYS_FLEET = ('id', 'x','y','owner_id', 'is_hidden','name','weight')
 KEYS_FLYING_FLEET = ('id', 'x','y','in_transit', 'owner_id','from_x','from_y','weight', 'arrival_turn','is_hidden')
 KEYS_FLYING_ALIEN_FLEET = ('x','y','user_id','from_x','from_y','weight', 'arrival_turn','is_hidden')
-KEYS_UNIT = ('id', 'hp','class', 'fleet_id')
-KEYS_GARRISON_UNIT = ('id', 'hp','class', 'x', 'y')
+KEYS_UNIT = ('id', 'hp', 'class', 'fleet_id', 'x', 'y')
 KEYS_GARRISON_QUEUE_UNIT = ('id', 'class', 'x', 'y')
 KEYS_ALIEN_UNIT = ('id', 'carapace','color','weight','fleet_id')
 KEYS_USER = ('id', 'name', 'race_id', 'login','turn')
@@ -47,7 +46,6 @@ class Db:
 	FLYING_FLEET = 'flying_fleet'
 	FLYING_ALIEN_FLEET = 'flying_alien_fleet'
 	#ALIEN_FLEET = 'alien_fleet'
-	GARRISON_UNIT = 'garrison_unit'
 	GARRISON_QUEUE_UNIT = 'garrison_queue_unit'
 	PROTO = 'proto'
 	PROTO_ACTION = 'proto_action'
@@ -56,7 +54,7 @@ class Db:
 	PLANET_SIZE ='planet_size'
 	
 	table_keys = {PLANET:KEYS_PLANET, OPEN_PLANET:KEYS_OPEN_PLANET, USER: KEYS_USER, PLAYER:KEYS_PLAYER, HW:KEYS_HW, FLEET:KEYS_FLEET, UNIT:KEYS_UNIT,
-	 ALIEN_UNIT:KEYS_ALIEN_UNIT, FLYING_FLEET:KEYS_FLYING_FLEET, FLYING_ALIEN_FLEET:KEYS_FLYING_ALIEN_FLEET, GARRISON_UNIT:KEYS_GARRISON_UNIT,
+	 ALIEN_UNIT:KEYS_ALIEN_UNIT, FLYING_FLEET:KEYS_FLYING_FLEET, FLYING_ALIEN_FLEET:KEYS_FLYING_ALIEN_FLEET, 
 	 GARRISON_QUEUE_UNIT:KEYS_GARRISON_QUEUE_UNIT, PROTO:KEYS_PROTO, PROTO_ACTION:KEYS_PROTO_ACTION, RACE:KEYS_RACE, DIP: KEYS_DIPLOMACY
 	 , PLANET_SIZE : ('x','y', 's', 'image'), USER_PLANET:KEYS_USER_PLANET}
 	 
@@ -86,7 +84,7 @@ class Db:
 		# table Db.FLYING_ALIEN_FLEET has no primary key
 		self.primary_keys = {Db.USER:['id'], Db.OPEN_PLANET:['x','y', 'user_id'], Db.RACE:['id'], Db.PLAYER: ['player_id'],
 		 Db.PLANET:['x','y'], Db.DIP:['owner_id', 'player_id'], Db.HW:['player_id'], Db.FLEET:['id'], Db.FLYING_FLEET:['id'], 
-		 Db.UNIT:['id'],Db.GARRISON_UNIT:['id'],Db.GARRISON_QUEUE_UNIT:['id'],Db.ALIEN_UNIT:['id']
+		 Db.UNIT:['id'],Db.GARRISON_QUEUE_UNIT:['id'],Db.ALIEN_UNIT:['id']
 		 ,Db.PROTO:['id'], Db.PROTO_ACTION:['id'], Db.PLANET_SIZE:['x','y']}
 		 
 		 
@@ -243,9 +241,11 @@ class Db:
 		
 		cur.execute("""create table if not exists %s(
 				id integer PRIMARY KEY,
-				fleet_id integer not null,
+				fleet_id integer default 0,
 				class integer not null,
-				hp integer not null
+				hp integer not null,
+				x integer(2),
+				y integer(2)
 				)"""%(self.UNIT,))
 				
 		
@@ -258,15 +258,6 @@ class Db:
 				class integer,
 				turn integer default 0
 				)"""%(self.ALIEN_UNIT,))
-
-	
-		cur.execute("""create table if not exists %s(
-				id integer PRIMARY KEY,
-				x integer(2) not null,
-				y integer(2) not null,
-				class integer not null,
-				hp integer not null
-				)"""%(self.GARRISON_UNIT,))
 		
 	
 		cur.execute("""create table if not exists %s(
@@ -583,27 +574,6 @@ class Db:
 		for login,name,id in self.cur.fetchall():
 			x,y = 1,1
 			yield login,name,(int(x),int(y)),int(id)
-	
-	def getAreaPlanets(self, leftTop=(0,0), size=(1000,1000)):
-		cx,cy=leftTop
-		zx=cx+size[0]
-		zy=cy+size[1]
-		cur = self.cur
-		cur.execute("select x,y,owner_id,name,s from planet where x>=:cx and y>=:cy and x<=:zx and y<=:zy", (cx,cy,zx,zy))
-		pl = {}
-		for c in cur.fetchall():
-			coord = (c[0], c[1])
-			p = Planet(coord, self.getPlayer(c[2]), c[3])
-			if c[4]:
-				p.geo['s']=c[4]
-			pl[coord] = p
-		
-		self.cur.execute("select x,y,garrison_unit.id,garrison_unit.class,garrison_unit.hp from user_planet,garrison_unit on garrison_unit.garrison_id=user_planet.id where x>=:cx and y>=:cy and x<=:zx and y<=:zy", (cx,cy,zx,zy))
-		for r in self.cur.fetchall():
-			u = Unit(r[2], self.getProto(r[3]), r[4])
-			pl[(r[0],r[1])].units[u.id] = u
-					
-		return pl
 
 	def getUserFleets(self, player_id):
 		self.cur.execute('select x,y,id,name,arrival_turn,from_x,from_y from fleet where owner_id=:player_id',(player_id,))
@@ -863,7 +833,7 @@ def get_units(turn_n, flt, keys = None):
 	return us
 
 def garrison_units(turn_n, flt, keys = None):
-	k = ('id', 'class', 'hp') if not keys else keys
+	#k = ('id', 'class', 'hp') if not keys else keys
 	for unit in items(Db.GARRISON_UNIT, flt, k, turn_n):
 		yield unit
 						

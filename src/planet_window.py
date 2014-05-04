@@ -48,69 +48,6 @@ class StackedObject(wx.Window):
 	def update(self):
 		self.text.SetLabel('x%d'%(len(self.units),))
 		self.sizer.Layout()
-	
-class PlanetWindow(scrolled.ScrolledPanel):
-	def __init__(self, parent, coord = None, turn = None, show_units = False):
-		scrolled.ScrolledPanel.__init__(self, parent, wx.ID_ANY, size=(200,300))
-		
-		self.turn = turn if turn else db.getTurn()
-		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		self.SetSizer(self.sizer)
-
-		self.coord = coord
-		
-		if not self.coord:
-			self.sizer.Layout()
-			return
-		
-		owner_id = 0
-		planet_name = ''
-		for planet in db.planets(self.turn, ['x=%d'%(coord[0],), 'y=%d'%(coord[1],)], ('x','y','owner_id','o','e','m','t','s', 'name')):
-			planet_name = planet.get('name', '')
-			owner = planet['owner_id']
-			if not owner:
-				break
-			owner_id = int(owner)
-			
-		
-		owner_name = 'unknown'
-		if owner_id > 0:
-			for res in db.players(['player_id=%s'%(owner_id,)]):
-				owner_name = res['name']
-		else:
-			owner_name = '<empty>'
-		
-		self.sizer.Add(wx.StaticText(self, wx.ID_ANY, '%s:%s %s'%(coord[0],coord[1], planet_name)))
-		self.sizer.Add(wx.StaticText(self, wx.ID_ANY, owner_name))
-		
-		if show_units:
-			self.addUnits()
-		#self.sizer.Layout()
-		
-		#self.SetSizer( self.vbox )
-		self.SetAutoLayout( 1 )
-		self.SetupScrolling()
-				
-		self.Bind(wx.EVT_SIZE, self.onSize, self)
-				
-	def onSize(self, evt):
-		if self.GetAutoLayout():
-			self.Layout()
-
-		
-	def addUnits(self):
-		gunits = {}
-		coord = self.coord
-		for gu in db.garrison_units(self.turn, ['x=%d'%(coord[0],), 'y=%d'%(coord[1],)]):
-			
-			cl = int(gu['class'])
-			if cl in gunits:
-				gunits[cl].add(gu)
-			else:
-				uwindow = StackedObject(self, gu)
-				gunits[cl] = uwindow
-				self.sizer.Add( uwindow )
-		
 		
 
 class UnitStackWindow(wx.Window):
@@ -381,7 +318,7 @@ class BuildingsWindows(wx.Frame):
 		dups = {}
 		protos = {}
 		# buildings	if ours
-		for building in db.garrison_units(db.getTurn(), db.filter_coord(coord)):
+		for building in db.db.iter_objects_list(db.Db.UNIT, {'=':{'x':coord[0], 'y':coord[1], 'fleet_id':0}}):
 			bc = building['class']
 			p = db.get_prototype(bc,('id', 'class', 'carapace', 'hp', 'name', 'is_building', 'max_count'))
 			if int(p['is_building']) != 1:
@@ -493,7 +430,8 @@ class GarrisonPanel(wx.Panel):
 		protos = {}
 
 		items = {}
-		for unit in db.db.iter_objects_list(db.Db.GARRISON_UNIT, {'=':{'x':coord[0], 'y':coord[1]}}):
+		
+		for unit in db.db.iter_objects_list(db.Db.UNIT, {'=':{'x':coord[0], 'y':coord[1], 'fleet_id':0}}):
 			bc = unit['class']
 			if bc in items:
 				items[bc].append(unit)
@@ -588,6 +526,6 @@ class InfoPanel(wx.Panel):
 			self.turn = turn
 		log.info('updating info panel, pos %s turn %d'%(self.pos, self.turn))
 		self.sizer.DeleteWindows()
-		self.sizer.Add( PlanetWindow(self, self.pos, self.turn, True) )
+		#self.sizer.Add( PlanetWindow(self, self.pos, self.turn, True) )
 		#self.sizer.Add( FleetWindow(self, self.pos, self.turn), 1, flag=wx.EXPAND | wx.ALL)
 		self.sizer.Layout()

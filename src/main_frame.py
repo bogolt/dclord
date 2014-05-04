@@ -586,8 +586,8 @@ class DcFrame(wx.Frame):
 			for planet in db.planets(turn, ['owner_id=%s'%(user_id,)]):
 				coord = get_coord(planet)
 				#print 'checking harrison for planet %s'%(planet,)
-				for unit in db.garrison_units(turn, filter_coord(coord) + [any_class]):
-					#print 'found unit %s on planet %s'%(unit, planet,)
+				for unit in db.db.iter_objects_list(db.Db.UNIT, {'=':{'x':coord[0], 'y':coord[1], 'fleet_id':0}, 'in':{'class':units_classes}}):
+					print 'found unit %s on planet %s'%(unit, planet,)
 					self.pending_actions.createNewFleet(coord, fleet_name)
 					pending_units.append( (self.pending_actions.get_action_id(), coord, unit['id'] ) )
 					#print 'found unit %s on planet %s'%(unit, coord )
@@ -634,8 +634,8 @@ class DcFrame(wx.Frame):
 		i = 0
 		if len(fleet_ids) < 1:
 			return
-		
-		for unit in db.garrison_units(turn, ['x=%s'%(coord[0],), 'y=%s'%(coord[1],), 'class=%s'%(unit_type,)]):
+
+		for unit in db.db.iter_objects_list(db.Db.UNIT, {'=':{'x':coord[0], 'y':coord[1], 'fleet_id':0, 'class':unit_type}}):
 			self.pending_actions.moveUnitToFleet(fleet_ids[i], unit['id'])
 			i += 1
 			if i >= len(fleet_ids):
