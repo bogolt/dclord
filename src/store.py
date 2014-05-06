@@ -374,6 +374,21 @@ class Store:
 		self.add_data('planet_geo', planet_data)
 		self.add_data('open_planet', planet_data)
 		
+	def add_known_planet(self, data):
+		
+		# for Lord,Vassal planets we know only x,y and open flag, so skip it here
+		if 'name' in data or 'user_id' in data:
+			# check previous data, only update if new data turn is not less then existing one
+			known_planet = self.get_object('planet', extract(data, ['x','y']))
+			if not known_planet or int(data['turn']) >= int(known_planet['turn']):
+				self.add_data('planet', data)
+		
+		if 'o' in data:
+			self.add_data('planet_geo', data)
+
+	def add_open_planet(self, data):
+		self.add_data('open_planet', data)
+		
 	def add_data(self, table, raw_data):
 		cur = self.conn.cursor()
 		
@@ -447,12 +462,26 @@ class TestStore(unittest.TestCase):
 		user_data = {'user_id':user_id, 'race_id':22, 'name':u'test_user', 'login':u'very_sercret', 'turn':33}
 		self.store.add_user(user_data)
 		
-		user_planet = {'user_id':user_id, 'x':34, 'y':56, 'o':56, 'e':12, 't':90, 's':32, 'corruption':0, 'population':4567, 'name':'hw'}
+		user_planet = {'user_id':user_id, 'x':34, 'y':56, 'o':56, 'e':12, 't':90, 's':32, 'corruption':0, 'is_open':1, 'population':4567, 'name':'hw'}
 		self.store.add_user_planet(user_planet)
 		
 		up = extract(user_planet, tables['planet'])
 		planet = self.store.get_object('planet', extract(user_planet, ['x', 'y']))
 		self.assertEqual(up, planet)
+		
+		us_pl = self.store.get_object('user_planet', extract(user_planet, ['user_id']))
+		u_pl = extract(user_planet, tables['user_planet'])
+		self.assertEqual(us_pl, u_pl)
+		
+		known_planet = {'x':11, 'y':22, 'o':5, 'e':22, 't':78, 's':99, 'turn':21}
+		self.store.add_known_planet(known_planet)
+		
+		known_planet2 = {'name':'test', 'user_id':4, 'x':11, 'y':22, 'turn':21}
+		self.store.add_known_planet(known_planet2)
+		
+		known_open_planet3 = {'user_id':3, 'x':11, 'y':22, 'is_open':1}
+		self.store.add_data('open_planet', known_open_planet3)
+		
 		
 		
 
