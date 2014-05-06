@@ -82,8 +82,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		
 	def startElement(self, name, attrs):
 		if 'dc' == name:
-			self.user = getAttrs(attrs, {'user':'name', 'id':'id', 'turn-n':'turn', 'main-res':'resource_main', 'second-res':'resource_secondary', 'money':'money'})
-			self.user_id = int(self.user['id'])
+			self.user = getAttrs(attrs, {'user':'name', 'id':'user_id', 'turn-n':'turn', 'main-res':'resource_main', 'second-res':'resource_secondary', 'money':'money'})
+			self.user_id = int(self.user['user_id'])
 			
 			# all info read, erase everything related to this user
 			if attrs['this-url'].endswith('/all/'):

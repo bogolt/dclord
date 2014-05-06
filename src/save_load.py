@@ -25,7 +25,6 @@ def save_csv(path, data):
 def save_csv_table(path, table, data_filter):
 	writer = None
 	for p in store.iter_objects_list(table, data_filter):
-		print 'iter %s'%(p,)
 		if not writer:
 			writer = csv_open(os.path.join(path, '%s.csv'%(table,)), p.keys())
 		writer.writerow(p)
@@ -48,7 +47,7 @@ def save_user_data(user_id, path):
 	util.assureDirExist(path)
 	
 	user_filter = {'user_id':user_id}
-	save_csv_table(path, 'user', user_filter)
+	save_csv_table(path, 'user', {})
 	save_csv_table(path, 'open_planet', user_filter)
 	save_csv_table(path, 'race', user_filter)
 	save_csv_table(path, 'diplomacy', user_filter)

@@ -462,6 +462,7 @@ class Store:
 		#print '%s with %s'%(s, tuple(conds.values()))
 		cur.execute(s, tuple(conds.values()))
 		for r in cur.fetchall():
+			#print 'res: %s'%(r,)
 			yield dict(zip(tables[table], r))
 
 
