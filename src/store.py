@@ -473,7 +473,9 @@ class TestStore(unittest.TestCase):
 		u_pl = extract(user_planet, tables['user_planet'])
 		self.assertEqual(us_pl, u_pl)
 		
-		known_planet = {'x':11, 'y':22, 'o':5, 'e':22, 't':78, 's':99, 'turn':21}
+		coord = {'x':11, 'y':22}
+		
+		known_planet = {'x':11, 'y':22, 'o':5, 'e':22, 'm':32, 't':78, 's':99}
 		self.store.add_known_planet(known_planet)
 		
 		known_planet2 = {'name':'test', 'user_id':4, 'x':11, 'y':22, 'turn':21}
@@ -483,6 +485,21 @@ class TestStore(unittest.TestCase):
 		self.store.add_data('open_planet', known_open_planet3)
 		
 		
+		p = self.store.get_object('planet', coord)
+		self.assertEqual(p, known_planet2)
+
+		p = self.store.get_object('planet_geo', coord)
+		self.assertEqual(p, known_planet)
+		
+		# add older info
+		
+		old_info = coord.copy()
+		old_info['user_id']=11
+		old_info['turn'] = 8
+		self.store.add_known_planet(old_info)
+
+		p = self.store.get_object('planet', coord)
+		self.assertEqual(p, known_planet2)
 		
 
 if __name__ == '__main__':
