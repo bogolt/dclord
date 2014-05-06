@@ -39,6 +39,13 @@ DIP_RELATION_ALLY = 2
 DIP_RELATION_VASSAL = 3
 DIP_RELATION_LORD = 4
 
+def extract(d, key_list):
+	r = {}
+	for key, value in d.iteritems():
+		if key in key_list:
+			r[key] = value
+	return r
+
 class Store:
 	def __init__(self):
 		self.conn = sqlite3.connect(':memory:')
@@ -354,11 +361,24 @@ class Store:
 		'add new user'
 		self.add_data('user', user_data)
 		
-	def add_data(self, table, data):
-		cur = self.conn.cursor()
-		keys = tables[table]
+	def get_user_turn(self, user_id):
+		user = self.get_object('user', {'user_id':user_id})
+		if not user:
+			return 0
+		return int(user['turn'])
 		
-		# consider that data has all the keys required
+	def add_user_planet(self, planet_data):
+		planet_data['turn'] = self.get_user_turn(planet_data['user_id'])
+		self.add_data('user_planet', planet_data)
+		self.add_data('planet', planet_data)
+		self.add_data('planet_geo', planet_data)
+		self.add_data('open_planet', planet_data)
+		
+	def add_data(self, table, raw_data):
+		cur = self.conn.cursor()
+		
+		data = extract(raw_data, tables[table])
+		
 		s = 'insert or replace into %s(%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key_name,) for key_name in data.iterkeys()]))
 		#print s
 		cur.execute(s, data)
@@ -377,7 +397,7 @@ class Store:
 			#print 'empty result'
 			return None
 		#print 'result %s'%(r,)
-		return dict(zip(tables['user'], r))
+		return dict(zip(tables[table], r))
 		
 	def get_objects_list(self, table, conds = {}):
 		
@@ -393,7 +413,7 @@ class Store:
 		if conds:
 			s += ' WHERE %s'%(' and '.join(['%s=?'%(key_name,) for key_name in conds.iterkeys()]),)
 
-		print '%s with %s'%(s, tuple(conds.values()))
+		#print '%s with %s'%(s, tuple(conds.values()))
 		cur.execute(s, tuple(conds.values()))
 		for r in cur.fetchall():
 			yield dict(zip(tables['user'], r))
@@ -421,6 +441,18 @@ class TestStore(unittest.TestCase):
 		users = self.store.get_objects_list('user')
 		self.assertEqual(len(users), 1)
 		self.assertEqual(users[0], user_data)
+		
+	def test_add_planet(self):
+		user_id = 3
+		user_data = {'user_id':user_id, 'race_id':22, 'name':u'test_user', 'login':u'very_sercret', 'turn':33}
+		self.store.add_user(user_data)
+		
+		user_planet = {'user_id':user_id, 'x':34, 'y':56, 'o':56, 'e':12, 't':90, 's':32, 'corruption':0, 'population':4567, 'name':'hw'}
+		self.store.add_user_planet(user_planet)
+		
+		up = extract(user_planet, tables['planet'])
+		planet = self.store.get_object('planet', extract(user_planet, ['x', 'y']))
+		self.assertEqual(up, planet)
 		
 		
 
