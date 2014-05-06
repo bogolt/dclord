@@ -322,10 +322,9 @@ class Store:
 		
 		# delete units
 		cur.execute("""delete from unit 
-						JOIN fleet_unit ON fleet_unit.unit_id=unit.unit_id
-						JOIN fleet ON fleet_unit.fleet_id=fleet.fleet_id
-						JOIN user ON user.user_id=fleet.fleet_id
-											WHERE user.user_id=?""", (user_id,))
+						JOIN fleet_unit ON fleet_unit.unit_id=unit.unit_id,
+						JOIN fleet ON fleet_unit.fleet_id=fleet.fleet_id,
+						JOIN user ON user.user_id=fleet.fleet_id WHERE user.user_id=?""", (user_id,))
 											
 		cur.execute("""delete from unit
 						JOIN garrison_unit ON unit.unit_id=garrison_unit.unit_id
@@ -476,7 +475,7 @@ class TestStore(unittest.TestCase):
 	
 	def test_add_get(self):
 		user_id = 3
-		user_data = {'user_id':user_id, 'race_id':22, 'name':u'test_user', 'turn':33}
+		user_data = {'user_id':user_id, 'race_id':22, 'name':u'test_user', 'turn':33, 'money':3, 'resource_main':455, 'resource_secondary':23}
 		user_none = self.store.get_user(user_id)
 		self.assertIsNone(user_none)
 		self.store.add_user( user_data)
@@ -544,6 +543,9 @@ class TestStore(unittest.TestCase):
 		
 		units = self.store.get_fleet_units( fleet )
 		self.assertEqual(units, uts)
+	
+	def xtest_x_clear(self):
+		self.store.clear_user_data(1)
 		
 
 if __name__ == '__main__':
