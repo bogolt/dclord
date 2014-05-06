@@ -318,7 +318,11 @@ class Store:
 		
 	def clear_user_data(self, user_id):
 		'clear all user-related data'
+		#TODO: delete join do not work!, need to use nested select, or something else http://stackoverflow.com/questions/4967135/deleting-rows-from-sqlite-table-when-no-match-exists-in-another-table
 		cur = self.conn.cursor()
+
+		cur.execute("""delete from unit JOIN fleet_unit ON fleet_unit.unit_id=unit.unit_id WHERE fleet_unit.fleet_id=3""")
+
 		
 		# delete units
 		cur.execute("""delete from unit 
@@ -544,8 +548,8 @@ class TestStore(unittest.TestCase):
 		units = self.store.get_fleet_units( fleet )
 		self.assertEqual(units, uts)
 	
-	def xtest_x_clear(self):
-		self.store.clear_user_data(1)
+	def test_x_clear(self):
+		self.store.clear_user_data(3)
 		
 
 if __name__ == '__main__':
