@@ -399,6 +399,31 @@ class Store:
 		cur.execute(s, data)
 		self.conn.commit()
 		
+	def add_fleet_unit(self, fleet_id, unit_data):
+		self.add_data('fleet_unit', {'fleet_id':fleet_id, 'unit_id':unit_data['unit_id']})
+		self.add_data('unit', unit_data)
+		
+	def add_garrison_unit(self, unit_data):
+		self.add_data('garrison_unit', unit_data)
+		self.add_data('unit', unit_data)
+		
+	def execute(self, table, query, args):
+		cur = self.conn.cursor()
+		keys = ['%s.%s'%(table, key) for key in tables[table]]
+		cur.execute(query%(','.join(keys), table), args)
+		res = []
+		for r in cur.fetchall():
+			res.append( dict(zip(tables[table], r)))
+		return res
+		
+	def get_fleet_units(self, fleet_id):
+		return self.execute('unit', """select %s from %s JOIN fleet_unit ON fleet_unit.unit_id=unit.unit_id
+											WHERE fleet_unit.fleet_id=?""", (fleet_id,))
+
+	def get_garrison_units(self, coord):
+		return self.execute('unit', """select %s from %s
+						JOIN garrison_unit ON unit.unit_id=garrison_unit.unit_id WHERE garrison_unit.x = ? AND garrison_unit.y = ?""", coord)
+		
 	def get_user(self, user_id):
 		return self.get_object('user', {'user_id':user_id})
 		
@@ -500,6 +525,15 @@ class TestStore(unittest.TestCase):
 
 		p = self.store.get_object('planet', coord)
 		self.assertEqual(p, known_planet2)
+		
+	def test_units(self):
+		fleet = 12
+		uts = [{'proto_id':34, 'unit_id':unit_id, 'hp':2} for unit_id in range(1,5)]
+		for u in uts:
+			self.store.add_fleet_unit( fleet, u )
+		
+		units = self.store.get_fleet_units( fleet )
+		self.assertEqual(units, uts)
 		
 
 if __name__ == '__main__':
