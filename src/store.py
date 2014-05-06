@@ -378,6 +378,25 @@ class Store:
 			return None
 		#print 'result %s'%(r,)
 		return dict(zip(tables['user'], r))
+		
+	def get_objects_list(self, table, conds = {}):
+		
+		objs = []
+		for obj in self.iter_objects_list(table, conds):
+			objs.append(obj)
+		return objs
+
+	def iter_objects_list(self, table, conds = {}):
+		cur = self.conn.cursor()
+		s = 'select %s from %s'%(','.join(tables[table]), table,)
+
+		if conds:
+			s += ' WHERE %s'%(' and '.join(['%s=?'%(key_name,) for key_name in conds.iterkeys()]),)
+
+		print '%s with %s'%(s, tuple(conds.values()))
+		cur.execute(s, tuple(conds.values()))
+		for r in cur.fetchall():
+			yield dict(zip(tables['user'], r))
 
 import unittest
 
@@ -385,7 +404,7 @@ class TestStore(unittest.TestCase):
 	def setUp(self):
 		self.store = Store()
 	
-	def test_a(self):
+	def test_add_get(self):
 		user_id = 3
 		user_data = {'user_id':user_id, 'race_id':22, 'name':u'test_user', 'login':u'very_sercret', 'turn':33}
 		user_none = self.store.get_user(user_id)
@@ -397,6 +416,11 @@ class TestStore(unittest.TestCase):
 		
 		user_none = self.store.get_user(user_id+1)
 		self.assertIsNone(user_none)
+		
+		self.assertEqual([], self.store.get_objects_list('user', {'name':u'test'}))
+		users = self.store.get_objects_list('user')
+		self.assertEqual(len(users), 1)
+		self.assertEqual(users[0], user_data)
 		
 		
 
