@@ -22,8 +22,8 @@ tables = {'planet':['x', 'y', 'user_id', 'name', 'turn'],
 		'unit':['unit_id', 'hp', 'proto_id'],
 		'fleet_unit':['unit_id', 'fleet_id'],
 		'garrison_unit':['unit_id', 'x', 'y'],
-		'garrison_queue_unit':['unit_id', 'x', 'y', 'bc', 'done', 'build_order'],
-		'alien_unit':['fleet_id', 'unit_id', 'weight', 'carapace','color'],
+		'garrison_queue_unit':['unit_id', 'x', 'y', 'proto_id', 'done', 'build_order'],
+		'alien_unit':['fleet_id', 'unit_id', 'class', 'weight', 'carapace','color'],
 		'user':['user_id', 'name', 'race_id', 'login', 'resource_main', 'resource_secondary', 'money', 'turn'],
 		'race':['race_id', 'user_id', 'temperature_delta',  'temperature_optimal',  'resource_nature',  'population_growth', 'resource_main', 'resource_secondary', 'modifier_fly', 'modifier_build_war', 'modifier_build_peace', 'modifier_science', 'modifier_stealth', 'modifier_detection', 'modifier_mining', 'modifier_price', 'name'],
 		'diplomacy':['user_id', 'other_user_id', 'relation'], #dip relation from user to other_user
@@ -56,7 +56,7 @@ class Store:
 		cur.execute("""create table if not exists user(
 				user_id integer PRIMARY KEY,
 				name text not null,
-				race_id integer not null,
+				race_id integer,
 				login text,
 				resource_main integer,
 				resource_secondary integer,
@@ -104,7 +104,7 @@ class Store:
 				PRIMARY KEY (x, y))""")
 		
 		cur.execute("""create table if not exists requested_action(
-				id integer PRIMARY KEY,
+				action_id integer PRIMARY KEY,
 				user_id integer not null,
 				return_id integer default 0,
 				is_ok integer default 0
@@ -223,6 +223,7 @@ class Store:
 				unit_id integer PRIMARY KEY,
 				fleet_id integer not null,
 				carapace integer not null,
+				class integer,
 				color integer(1),
 				weight integer,
 				bc integer
@@ -233,7 +234,7 @@ class Store:
 				unit_id integer PRIMARY KEY,
 				x integer(2) not null,
 				y integer(2) not null,
-				bc integer not null,
+				proto_id integer not null,
 				done integer,
 				build_order integer
 				)""")
@@ -305,7 +306,6 @@ class Store:
 				
 		cur.execute("""create table if not exists proto_action(
 				proto_action_id integer primary key,
-				type integer not null,
 				proto_id integer not null,
 				max_count integer,
 				cost_people integer,
@@ -366,6 +366,11 @@ class Store:
 		'add new user'
 		self.add_data('user', user_data)
 		
+	def add_user_info(self, user_id, user_name):
+		user = self.get_user(user_id)
+		if not user:
+			self.add_data('user', {'user_id':user_id, 'name':user_name})
+		
 	def get_user_turn(self, user_id):
 		user = self.get_object('user', {'user_id':user_id})
 		if not user:
@@ -400,8 +405,12 @@ class Store:
 		data = extract(raw_data, tables[table])
 		
 		s = 'insert or replace into %s(%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key_name,) for key_name in data.iterkeys()]))
-		print s, data
+		#print s, data
 		cur.execute(s, data)
+		self.conn.commit()
+		
+	def add_action_result(self, action_id, is_ok, return_id = None):
+		self.conn.cursor().execute('update requested_action set is_ok=?, return_id=? WHERE action_id=?', (is_ok, return_id, action_id))
 		self.conn.commit()
 		
 	def keys(self, table):
