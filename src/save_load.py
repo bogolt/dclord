@@ -60,6 +60,12 @@ def save_user_data(user_id, path):
 		for fleet_unit in store.iter_objects_list('fleet_unit', {'fleet_id':fleet['fleet_id']}):
 			fleet_unit_writer.writerow(fleet_unit)
 			unit_writer.writerow( store.get_object('unit', {'unit_id':fleet_unit['unit_id']}) )
+			
+	garrison_unit_writer = csv_open(os.path.join(path, 'garrison_unit.csv'), store.keys('garrison_unit'))
+	for planet in store.iter_objects_list('user_planet', {'user_id':user_id}):
+		for garrison_unit in store.iter_objects_list('garrison_unit', {'x':planet['x'], 'y':planet['y']}):
+			garrison_unit_writer.writerow(garrison_unit)
+			unit_writer.writerow( store.get_object('unit', {'unit_id':garrison_unit['unit_id']}) )
 	
 	#writer = csv_open(os.path.join(path, 'proto_action.csv'), store.keys('proto_action'))
 	#for proto in store.iter_objects_list('proto', user_filter):
