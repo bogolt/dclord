@@ -409,6 +409,14 @@ class Store:
 		cur.execute(s, data)
 		self.conn.commit()
 		
+	def update_data(self, table, filter_keys, data):
+		'check data turn for max value'
+		u = self.get_object(table, {k:v for k,v in data.iteritems() if k in filter_keys})
+		if u and u['turn'] and int(u['turn']) > int(data['turn']):
+			return
+		
+		self.add_data(table, data)
+		
 	def add_action_result(self, action_id, is_ok, return_id = None):
 		self.conn.cursor().execute('update requested_action set is_ok=?, return_id=? WHERE action_id=?', (is_ok, return_id, action_id))
 		self.conn.commit()
@@ -488,10 +496,17 @@ import unittest
 class TestStore(unittest.TestCase):
 	USER_ID = 3
 	USER_DATA = {'user_id':USER_ID, 'login':'testu', 'race_id':22, 'name':u'test_user', 'turn':33, 'money':3, 'resource_main':455, 'resource_secondary':23}
+	USER_ID2 = 5
+	USER_DATA_OLD = {'user_id':USER_ID, 'login':'testu', 'race_id':22, 'name':u'test_user', 'turn':32, 'money':1, 'resource_main':2, 'resource_secondary':23}
 	FLEET = {'fleet_id':34, 'user_id':USER_ID, 'name':'test-flying machines', 'x':12, 'y':987, 'times_spotted':0, 'is_hidden':0}
+	FLEET_OLD = {'fleet_id':34, 'user_id':USER_ID, 'name':'test', 'x':112, 'y':987, 'times_spotted':0, 'is_hidden':1}
 	PROTO_ID = 9
+	
+	PLANET = {'x':11, 'y':22, 'user_id':USER_ID, 'name':'my home', 'turn':33}
+	PLANET_OLD = {'x':11, 'y':22, 'user_id':USER_ID, 'name':'Users  home', 'turn':12}
 
-	FLEET_UNIT = {'hp':2, 'unit_id':11, 'proto_id':PROTO_ID}
+	FLEET_UNIT = {'hp':1, 'unit_id':11, 'proto_id':PROTO_ID}
+	FLEET_UNIT_OLD = {'hp':2, 'unit_id':11, 'proto_id':PROTO_ID}
 	FLEET_UNIT2 = {'hp':2, 'unit_id':12, 'proto_id':PROTO_ID}
 	FLEET_UNIT_OTHER = {'hp':2, 'unit_id':1555, 'proto_id':PROTO_ID}
 	
@@ -588,6 +603,24 @@ class TestStore(unittest.TestCase):
 		self.store.clear_user_data(self.USER_ID)
 		self.assertEqual([], self.store.get_objects_list('fleet', {'user_id':self.USER_ID}))
 		self.assertEqual([self.FLEET_UNIT_OTHER], self.store.get_fleet_units(self.FLEET['fleet_id']+11))
+		
+	def test_update(self):
+		self.store.update_data('user', ['user_id'], self.USER_DATA)
+		self.store.update_data('user', ['user_id'], self.USER_DATA_OLD)
+		
+		user = self.store.get_user(self.USER_ID)
+		self.assertEqual(user, self.USER_DATA)
+		
+		self.store.update_data('planet', ['x', 'y'], self.PLANET_OLD)
+		self.assertEqual(self.PLANET_OLD, self.store.get_object('planet', {'x':self.PLANET_OLD['x'], 'y':self.PLANET_OLD['y']}))
+		
+		self.store.update_data('planet', ['x', 'y'], self.PLANET)
+		self.assertEqual(self.PLANET, self.store.get_object('planet', {'x':self.PLANET['x'], 'y':self.PLANET['y']}))
+		
+		self.store.update_data('planet', ['x', 'y'], self.PLANET_OLD)
+		self.assertEqual(self.PLANET, self.store.get_object('planet', {'x':self.PLANET['x'], 'y':self.PLANET['y']}))
+		
+		
 		
 
 if __name__ == '__main__':
