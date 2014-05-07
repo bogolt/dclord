@@ -42,7 +42,7 @@ def save_user_data(user_id, path):
 	util.assureDirExist(path)
 	
 	user_filter = {'user_id':user_id}
-	save_csv_table(path, 'user', {})
+	save_csv_table(path, 'user', user_filter)
 	save_csv_table(path, 'open_planet', user_filter)
 	save_csv_table(path, 'race', user_filter)
 	save_csv_table(path, 'diplomacy', user_filter)
@@ -74,13 +74,11 @@ def save_user_data(user_id, path):
 def save_all_data(path):
 	util.assureDirExist(path)
 	
+	save_csv_table(path, 'user', {})
 	save_csv_table(path, 'planet', {})
 	save_csv_table(path, 'planet_geo', {})
 	save_csv_table(path, 'alien_fleet', {})
-	#save_csv_table(path, 'alien_flying_fleet', {})
-	#for user in store.iter_objects_list('user', 
-	
-	
+	save_csv_table(path, 'alien_unit', {})
 	
 
 import unittest
