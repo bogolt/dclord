@@ -104,23 +104,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			d['user_id'] = self.user_id
 			store.add_data('hw', d)
 			
-	def other(self, name, attrs):
-
-		if XmlHandler.Error == name and self.errors:
-			log.error('Found error node!')
-
-			
-			
-		#elif XmlHandler.NotLoggedInError == name:
-		#	log.error('Not logged in - turn in progress')
-		#	self.status = self.StatusTurnInProgress
-			
-		elif XmlHandler.UserInfo == name:
-			pass
-		elif XmlHandler.UserRace == name:
-			
+		elif 'this-player-race' == name:
 			d = getAttrs(attrs, {
-				'race-id':'id',
+				'race-id':'race_id',
 				't-delta':'temperature_delta', 
 				't-optimal':'temperature_optimal', 
 				'race-nature':'resource_nature', 
@@ -139,10 +125,47 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				#'bonus-ground-units': 'modifier_build_ground',
 				#'bonus-space-units': 'modifier_build_space',
 				'race-name':'name'
-				
 					})
+			d['user_id'] = self.user_id
+			store.add_data('race', d)
+		
+		elif 'user-planets' == name:
+			self.parent = 'user-planets'
+		elif 'planet' == name:
+			
+			if 'user-planets' == self.parent:
+				data = getAttrs(attrs, {'x':'x', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s'})
+				if 'hidden' in attrs:
+					data['is_open'] = not int(attrs['hidden'])
+				data['user_id'] = self.user_id
+				store.add_user_planet(data)
+			else:
+				# ok, this is known planet
+				data = getAttrs(attrs, {'x':'x', 'y':'y', 'owner-id':'user_id', 'name':'name','o':'o','e':'e','m':'m','t':'t','s':'s','turn':'turn'})
+				store.add_known_planet(data)
+				
+				if 'open' in data:
+					# do not care about planet
+					data['user_id'] = self.user_id
+					store.add_open_planet(data)
+		
+			
+	def other(self, name, attrs):
 
-			db.db.set_object(db.Db.RACE, d)
+		if XmlHandler.Error == name and self.errors:
+			log.error('Found error node!')
+
+			
+			
+		#elif XmlHandler.NotLoggedInError == name:
+		#	log.error('Not logged in - turn in progress')
+		#	self.status = self.StatusTurnInProgress
+			
+		elif XmlHandler.UserInfo == name:
+			pass
+		elif XmlHandler.UserRace == name:
+			
+			pass
 			# race-nature	  (nature)
 			# industry-nature ( first )
 			# unused-resource ( second )
@@ -380,18 +403,24 @@ def processAllUnpacked():
 import unittest
 import save_load
 
+def load_xml(path):
+	p = xml.sax.make_parser()
+	handler = XmlHandler()
+	p.setContentHandler(handler)
+	p.parse( open(path) )
+	return handler.user_id
+
 class TestXmlImport(unittest.TestCase):
 	def setUp(self):
 		pass
-	
+
 	def test_import_xml(self):
-		p = xml.sax.make_parser()
-		handler = XmlHandler()
-		p.setContentHandler(handler)
-		path = '/tmp/dclord/raw_xml/niki_all.xml'
-		p.parse( open(path) )
-		save_load.save_user_data(handler.user_id, '/tmp/dclord/out/')
-		return handler.status		
+		
+		user_id = load_xml('/tmp/dclord/raw_xml/niki_all.xml')
+		load_xml('/tmp/dclord/raw_xml/niki_known_planets.xml')
+		
+		save_load.save_user_data(user_id, '/tmp/dclord/out/')
+		
 		
 if __name__ == '__main__':
 	unittest.main()

@@ -4,7 +4,7 @@ import os
 import logging
 import util
 
-unicode_strings = ['name', 'description']
+unicode_strings = [u'name', u'description']
 
 def csv_open(path, keys):
 	writer = csv.DictWriter(open(path, 'wt'), keys)
@@ -16,26 +16,21 @@ def save_csv(path, data):
 		return
 		
 	writer = csv_open(path, data[0].keys())
-	for d in data:
-		for k,v in d.iteritems():
-			if k in unicode_strings and v:
-				v = v.encode('utf-8')
-		writer.writerow(d)
+	for p in data:
+		writer.writerow({k:(v.encode('utf8') if k in unicode_strings else v) for k,v in p.items()})
+			
 		
 def save_csv_table(path, table, data_filter):
 	writer = None
 	for p in store.iter_objects_list(table, data_filter):
 		if not writer:
 			writer = csv_open(os.path.join(path, '%s.csv'%(table,)), p.keys())
-		writer.writerow(p)
+		writer.writerow({k:(v.encode('utf8') if k in unicode_strings else v) for k,v in p.items()})
 		
 def iter_csv(path):
 	objs = []
 	for p in csv.DictReader(open(path, 'rt')):
-		for s in unicode_strings:
-			if s in p and p[s]:
-				p[s] = p[s].decode('utf-8')
-		yield p
+		yield {k:(v.decode('utf8') if k in unicode_strings else v) for k,v in p.items()})
 			
 def load_csv(path):
 	objs = []
