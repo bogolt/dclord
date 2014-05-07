@@ -134,7 +134,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif 'planet' == name:
 			
 			if 'user-planets' == self.parent:
-				data = getAttrs(attrs, {'x':'x', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s'})
+				data = getAttrs(attrs, {'x':'x', 'y':'y', 'name':'name','o':'o','e':'e','m':'m','t':'t','temperature':'t','s':'s','surface':'s', 'corruption':'corruption', 'population':'population'})
 				if 'hidden' in attrs:
 					data['is_open'] = not int(attrs['hidden'])
 				data['user_id'] = self.user_id
