@@ -1,5 +1,5 @@
 import xml.sax
-from store import store
+import store
 import os
 import util
 import shutil
@@ -37,7 +37,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	StatusAuthError = 2
 	StatusError = 3
 	
-	def __init__(self):
+	def __init__(self, db = None):
 		xml.sax.handler.ContentHandler.__init__(self)
 
 		self.user_id = 0		
@@ -47,6 +47,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		self.error_text = ''
 		self.parent_id = 0
 		self.parent_coord = None
+		self.store = db if db else store.store
 		
 	def startElement(self, name, attrs):
 		if 'dc' == name:
@@ -55,7 +56,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			
 			# all info read, erase everything related to this user
 			if attrs['this-url'].endswith('/all/'):
-				store.clear_user_data(self.user_id)
+				self.store.clear_user_data(self.user_id)
 				
 		elif 'errors' == name:
 			self.parent = name
@@ -66,11 +67,11 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.user['race_id'] = attrs['race-id']
 			# save login ( will be used later, to link user data with it's config info )
 			self.user['login'] = attrs['login']
-			store.add_user(self.user)
+			self.store.add_user(self.user)
 
 			d = getAttrs(attrs, {'homeworldx':'x', 'homeworldy':'y'})
 			d['user_id'] = self.user_id
-			store.add_data('hw', d)
+			self.store.add_data('hw', d)
 			
 		elif 'this-player-race' == name:
 			d = getAttrs(attrs, {
@@ -95,7 +96,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				'race-name':'name'
 					})
 			d['user_id'] = self.user_id
-			store.add_data('race', d)
+			self.store.add_data('race', d)
 		
 		elif 'user-planets' == name:
 			self.parent = 'user-planets'
@@ -106,16 +107,16 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				if 'hidden' in attrs:
 					data['is_open'] = not int(attrs['hidden'])
 				data['user_id'] = self.user_id
-				store.add_user_planet(data)
+				self.store.add_user_planet(data)
 			else:
 				# ok, this is known planet
 				data = getAttrs(attrs, {'x':'x', 'y':'y', 'owner-id':'user_id', 'name':'name','o':'o','e':'e','m':'m','t':'t','s':'s','turn':'turn'})
-				store.add_known_planet(data)
+				self.store.add_known_planet(data)
 				
 				if 'open' in attrs and 1==int(attrs['open']):
 					# do not care about planet
 					data['user_id'] = self.user_id
-					store.add_open_planet(data)
+					self.store.add_open_planet(data)
 					
 		elif 'fleets' == name:
 			self.parent = 'fleets'
@@ -136,27 +137,27 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				#ok, this is ours fleet
 				data['user_id']=self.user_id
 				
-				store.add_data(table, data)
+				self.store.add_data(table, data)
 			elif 'allien-fleet' == name:
-				store.add_data('alien_'+table, data)
+				self.store.add_data('alien_'+table, data)
 				
 		elif 'u' == name:
 			data = getAttrs(attrs, {'bc':'proto_id', 'id':'unit_id', 'hp':'hp'})
 			
 			if self.parent == 'fleets':
-				store.add_fleet_unit(self.parent_id, data)
+				self.store.add_fleet_unit(self.parent_id, data)
 			elif self.parent == 'harrison':
 				data['x'], data['y'] = self.parent_coord
-				store.add_garrison_unit(data)
+				self.store.add_garrison_unit(data)
 		elif 'c-u' == name:
 			data = getAttrs(attrs, {'bc':'proto_id', 'id':'unit_id', 'hp':'hp', 'done':'done', 'inproc-order':'build_order'})
 			data['x'] = self.parent_coord[0]
 			data['y'] = self.parent_coord[1]
-			store.add_data('garrison_queue_unit', data)
+			self.store.add_data('garrison_queue_unit', data)
 		elif 'allien-ship' == name:
 			data = getAttrs(attrs, {'class-id':'class', 'id':'unit_id', 'weight':'weight', 'carapace':'carapace', 'color':'color'})
 			data['fleet_id'] = self.parent_id
-			store.add_data('alien_unit', data)
+			self.store.add_data('alien_unit', data)
 		elif 'harrison' == name:
 			self.parent_coord = int(attrs['x']), int(attrs['y'])
 			self.parent = name
@@ -165,19 +166,19 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			data['user_id'] = self.user_id
 			self.parent_id = data['proto_id']
 			self.parent = name
-			store.add_data('proto', data)
+			self.store.add_data('proto', data)
 		elif 'act' and self.parent == 'building_class':
 			data = getAttrs(attrs, {'action':'proto_action_id', 'maxcount':'max_count', 'cost-pepl':"cost_people", 'cost-main':"cost_main", 'cost-money':"cost_money", 'cost-second':"cost_second", 'planet-can-be':"planet_can_be"})
 			data['proto_id'] = self.parent_id
-			store.add_data('proto_action', data)
+			self.store.add_data('proto_action', data)
 		elif 'rel' == name:
 			data = getAttrs(attrs, {'player':'other_user_id', 'name':'name', 'type':'relation'})
-			store.add_user_info(data['other_user_id'], data['name'])
+			self.store.add_user_info(data['other_user_id'], data['name'])
 			data['user_id'] = self.user_id
-			store.add_data('diplomacy', data)
+			self.store.add_data('diplomacy', data)
 		elif 'act' == name and not self.parent:
 			ret_id = attrs['return-id'] if 'return-id' in attrs else None
-			store.add_action_result(attrs['id'], unicode(attrs['result'])==u'ok', ret_id)
+			self.store.add_action_result(attrs['id'], unicode(attrs['result'])==u'ok', ret_id)
 				
 	def endElement(self, name):
 		if name in ['user-planets', 'fleets', 'allien-fleets', 'harrison', 'building_class']:
