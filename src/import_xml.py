@@ -30,29 +30,6 @@ def safeRemove(array, keys):
 
 class XmlHandler(xml.sax.handler.ContentHandler):
 	
-	NodeDC = 'dc'
-	UserInfo = 'this-player'
-	UserRace = 'this-player-race'
-	UserPlanets = 'user-planets'
-	UserFleets = 'fleets'
-	Planet = 'planet'
-	KnownPlanets = 'known-planets'
-	Fleet = 'fleet'
-	AlienFleet = 'allien-fleet'
-	AlienFleets = 'allien-fleets'
-	Unit = 'u'
-	AlienUnit = 'allien-ship'
-	Garrison = 'harrison'
-	BuildingClass = 'building_class'
-	BuildingClassActionsList = 'actions'
-	BuildingClassAction = 'act'
-	Iframe = 'iframe'
-	PerformAction = 'act'
-	Diplomacy = 'diplomacy'
-	DipRelation = 'rel'
-	Errors = 'errors'
-	Error = 'error'
-	
 	NotLoggedInError = 'not-logged-in'
 	
 	StatusOk = 0
@@ -145,7 +122,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif 'allien-fleets' == name:
 			self.parent = 'allien-fleets'
 		elif name in ['fleet', 'allien-fleet']:
-			fleetDict = {'x':'x','y':'y','id':'id','in-transit':'in_transit','fleet-id':'fleet_id','player-id':'user_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
+			fleetDict = {'x':'x','y':'y','id':'fleet_id','in-transit':'in_transit','fleet-id':'fleet_id','player-id':'user_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
 			data = getAttrs(attrs, fleetDict)
 			self.parent_id = data['fleet_id'] if 'fleet_id' in data else 0
 			table = 'fleet'

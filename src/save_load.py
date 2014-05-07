@@ -54,6 +54,13 @@ def save_user_data(user_id, path):
 	save_csv_table(path, 'fleet', user_filter)
 	save_csv_table(path, 'proto', user_filter)
 	
+	fleet_unit_writer = csv_open( os.path.join(path, 'fleet_unit.csv'), store.keys('fleet_unit'))
+	unit_writer = csv_open( os.path.join(path, 'unit.csv'), store.keys('unit'))
+	for fleet in store.iter_objects_list('fleet', {'user_id':user_id}):
+		for fleet_unit in store.iter_objects_list('fleet_unit', {'fleet_id':fleet['fleet_id']}):
+			fleet_unit_writer.writerow(fleet_unit)
+			unit_writer.writerow( store.get_object('unit', {'unit_id':fleet_unit['unit_id']}) )
+	
 	#writer = csv_open(os.path.join(path, 'proto_action.csv'), store.keys('proto_action'))
 	#for proto in store.iter_objects_list('proto', user_filter):
 	#	for p_action in store.iter_objects_list('proto_action', {'proto_id':proto['proto_id']}):
