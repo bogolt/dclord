@@ -67,10 +67,9 @@ def save_user_data(user_id, path):
 			garrison_unit_writer.writerow(garrison_unit)
 			unit_writer.writerow( store.get_object('unit', {'unit_id':garrison_unit['unit_id']}) )
 	
-	#writer = csv_open(os.path.join(path, 'proto_action.csv'), store.keys('proto_action'))
-	#for proto in store.iter_objects_list('proto', user_filter):
-	#	for p_action in store.iter_objects_list('proto_action', {'proto_id':proto['proto_id']}):
-	#		writer.writerow(p_action)
+	proto_actions_writer = csv_open(os.path.join(path, 'proto_action.csv'), store.keys('proto_action'))
+	for proto in store.iter_objects_list('proto', {'user_id':user_id}):
+		proto_actions_writer.writerows(store.get_objects_list('proto_action', {'proto_id':proto['proto_id']}))
 	
 def save_all_data(path):
 	util.assureDirExist(path)

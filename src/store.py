@@ -28,7 +28,7 @@ tables = {'planet':['x', 'y', 'user_id', 'name', 'turn'],
 		'race':['race_id', 'user_id', 'temperature_delta',  'temperature_optimal',  'resource_nature',  'population_growth', 'resource_main', 'resource_secondary', 'modifier_fly', 'modifier_build_war', 'modifier_build_peace', 'modifier_science', 'modifier_stealth', 'modifier_detection', 'modifier_mining', 'modifier_price', 'name'],
 		'diplomacy':['user_id', 'other_user_id', 'relation'], #dip relation from user to other_user
 		'proto':['proto_id', 'user_id', 'fly_speed', 'aim_bomb', 'color', 'build_speed', 'require_people', 'carapace', 'fly_range', 'class', 'cost_second', 'cost_main', 'cost_money', 'is_transportable', 'require_tech_level', 'support_second', 'name', 'stealth_level', 'bonus_s', 'bonus_m', 'bonus_o', 'max_count', 'bonus_e', 'support_main', 'weight', 'damage_laser', 'is_ground_unit', 'is_serial', 'aim_laser', 'is_spaceship', 'transport_capacity', 'is_offensive', 'detect_range', 'damage_bomb', 'bonus_production', 'description', 'scan_strength', 'hp', 'defence_laser', 'defence_bomb', 'carrier_capacity', 'laser_number', 'is_building', 'cost_people', 'bomb_number', 'is_war'],
-		'proto_action':['type', 'proto_id', 'max_count', "cost_people", "cost_main", "cost_money", "cost_second", "planet_can_be"],
+		'proto_action':['proto_action_id', 'proto_id', 'max_count', "cost_people", "cost_main", "cost_money", "cost_second", "planet_can_be"],
 		'hw':['x','y', 'user_id']
 }
 
