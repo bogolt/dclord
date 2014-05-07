@@ -144,11 +144,15 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				data = getAttrs(attrs, {'x':'x', 'y':'y', 'owner-id':'user_id', 'name':'name','o':'o','e':'e','m':'m','t':'t','s':'s','turn':'turn'})
 				store.add_known_planet(data)
 				
-				if 'open' in data:
+				if 'open' in attrs and 1==int(attrs['open']):
 					# do not care about planet
 					data['user_id'] = self.user_id
 					store.add_open_planet(data)
 		
+			
+	def endElement(self, name):
+		if 'user-planets' == name:
+			self.parent = ''
 			
 	def other(self, name, attrs):
 
