@@ -357,6 +357,9 @@ class Store:
 		
 		cur.execute('delete from diplomacy WHERE user_id=?', (user_id,))
 		
+		# delete flying alien fleets ( unable distinct them from new ones )
+		cur.execute('delete from flying_alien_fleet WHERE user_id=?', (user_id,))
+		
 		self.conn.commit()
 	
 	def add_user(self, user_data):
@@ -397,7 +400,7 @@ class Store:
 		data = extract(raw_data, tables[table])
 		
 		s = 'insert or replace into %s(%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key_name,) for key_name in data.iterkeys()]))
-		#print s, data
+		print s, data
 		cur.execute(s, data)
 		self.conn.commit()
 		
@@ -411,6 +414,10 @@ class Store:
 	def add_garrison_unit(self, unit_data):
 		self.add_data('garrison_unit', unit_data)
 		self.add_data('unit', unit_data)
+		
+	#def add_flying_alien_fleet(self, fleet):
+	#	matching_fleets = self.get_objects_list('flying_alien_fleet', fleet)
+	#	
 		
 	def execute(self, table, query, args):
 		cur = self.conn.cursor()

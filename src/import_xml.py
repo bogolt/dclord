@@ -148,10 +148,31 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 					# do not care about planet
 					data['user_id'] = self.user_id
 					store.add_open_planet(data)
-		
+					
+		elif 'fleets' == name:
+			self.parent = 'fleets'
+		elif 'allien-fleets' == name:
+			self.parent = 'allien-fleets'
+		elif name in ['fleet', 'allien-fleet']:
+			fleetDict = {'x':'x','y':'y','id':'id','in-transit':'in_transit','fleet-id':'fleet_id','player-id':'user_id','from-x':'from_x','from-y':'from_y','name':'name', 'tta':'tta', 'turns-till-arrival':'tta', 'hidden':'is_hidden'}
+			data = getAttrs(attrs, fleetDict)
+			table = 'fleet'
+			if 'in_transit' in data and 1==int(data['in_transit']):
+				table = 'flying_fleet'
+				
+			if 'tta' in data:
+				data['arrival_turn'] = int(self.user['turn']) + int(data['tta'])
+
+			if 'fleet' == name:
+				#ok, this is ours fleet
+				data['user_id']=self.user_id
+				
+				store.add_data(table, data)
+			elif 'allien-fleet' == name:
+				store.add_data('alien_'+table, data)
 			
 	def endElement(self, name):
-		if 'user-planets' == name:
+		if name in ['user-planets', 'fleets', 'allien-fleets']:
 			self.parent = ''
 			
 	def other(self, name, attrs):

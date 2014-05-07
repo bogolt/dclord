@@ -64,6 +64,8 @@ def save_all_data(path):
 	
 	save_csv_table(path, 'planet', {})
 	save_csv_table(path, 'planet_geo', {})
+	save_csv_table(path, 'alien_fleet', {})
+	#save_csv_table(path, 'alien_flying_fleet', {})
 	#for user in store.iter_objects_list('user', 
 	
 	
