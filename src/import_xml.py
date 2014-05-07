@@ -87,7 +87,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			
 			# all info read, erase everything related to this user
 			if attrs['this-url'].endswith('/all/'):
-				store.clear_user_data(user_id)
+				store.clear_user_data(self.user_id)
 				
 		elif 'errors' == name:
 			self.parent = name

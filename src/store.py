@@ -321,33 +321,28 @@ class Store:
 		#TODO: delete join do not work!, need to use nested select, or something else http://stackoverflow.com/questions/4967135/deleting-rows-from-sqlite-table-when-no-match-exists-in-another-table
 		cur = self.conn.cursor()
 
-		cur.execute("""delete from unit JOIN fleet_unit ON fleet_unit.unit_id=unit.unit_id WHERE fleet_unit.fleet_id=3""")
+		#cur.execute("""delete from unit JOIN fleet_unit ON fleet_unit.unit_id=unit.unit_id WHERE fleet_unit.fleet_id=3""")
 
 		
-		# delete units
-		cur.execute("""delete from unit 
-						JOIN fleet_unit ON fleet_unit.unit_id=unit.unit_id,
-						JOIN fleet ON fleet_unit.fleet_id=fleet.fleet_id,
-						JOIN user ON user.user_id=fleet.fleet_id WHERE user.user_id=?""", (user_id,))
-											
-		cur.execute("""delete from unit
-						JOIN garrison_unit ON unit.unit_id=garrison_unit.unit_id
-						JOIN user_planet ON user_planet.x = garrison_unit.x AND user_planet.y = garrison_unit.y
-											WHERE user_planet.user_id=?""", (user_id,))
+		# delete fleet units
+		cur.execute("delete from unit WHERE unit_id IN ( select unit_id from fleet_unit WHERE fleet_id IN (select fleet_id FROM fleet WHERE user_id=?))", (user_id,))
+		cur.execute("delete from fleet_unit WHERE fleet_id IN (select fleet_id FROM fleet WHERE user_id=?)", (user_id,))
 
-		# delete units fleets/garrison link
-		cur.execute('delete from fleet_unit JOIN fleet ON fleet_unit.fleet_id=fleet.fleet_id JOIN user ON fleet.user_id=user.user_id WHERE user_id=?', user_id)
-		cur.execute('delete from garrison_unit JOIN user_planet ON user_planet.x = garrison_unit.x AND user_planet.y = garrison_unit.y WHERE user_id=?', user_id)
+		# garrisons
+		for user_planet in self.iter_objects_list('user_planet', {'user_id':user_id}):
+			cur.execute('delete from unit WHERE unit_id IN ( select unit_id from garrison_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?)'%(user_planet['x'], user_planet['y']))
+			cur.execute('delete from garrison_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?)'%(user_planet['x'], user_planet['y']))
+			
 
-		cur.execute('delete from user_planet WHERE user_id=?', user_id)
-		cur.execute('delete from fleet WHERE user_id=?', user_id)
+		cur.execute('delete from user_planet WHERE user_id=?', (user_id,))
+		cur.execute('delete from fleet WHERE user_id=?', (user_id,))
 		
 		
 		# mark all user-taken planets as empty
-		cur.execute('update planet set user_id=0 WHERE user_id=?', user_id)
+		cur.execute('update planet set user_id=0 WHERE user_id=?', (user_id,))
 		
 		# delete all proto actions and prototypes
-		cur.execute('delete from proto_action JOIN proto ON proto_action.proto_id=proto.proto_id WHERE proto.user_id=?', (user_id,))
+		cur.execute('delete from proto_action WHERE proto_id IN (select proto_id from proto WHERE proto.user_id=?)', (user_id,))
 		cur.execute('delete from proto WHERE proto.user_id=?', (user_id,))
 		
 		# delete open planets
@@ -357,9 +352,9 @@ class Store:
 		cur.execute('delete from hw WHERE user_id=?', (user_id,))
 		
 		# delete race
-		cur.execute('delete from race WHERE user_id=?', user_id)
+		cur.execute('delete from race WHERE user_id=?', (user_id,))
 		
-		cur.execute('delete from diplomacy WHERE user_id=?', user_id)
+		cur.execute('delete from diplomacy WHERE user_id=?', (user_id,))
 		
 		self.conn.commit()
 	
@@ -474,12 +469,25 @@ store = Store()
 import unittest
 
 class TestStore(unittest.TestCase):
+	USER_ID = 3
+	USER_DATA = {'user_id':USER_ID, 'race_id':22, 'name':u'test_user', 'turn':33, 'money':3, 'resource_main':455, 'resource_secondary':23}
+	FLEET = {'fleet_id':34, 'user_id':USER_ID, 'name':'test-flying machines', 'x':12, 'y':987, 'times_spotted':0, 'is_hidden':0}
+	PROTO_ID = 9
+
+	FLEET_UNIT = {'hp':2, 'unit_id':11, 'proto_id':PROTO_ID}
+	FLEET_UNIT2 = {'hp':2, 'unit_id':12, 'proto_id':PROTO_ID}
+	FLEET_UNIT_OTHER = {'hp':2, 'unit_id':1555, 'proto_id':PROTO_ID}
+	
+	PROTO = {'proto_id':PROTO_ID, 'user_id':USER_ID, 'class':100, 'name':'test class un'}
+	PROTO_ACTION = {'proto_id':PROTO_ID, 'proto_action_id':123}
+	UNIT = {'unit_id':11, 'hp':3, 'proto_id':PROTO_ID}
+	
 	def setUp(self):
 		self.store = Store()
 	
 	def test_add_get(self):
-		user_id = 3
-		user_data = {'user_id':user_id, 'race_id':22, 'name':u'test_user', 'turn':33, 'money':3, 'resource_main':455, 'resource_secondary':23}
+		user_id = self.USER_ID
+		user_data = self.USER_DATA
 		user_none = self.store.get_user(user_id)
 		self.assertIsNone(user_none)
 		self.store.add_user( user_data)
@@ -549,7 +557,20 @@ class TestStore(unittest.TestCase):
 		self.assertEqual(units, uts)
 	
 	def test_x_clear(self):
-		self.store.clear_user_data(3)
+		self.store.add_user(self.USER_DATA)
+		self.assertEqual([], self.store.get_objects_list('fleet', {'user_id':self.USER_ID}))
+		self.store.add_data('fleet', self.FLEET )
+		self.store.add_fleet_unit(self.FLEET['fleet_id'], self.FLEET_UNIT)
+		self.store.add_fleet_unit(self.FLEET['fleet_id'], self.FLEET_UNIT2)
+		
+		self.store.add_fleet_unit(self.FLEET['fleet_id']+11, self.FLEET_UNIT_OTHER)
+
+		self.assertEqual([self.FLEET], self.store.get_objects_list('fleet', {'user_id':self.USER_ID}))
+		self.assertEqual(sorted([self.FLEET_UNIT, self.FLEET_UNIT2]), sorted(self.store.get_fleet_units(self.FLEET['fleet_id'])))
+
+		self.store.clear_user_data(self.USER_ID)
+		self.assertEqual([], self.store.get_objects_list('fleet', {'user_id':self.USER_ID}))
+		self.assertEqual([self.FLEET_UNIT_OTHER], self.store.get_fleet_units(self.FLEET['fleet_id']+11))
 		
 
 if __name__ == '__main__':
