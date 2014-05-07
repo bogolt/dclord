@@ -24,7 +24,7 @@ tables = {'planet':['x', 'y', 'user_id', 'name', 'turn'],
 		'garrison_unit':['unit_id', 'x', 'y'],
 		'garrison_queue_unit':['unit_id', 'x', 'y', 'bc', 'done', 'build_order'],
 		'alien_unit':['fleet_id', 'unit_id', 'weight', 'carapace','color'],
-		'user':['user_id', 'name', 'race_id', 'resource_main', 'resource_secondary', 'money', 'turn'],
+		'user':['user_id', 'name', 'race_id', 'login', 'resource_main', 'resource_secondary', 'money', 'turn'],
 		'race':['race_id', 'user_id', 'temperature_delta',  'temperature_optimal',  'resource_nature',  'population_growth', 'resource_main', 'resource_secondary', 'modifier_fly', 'modifier_build_war', 'modifier_build_peace', 'modifier_science', 'modifier_stealth', 'modifier_detection', 'modifier_mining', 'modifier_price', 'name'],
 		'diplomacy':['user_id', 'other_user_id', 'relation'], #dip relation from user to other_user
 		'proto':['proto_id', 'user_id', 'fly_speed', 'aim_bomb', 'color', 'build_speed', 'require_people', 'carapace', 'fly_range', 'class', 'cost_second', 'cost_main', 'cost_money', 'is_transportable', 'require_tech_level', 'support_second', 'name', 'stealth_level', 'bonus_s', 'bonus_m', 'bonus_o', 'max_count', 'bonus_e', 'support_main', 'weight', 'damage_laser', 'is_ground_unit', 'is_serial', 'aim_laser', 'is_spaceship', 'transport_capacity', 'is_offensive', 'detect_range', 'damage_bomb', 'bonus_production', 'description', 'scan_strength', 'hp', 'defence_laser', 'defence_bomb', 'carrier_capacity', 'laser_number', 'is_building', 'cost_people', 'bomb_number', 'is_war'],
@@ -57,6 +57,7 @@ class Store:
 				user_id integer PRIMARY KEY,
 				name text not null,
 				race_id integer not null,
+				login text,
 				resource_main integer,
 				resource_secondary integer,
 				money integer,
@@ -470,7 +471,7 @@ import unittest
 
 class TestStore(unittest.TestCase):
 	USER_ID = 3
-	USER_DATA = {'user_id':USER_ID, 'race_id':22, 'name':u'test_user', 'turn':33, 'money':3, 'resource_main':455, 'resource_secondary':23}
+	USER_DATA = {'user_id':USER_ID, 'login':'testu', 'race_id':22, 'name':u'test_user', 'turn':33, 'money':3, 'resource_main':455, 'resource_secondary':23}
 	FLEET = {'fleet_id':34, 'user_id':USER_ID, 'name':'test-flying machines', 'x':12, 'y':987, 'times_spotted':0, 'is_hidden':0}
 	PROTO_ID = 9
 

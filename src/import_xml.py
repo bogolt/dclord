@@ -96,14 +96,13 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif 'this-player'==name:
 			
 			self.user['race_id'] = attrs['race-id']
+			# save login ( will be used later, to link user data with it's config info )
+			self.user['login'] = attrs['login']
 			store.add_user(self.user)
 
 			d = getAttrs(attrs, {'homeworldx':'x', 'homeworldy':'y'})
 			d['user_id'] = self.user_id
 			store.add_data('hw', d)
-
-			# save login ( will be used later, to link user data with it's config info )
-			self.user['login'] = attrs['login']
 			
 	def other(self, name, attrs):
 
