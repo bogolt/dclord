@@ -17,7 +17,7 @@ def save_csv(path, data):
 		
 	writer = csv_open(path, data[0].keys())
 	for p in data:
-		writer.writerow({k:(v.encode('utf8') if k in unicode_strings else v) for k,v in p.items()})
+		writer.writerow({k:(v.encode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()})
 			
 		
 def save_csv_table(path, table, data_filter):
@@ -25,12 +25,12 @@ def save_csv_table(path, table, data_filter):
 	for p in store.iter_objects_list(table, data_filter):
 		if not writer:
 			writer = csv_open(os.path.join(path, '%s.csv'%(table,)), p.keys())
-		writer.writerow({k:(v.encode('utf8') if k in unicode_strings else v) for k,v in p.items()})
+		writer.writerow({k:(v.encode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()})
 		
 def iter_csv(path):
 	objs = []
 	for p in csv.DictReader(open(path, 'rt')):
-		yield {k:(v.decode('utf8') if k in unicode_strings else v) for k,v in p.items()}
+		yield {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()}
 			
 def load_csv(path):
 	objs = []
@@ -61,6 +61,9 @@ def save_user_data(user_id, path):
 	
 def save_all_data(path):
 	util.assureDirExist(path)
+	
+	save_csv_table(path, 'planet', {})
+	save_csv_table(path, 'planet_geo', {})
 	#for user in store.iter_objects_list('user', 
 	
 	

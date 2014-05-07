@@ -455,7 +455,7 @@ class Store:
 		cur = self.conn.cursor()
 		s = 'select %s from %s'%(','.join(tables[table]), table,)
 
-		if conds:
+		if conds and len(conds) > 0:
 			s += ' WHERE %s'%(' and '.join(['%s=?'%(key_name,) for key_name in conds.iterkeys()]),)
 
 		#print '%s with %s'%(s, tuple(conds.values()))

@@ -424,6 +424,7 @@ class TestXmlImport(unittest.TestCase):
 		load_xml('/tmp/dclord/raw_xml/niki_known_planets.xml')
 		
 		save_load.save_user_data(user_id, '/tmp/dclord/out/')
+		save_load.save_all_data('/tmp/dclord/out/')
 		
 		
 if __name__ == '__main__':
