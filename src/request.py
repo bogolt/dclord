@@ -10,6 +10,7 @@ def val(name, value):
 
 class RequestMaker:
 	GEO_EXPLORE = 1
+	KILL_PEOPLE = 101
 	OFFER_VASSALAGE = 102
 	ARC_COLONISE=6
 	COLONY_COLONISE=2

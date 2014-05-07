@@ -386,12 +386,9 @@ class Store:
 		
 	def add_known_planet(self, data):
 		
-		# for Lord,Vassal planets we know only x,y and open flag, so skip it here
-		if 'name' in data or 'user_id' in data:
-			# check previous data, only update if new data turn is not less then existing one
-			known_planet = self.get_object('planet', extract(data, ['x','y']))
-			if not known_planet or int(data['turn']) >= int(known_planet['turn']):
-				self.add_data('planet', data)
+		# there is nothing except x,y,open for open_planet, so skip them here, not to clean our db
+		if 'turn' in data:
+			self.update_data('planet', ['x', 'y'], data)
 		
 		if 'o' in data:
 			self.add_data('planet_geo', data)

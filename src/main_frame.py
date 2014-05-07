@@ -19,7 +19,11 @@ import history
 import algorithm
 import math
 import loader
+
 from datetime import datetime
+
+import save_load
+import import_xml
 
 def get_coord(obj):
 	x = obj['x']
@@ -871,7 +875,7 @@ class DcFrame(wx.Frame):
 		if not key:
 			log.info('all requested data downloaded')
 			self.log('All requested data downloaded')
-			serialization.save()
+			save_load.save()
 			return
 		if not data:
 			log.error('failed to load info for user %s'%(key,))
@@ -879,10 +883,10 @@ class DcFrame(wx.Frame):
 			return
 		
 		self.log('Downloaded %s %s'%(key, data))
-		status = import_raw.processRawData(data)
-		if status != import_raw.XmlHandler.StatusOk:
-			status_text = 'Not authorized' if status == import_raw.XmlHandler.StatusAuthError else 'Turn in progress'
-			self.log('Error processing %s %s'%(key, status_text))
+		user = import_xml.processRawData(data)
+		if not user:
+			#status_text = 'Not authorized' if status == import_raw.XmlHandler.StatusAuthError else 'Turn in progress'
+			self.log('Error processing %s'%(key))
 		
 		if key in self.recv_data_callback:
 			func, user_id, data = self.recv_data_callback[key]

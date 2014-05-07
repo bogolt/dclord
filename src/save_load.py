@@ -3,6 +3,7 @@ import csv
 import os
 import logging
 import util
+import config
 
 unicode_strings = [u'name', u'description']
 
@@ -87,6 +88,15 @@ def save_all_data(path):
 	save_csv_table(path, 'planet_geo', {})
 	save_csv_table(path, 'alien_fleet', {})
 	save_csv_table(path, 'alien_unit', {})
+	
+def save():
+	path = config.options['data']['path']
+	save_all_data(os.path.join(path, 'common'))
+	
+	user_base_path = os.path.join(path, 'users')
+	for user in store.iter_objects_list('user'):
+		if user['login']:
+			save_user_data(user['user_id'], os.path.join(user_base_path, user['name']))
 	
 def load_user_data(path):
 	for user in iter_csv_table(path, 'user'):

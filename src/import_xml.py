@@ -3,6 +3,10 @@ import store
 import os
 import util
 import shutil
+import logging
+import config
+
+log = logging.getLogger('dclord')
 
 def get_coord(obj):
 	x = obj['x']
@@ -167,6 +171,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.parent_id = data['proto_id']
 			self.parent = name
 			self.store.add_data('proto', data)
+		elif 'actions-requested' == name:
+			self.parent = name
 		elif 'act' and self.parent == 'building_class':
 			data = getAttrs(attrs, {'action':'proto_action_id', 'maxcount':'max_count', 'cost-pepl':"cost_people", 'cost-main':"cost_main", 'cost-money':"cost_money", 'cost-second':"cost_second", 'planet-can-be':"planet_can_be"})
 			data['proto_id'] = self.parent_id
@@ -181,18 +187,18 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.store.add_action_result(attrs['id'], unicode(attrs['result'])==u'ok', ret_id)
 				
 	def endElement(self, name):
-		if name in ['user-planets', 'fleets', 'allien-fleets', 'harrison', 'building_class']:
+		if name in ['user-planets', 'fleets', 'allien-fleets', 'harrison', 'building_class', 'actions-requested']:
 			self.parent = None
 			self.parent_id = 0
 			self.parent_coord = None
 			
-def load_xml(path, path_archive):
-	print 'load xml %s %s'%(path, path_archive)
+def load_xml(path):
+	print 'load xml %s'%(path)
 	p = xml.sax.make_parser()
-	handler = XmlHandler(path_archive)
+	handler = XmlHandler()
 	p.setContentHandler(handler)
 	p.parse( open(path) )
-	return handler.status
+	return handler.user
 
 def processRawData(path):
 	log.debug('processing raw data %s'%(path,))
@@ -201,7 +207,7 @@ def processRawData(path):
 	base = os.path.basename(path)
 	xml_path = os.path.join(xml_dir, base[:-3])
 	util.unpack(path, xml_path)
-	return load_xml(xml_path, path)
+	return load_xml(xml_path)
 
 def processAllUnpacked():
 	xml_dir = os.path.join(util.getTempDir(), config.options['data']['raw-xml-dir'])
@@ -214,10 +220,10 @@ def processAllUnpacked():
 				continue
 			log.debug('loading %s'%(file,))
 			p = os.path.join(xml_dir, file)
-			load_xml( p, p )
+			load_xml( p )
 			at_least_one = True
 		if at_least_one:
-			serialization.save()
+			save_load.save()
 	except OSError, e:
 		log.error('unable to load raw data: %s'%(e,))
 
@@ -226,20 +232,14 @@ def processAllUnpacked():
 import unittest
 import save_load
 
-def load_xml(path):
-	p = xml.sax.make_parser()
-	handler = XmlHandler()
-	p.setContentHandler(handler)
-	p.parse( open(path) )
-	return handler.user_id
-
 class TestXmlImport(unittest.TestCase):
 	def setUp(self):
 		pass
 
 	def test_import_xml(self):
 		
-		user_id = load_xml('/tmp/dclord/raw_xml/niki_all.xml')
+		user = load_xml('/tmp/dclord/raw_xml/niki_all.xml')
+		user_id = user['user_id']
 		load_xml('/tmp/dclord/raw_xml/niki_known_planets.xml')
 		
 		save_load.save_user_data(user_id, '/tmp/dclord/out/')
