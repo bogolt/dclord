@@ -30,7 +30,7 @@ def save_csv_table(path, table, data_filter):
 def iter_csv(path):
 	objs = []
 	for p in csv.DictReader(open(path, 'rt')):
-		yield {k:(v.decode('utf8') if k in unicode_strings else v) for k,v in p.items()})
+		yield {k:(v.decode('utf8') if k in unicode_strings else v) for k,v in p.items()}
 			
 def load_csv(path):
 	objs = []
