@@ -321,10 +321,7 @@ class Store:
 		'clear all user-related data'
 		#TODO: delete join do not work!, need to use nested select, or something else http://stackoverflow.com/questions/4967135/deleting-rows-from-sqlite-table-when-no-match-exists-in-another-table
 		cur = self.conn.cursor()
-
-		#cur.execute("""delete from unit JOIN fleet_unit ON fleet_unit.unit_id=unit.unit_id WHERE fleet_unit.fleet_id=3""")
-
-		
+	
 		# delete fleet units
 		cur.execute("delete from unit WHERE unit_id IN ( select unit_id from fleet_unit WHERE fleet_id IN (select fleet_id FROM fleet WHERE user_id=?))", (user_id,))
 		cur.execute("delete from fleet_unit WHERE fleet_id IN (select fleet_id FROM fleet WHERE user_id=?)", (user_id,))

@@ -12,37 +12,6 @@ import json
 
 log = logging.getLogger('dclord')
 
-class UnicodeConfigParser(ConfigParser.RawConfigParser):
-	'big thanks: http://s-c.me/21655/s   http://habrahabr.ru/post/119405/'
-	def __init__(self, defaults=None, dict_type=dict):
-		ConfigParser.RawConfigParser.__init__(self, defaults, dict_type)
-
-	def write(self, fp):
-		"""Fixed for Unicode output"""
-		if self._defaults:
-			fp.write("[%s]\n" % DEFAULTSECT)
-			for (key, value) in self._defaults.items():
-				if type(value) is str or type(value) is unicode:
-					fp.write("%s = %s\n" % (key, value.decode('utf8').replace('\n', '\n\t')))
-				else:
-					fp.write("%s = %s\n" % (key, value))
-			fp.write("\n")
-		for section in self._sections:
-			fp.write("[%s]\n" % section)
-			for (key, value) in self._sections[section].items():
-				if key != "__name__":
-					if type(value) is str or type(value) is unicode:
-						fp.write("%s = %s\n" %(key, value.decode('utf8').replace('\n','\n\t')))
-					else:
-						fp.write("%s = %s\n" %(key, value))
-		fp.write("\n")
-
-	# This function is needed to override default lower-case conversion
-	# of the parameter's names. They will be saved 'as is'.
-	def optionxform(self, strOut):
-		return strOut
-
-
 def getOptionsDir():
 	conf_dir = 'dclord' if 'Windows' == platform.system() else '.config/dclord'
 	return os.path.join(wx.StandardPaths.Get().GetUserConfigDir(), conf_dir)
@@ -138,39 +107,9 @@ def saveOptions():
 	global options
 	with open( path, 'wt') as f:
 		f.write( json.dumps(options, indent=4) )
-
-def loadAccountsOld():
-	config = UnicodeConfigParser()
-	try:
-		config.readfp(codecs.open(os.path.join(getOptionsDir(), users_file_name_old2), 'r', 'utf8'))
-	except IOError as e:
-		print 'Error loading accounts: %s'%(e,)
-		return
-       
-	global users
-	global user_id_dict
-	for u in config.sections():
-		acc = {}
-		for k,v in config.items(u):
-			acc[k] = v
-		if not 'login' in acc:
-			continue
-
-		#print 'loading account %s'%(acc['login'],)
-		users[acc['login']] = acc
-		if 'id' in acc and acc['id']:
-			user_id_dict[int(acc['id'])] = acc
-			
-	saveUsers()
 	
 def loadAccounts():
-	old_name = os.path.join(getOptionsDir(), users_file_name_old)
-	if os.path.exists(old_name):
-		o2 = old_name+'.old'
-		os.rename(old_name, o2)
-		loadAccountsOld()
-		return
-	
+
 	new_name = os.path.join(getOptionsDir(), users_file_name)
 	if not os.path.exists(new_name):
 		return
@@ -227,17 +166,6 @@ def accounts():
 	for acc in users.values():
 		yield acc
 
-def not_used_setUserId(login, id):
-	global users
-	global user_id_dict
-	if not login in users:
-		users[login] = {'login':login}
-		
-	u = users[login]
-	if 'id' in u and int(u['id']) == int(id):
-		return
-	u['id'] = id
-	user_id_dict[int(id)] = users[login]
-	log.info('store user id %s for user %s'%(id, login))
-	saveUsers()
+def has_user(login):
+	return login in users
 	

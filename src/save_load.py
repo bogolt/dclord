@@ -80,7 +80,7 @@ def save_user_data(user_id, path):
 	for proto in store.iter_objects_list('proto', {'user_id':user_id}):
 		proto_actions_writer.writerows(store.get_objects_list('proto_action', {'proto_id':proto['proto_id']}))
 	
-def save_all_data(path):
+def save_common_data(path):
 	util.assureDirExist(path)
 	
 	save_csv_table(path, 'user', {})
@@ -89,13 +89,15 @@ def save_all_data(path):
 	save_csv_table(path, 'alien_fleet', {})
 	save_csv_table(path, 'alien_unit', {})
 	
-def save():
-	path = config.options['data']['path']
-	save_all_data(os.path.join(path, 'common'))
+def save_local_data():
+	save_data(config.options['data']['path'])
+	
+def save_data(path):
+	save_common_data(os.path.join(path, 'common'))
 	
 	user_base_path = os.path.join(path, 'users')
 	for user in store.iter_objects_list('user'):
-		if user['login']:
+		if user['login'] and config.has_user(user['login']):
 			save_user_data(user['user_id'], os.path.join(user_base_path, user['name']))
 	
 def load_user_data(path):
@@ -126,7 +128,7 @@ def load_user_data(path):
 		load_csv_table(path, 'fleet_unit')
 		load_csv_table(path, 'proto_action')
 		
-def load_all_data(path):	
+def load_common_data(path):	
 
 	for data in iter_csv_table(path, 'user'):
 		store.update_data('user', ['user_id'], data)
@@ -140,6 +142,15 @@ def load_all_data(path):
 	load_csv_table(path, 'planet_geo')
 	load_csv_table(path, 'alien_unit')
 	
+def load_local_data():
+	load_data(config.options['data']['path'])
+
+def load_data(path):
+	load_common_data(os.path.join(path, 'common'))
+	
+	user_base_path = os.path.join(path, 'users')
+	for p in os.listdir(user_base_path):
+		load_user_data(os.path.join(user_base_path, p))
 
 import unittest
 class TestSaveLoad(unittest.TestCase):
