@@ -6,7 +6,7 @@ import util
 import config
 
 unicode_strings = [u'name', u'description']
-last_sync = {}
+#last_sync = {}
 
 def csv_open(path, keys):
 	writer = csv.DictWriter(open(path, 'wt'), fieldnames=keys)
@@ -20,7 +20,7 @@ def save_csv(path, data):
 	writer = csv_open(path, data[0].keys())
 	for p in data:
 		writer.writerow({k:(v.encode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()})
-	last_sync[path] = os.stat(path).st_mtime
+	#last_sync[path] = os.stat(path).st_mtime
 		
 def save_csv_table(path, table, data_filter):
 	writer = None
@@ -30,23 +30,30 @@ def save_csv_table(path, table, data_filter):
 			writer = csv_open(f, p.keys())
 		writer.writerow({k:(v.encode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()})
 		
-	last_sync[f] = os.stat(f).st_mtime
+	#last_sync[f] = os.stat(f).st_mtime
 		
 def load_csv_table(path, table):
-	f = os.path.join(path, '%s.csv'%(table,))
-	last_sync[f] = os.stat(f).st_mtime
-	for p in csv.DictReader(open(f, 'rt')):
-		store.add_data(table, p)
+	try:
+		f = os.path.join(path, '%s.csv'%(table,))
+		#last_sync[f] = os.stat(f).st_mtime
+		for p in csv.DictReader(open(f, 'rt')):
+			store.add_data(table, p)
+	except OSError as e:
+		print 'Load csv table %s %s failed: %s'%(path, table, e)
+		return None
 		
 def iter_csv_table(path, table):
-	f = os.path.join(path, '%s.csv'%(table,))
-	last_sync[f] = os.stat(f).st_mtime
-	for p in csv.DictReader(open(f, 'rt')):
-		yield {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()}
+	try:
+		f = os.path.join(path, '%s.csv'%(table,))
+		#last_sync[f] = os.stat(f).st_mtime
+		for p in csv.DictReader(open(f, 'rt')):
+			yield {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()}
+	except OSError as e:
+		print 'Load csv table %s %s failed: %s'%(path, table, e)	
 		
 def iter_csv(path):
 	objs = []
-	last_sync[path] = os.stat(path).st_mtime
+	#last_sync[path] = os.stat(path).st_mtime
 	for p in csv.DictReader(open(path, 'rt')):
 		yield {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()}
 			
@@ -179,7 +186,7 @@ def load_geo_size(path, left_top, size):
 		
 		geo_size_loaded.add(path)
 	except IOError, e:
-		log.error('failed to load csv %s: %s'%(path, e))		
+		log.error('failed to load geo size csv %s: %s'%(path, e))		
 
 def load_all_visible_geo(path ):
 	for f in os.listdir(path):
@@ -263,6 +270,8 @@ def load_data(path):
 	load_common_data(os.path.join(path, 'common'))
 	
 	user_base_path = os.path.join(path, 'users')
+	if not os.path.exists(user_base_path):
+		return
 	for p in os.listdir(user_base_path):
 		load_user_data(os.path.join(user_base_path, p))
 

@@ -875,8 +875,9 @@ class DcFrame(wx.Frame):
 		if not key:
 			log.info('all requested data downloaded')
 			self.log('All requested data downloaded')
-			local_data_path = config.options['data']['path']
-			save_load.save_common_data(local_data_path)
+			save_load.save_local_data()
+			#local_data_path = config.options['data']['path']
+			#save_load.save_common_data(os.path.join(local_data_path, 'common')
 			
 			sync_data_path = config.options['data']['sync_path']
 			if sync_data_path:
