@@ -1,6 +1,7 @@
 import sqlite3
 import logging
 import sys, traceback
+import util
 
 def to_pos(a,b):
 	return int(a),int(b)
@@ -50,6 +51,7 @@ class Store:
 	def __init__(self):
 		self.conn = sqlite3.connect(':memory:')
 		self.create_tables()
+		#self.owned_user_ids = []
 	
 	def create_tables(self):
 		cur = self.conn.cursor()
@@ -403,6 +405,17 @@ class Store:
 		cur.execute(s, data)
 		self.conn.commit()
 		
+	def add_planet_size(self, planet):
+		cur = self.conn.cursor()
+		
+		#data = extract(raw_data, ['x','y','s', 'image'])
+		
+		s = 'insert or replace into planet_size(x,y,s,image) values(:x, :y, 10 * :s, :img)'
+		#print s, planet
+		cur.execute(s, planet)
+		self.conn.commit()
+		
+		
 	def update_data(self, table, filter_keys, data):
 		'check data turn for max value'
 		u = self.get_object(table, {k:v for k,v in data.iteritems() if k in filter_keys})
@@ -433,6 +446,7 @@ class Store:
 	def execute(self, table, query, args):
 		cur = self.conn.cursor()
 		keys = ['%s.%s'%(table, key) for key in tables[table]]
+		#print 'exec %s %s %s %s'%(query, ','.join(keys), table, args)
 		cur.execute(query%(','.join(keys), table), args)
 		res = []
 		for r in cur.fetchall():
@@ -469,6 +483,32 @@ class Store:
 			objs.append(obj)
 		return objs
 
+	def iter_planets(self, rect, owned = False, inhabited = False):
+		cur = self.conn.cursor()
+		table = 'planet'
+		keys = ['x', 'y', 'user_id', 's']
+		s = 'select %s from %s JOIN planet_size USING(x,y) WHERE x >= ? AND x <= ? AND y >= ? AND y <= ?'%(','.join(keys), table,)
+		if owned:
+			s += ' AND user_id IN (select user_id from user WHERE login != null)'
+		elif inhabited:
+			s += ' AND user_id != null'
+			
+		#print '%s with %s'%(s, rect)
+		cur.execute(s, rect)
+		for r in cur.fetchall():
+			yield dict(zip(keys, r))
+
+	def iter_planets_size(self, rect):
+		cur = self.conn.cursor()
+		table = 'planet'
+		keys = ['x', 'y', 's']
+		s = 'select %s from planet_size WHERE x >= ? AND x <= ? AND y >= ? AND y <= ?'%(','.join(keys),)
+			
+		#print '%s with %s'%(s, rect)
+		cur.execute(s, rect)
+		for r in cur.fetchall():
+			yield dict(zip(keys, r))
+			
 	def iter_objects_list(self, table, conds = {}):
 		cur = self.conn.cursor()
 		s = 'select %s from %s'%(','.join(tables[table]), table,)
@@ -479,7 +519,6 @@ class Store:
 		#print '%s with %s'%(s, tuple(conds.values()))
 		cur.execute(s, tuple(conds.values()))
 		for r in cur.fetchall():
-			#print 'res: %s'%(r,)
 			yield dict(zip(tables[table], r))
 
 

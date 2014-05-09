@@ -8,6 +8,19 @@ import event
 import math
 from datetime import datetime
 
+from functools import wraps
+
+def timed(f):
+	@wraps(f)
+	def wrapper(*args, **kwds):
+		from time import time
+		start = time()
+		result = f(*args, **kwds)
+		elapsed = time() - start
+		print "%s took %f time to finish" % (f.__name__, elapsed)
+		return result
+	return wrapper
+
 def getTempDir():
 	return os.path.join(tempfile.gettempdir(), 'dclord')
 
@@ -134,7 +147,7 @@ class BufferedWindow(wx.Window):
 		self.Refresh()
 		self.Update()
 		
-
+	#@timed
 	def update(self):
 		dc = wx.MemoryDC()
 		dc.SelectObject(self.image)

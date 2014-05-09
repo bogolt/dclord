@@ -68,7 +68,8 @@ class DcFrame(wx.Frame):
 		self.log_dlg = wx.TextCtrl(self, 1, style=wx.TE_MULTILINE)
 		self.log_dlg.Disable()
 		self.log_dlg.SetBackgroundColour('WHITE')
-		serialization.load(ev_cb = self)
+		save_load.load_local_data()
+		#serialization.load(ev_cb = self)
 		
 		#self.info_panel = planet_window.InfoPanel(self)
 		self.planet_panel = planet_window.PlanetPanel(self)
@@ -155,7 +156,6 @@ class DcFrame(wx.Frame):
 		#self.info_panel.selectObject)
 		#self.Bind(event.EVT_SELECT_OBJECT, self.planet_panel.select_coord)
 		#self.Bind(event.EVT_SELECT_OBJECT, self.garrison_panel.select_coord)
-		self.Bind(event.EVT_TURN_SELECTED, self.onTurnSelected)
 		self.Bind(event.EVT_LOG_APPEND, self.onLog)
 	
 		#import_raw.processAllUnpacked()
@@ -875,7 +875,13 @@ class DcFrame(wx.Frame):
 		if not key:
 			log.info('all requested data downloaded')
 			self.log('All requested data downloaded')
-			save_load.save()
+			local_data_path = config.options['data']['path']
+			save_load.save_common_data(local_data_path)
+			
+			sync_data_path = config.options['data']['sync_path']
+			if sync_data_path:
+				save_load.save_common_data(sync_data_path)
+				
 			return
 		if not data:
 			log.error('failed to load info for user %s'%(key,))
@@ -910,12 +916,3 @@ class DcFrame(wx.Frame):
 		#print 'selecting user %s'%(user_id, )
 		self.map.selectUser( user_id)
  
-	def onTurnSelected(self, evt):
-		turn = evt.attr1
-		#only load if db does not know about this turn
-		if not turn in db.db.turns or not db.db.turns[turn]:
-			serialization.load(turn, self)
-		self.map.turn = turn
-		self.map.update()
-		log.info('update info panel with turn %s'%(self.map.turn,))
-		#self.info_panel.update(self.map.turn)

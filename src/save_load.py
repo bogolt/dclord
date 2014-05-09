@@ -6,6 +6,7 @@ import util
 import config
 
 unicode_strings = [u'name', u'description']
+last_sync = {}
 
 def csv_open(path, keys):
 	writer = csv.DictWriter(open(path, 'wt'), fieldnames=keys)
@@ -19,25 +20,33 @@ def save_csv(path, data):
 	writer = csv_open(path, data[0].keys())
 	for p in data:
 		writer.writerow({k:(v.encode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()})
-			
+	last_sync[path] = os.stat(path).st_mtime
 		
 def save_csv_table(path, table, data_filter):
 	writer = None
+	f = os.path.join(path, '%s.csv'%(table,))
 	for p in store.iter_objects_list(table, data_filter):
 		if not writer:
-			writer = csv_open(os.path.join(path, '%s.csv'%(table,)), p.keys())
+			writer = csv_open(f, p.keys())
 		writer.writerow({k:(v.encode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()})
 		
+	last_sync[f] = os.stat(f).st_mtime
+		
 def load_csv_table(path, table):
-	for p in csv.DictReader(open(os.path.join(path, '%s.csv'%(table,)), 'rt'),  fieldnames=store.keys(table)):
+	f = os.path.join(path, '%s.csv'%(table,))
+	last_sync[f] = os.stat(f).st_mtime
+	for p in csv.DictReader(open(f, 'rt')):
 		store.add_data(table, p)
 		
 def iter_csv_table(path, table):
-	for p in csv.DictReader(open(os.path.join(path, '%s.csv'%(table,)), 'rt'),  fieldnames=store.keys(table)):
-		yield p
+	f = os.path.join(path, '%s.csv'%(table,))
+	last_sync[f] = os.stat(f).st_mtime
+	for p in csv.DictReader(open(f, 'rt')):
+		yield {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()}
 		
 def iter_csv(path):
 	objs = []
+	last_sync[path] = os.stat(path).st_mtime
 	for p in csv.DictReader(open(path, 'rt')):
 		yield {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()}
 			
@@ -89,6 +98,21 @@ def save_common_data(path):
 	save_csv_table(path, 'alien_fleet', {})
 	save_csv_table(path, 'alien_unit', {})
 	
+def is_updated(path):
+	global last_sync
+	for filename in os.listdir(path):
+		f = os.path.join(path, filename)
+		if not f in last_sync:
+			return True
+		if last_sync[f] != os.stat(f).st_mtime:
+			return True
+	return False
+	
+#def sync_common_data(path):
+#	if is_updated(path):
+#		load_common_data(path)
+#	save_common_data(path)
+	
 def save_local_data():
 	save_data(config.options['data']['path'])
 	
@@ -128,6 +152,93 @@ def load_user_data(path):
 		load_csv_table(path, 'fleet_unit')
 		load_csv_table(path, 'proto_action')
 		
+
+geo_size_loaded = set()
+def load_geo_size(path, left_top, size):
+	global geo_size_loaded
+	if path in geo_size_loaded:
+		#print 'no double loading %s'%path
+		return
+	try:
+		#print 'loading geo %s'%path
+		for p in csv.DictReader(open(path, 'rt')):
+			#x=int(p['x'])
+			#y=int(p['y'])
+			img = int(p['img'])
+			s = int(p['s'])
+			
+			#skip holes
+			if img >= 90:
+				continue
+			
+			#skip stars
+			#if s == 11:
+			#	continue
+			#if in_rect( (x,y), left_top, size):
+			store.add_planet_size(p)
+		
+		geo_size_loaded.add(path)
+	except IOError, e:
+		log.error('failed to load csv %s: %s'%(path, e))		
+
+def load_all_visible_geo(path ):
+	for f in os.listdir(path):
+		#print 'loading %s'%(f,)
+		try:
+			for p in csv.DictReader(open(os.path.join(path,f), 'rt')):
+				for s in unicode_strings:
+					if s in p and p[s]:
+						p[s] = p[s].decode('utf-8')
+				db.setData('planet_size', p, None)
+				yield p
+		except IOError, e:
+			log.error('failed to load csv %s: %s'%(path, e))
+
+def load_geo_size_rect(left_top, size):
+	x,y = left_top
+	step = 25
+	
+	px = (x-x%step) if x >= step else 0
+	py = (y-y%step) if y >= step else 0
+	
+	#print 'was %s %s got %s %s'%(x,y, px, py)
+	
+	lx = x + size[0]
+	ly = y + size[0]
+
+	dx = (lx-lx%step) if lx >= step else 0
+	dy = (ly-ly%step) if ly >= step else 0
+	
+	if px == dx:
+		dx += step
+	
+	if py == dy:
+		dy += step
+	
+	path = config.options['data']['geo-size']
+	x = px
+	y = py
+	#print 'get rect %s %s : %s %s'%(px,py, dx, dy)
+	
+	for x in range(px, dx+step, step):
+		for y in range(py, dy+step, step):
+			load_geo_size( os.path.join(path, '%s_%s.csv'%(x, y)), left_top, size )
+
+def load_geo_size_center(center, dist):
+	x,y = center
+	load_geo_size_rect((x-dist, y-dist), (dist*2,dist*2))
+
+def load_geo_size_at(center):
+	x,y = center
+	
+	step = 25
+	
+	px = (x-x%step) if x >= step else 0
+	py = (y-y%step) if y >= step else 0
+	path = config.options['data']['geo-size']
+	load_geo_size( os.path.join(path, '%s_%s.csv'%(px, py)), (x,y), (x,y) )
+	
+
 def load_common_data(path):	
 
 	for data in iter_csv_table(path, 'user'):
@@ -141,6 +252,9 @@ def load_common_data(path):
 		
 	load_csv_table(path, 'planet_geo')
 	load_csv_table(path, 'alien_unit')
+	
+	for planet in store.iter_objects_list('planet'):
+		load_geo_size_at((int(planet['x']), int(planet['y'])))
 	
 def load_local_data():
 	load_data(config.options['data']['path'])

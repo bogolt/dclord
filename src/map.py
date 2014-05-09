@@ -1,6 +1,7 @@
 import wx
 import math
 import db
+from store import store
 import logging
 import util
 import config
@@ -176,6 +177,9 @@ class Map(util.BufferedWindow):
 		height = int(math.ceil(float(h) / self.cell_size))
 		self.screen_size = width,height
 	
+	def rel_coords(self, x, y):
+		return (x - self.offset_pos[0]) * self.cell_size, (y - self.offset_pos[1]) * self.cell_size
+	
 	def relPos(self, pos):
 		ox, oy = self.offset_pos
 		x,y = pos
@@ -197,7 +201,6 @@ class Map(util.BufferedWindow):
 		return util.add(self.offset_pos, util.div(pos, self.cell_size))
 		
 	def drawPlanet(self, dc, planet):
-
 		planetPos = objPos(planet)
 		rx,ry = self.relPos(planetPos)
 		
@@ -206,7 +209,10 @@ class Map(util.BufferedWindow):
 			sz = int(planet['s'])
 
 		col = None
-		owner_id = planet.get('owner_id', 0)
+		owner_id = 0
+		if 'user_id' in planet and planet['user_id']:
+			owner_id = planet.get('user_id', 0)
+			
 		dc.SetPen(wx.Pen(colour='black', width=1))
 		if not owner_id:
 			owner_id = 0
@@ -308,15 +314,18 @@ class Map(util.BufferedWindow):
 		sz = util.add(sz, (1,1))
 		return ['x>=%d AND y>=%d AND x<=%d AND y<=%d'%(ps[0], ps[1], ps[0]+sz[0], ps[1]+sz[1])]
 		
-		
+	@util.timed
 	def drawPlanets(self, dc, rect):
 		#cond = ['owner_id is not null'] 
 		x = self.offset_pos[0], self.offset_pos[0]+self.screen_size[0]
 		y = self.offset_pos[1], self.offset_pos[1]+self.screen_size[1]
+
+		ax,bx = x
+		ay,by = y
 		
 		if int(config.options['filter']['inhabited_planets'])==0 and int(config.options['filter']['size_planets'])==1:
 			area = {'between':{'x':x, 'y':y}}
-			for p in db.db.iter_objects_list(db.Db.PLANET_SIZE, area):
+			for p in store.iter_planets_size((ax,bx,ay,by)):
 				self.drawPlanet(dc, p)
 
 		area = {'between':{'x':x, 'y':y}}
@@ -328,12 +337,11 @@ class Map(util.BufferedWindow):
 			
 		if int(config.options['filter']['access_planets'])==1:
 			area['in'] = {'owner_id':db.get_objects_list(db.Db.USER)}
-			
-		for p in db.db.iter_objects_list(db.Db.PLANET, area):
-			#print 'got plnaet %s'%(p,)
+		
+		for p in store.iter_planets((ax,bx,ay,by), owned = False):
 			self.drawPlanet(dc, p)
-			if self.draw_geo:
-				self.drawPlanetGeo(dc, p)
+			#if self.draw_geo:
+			#	self.drawPlanetGeo(dc, p)
 			
 	def drawFleets(self, dc, rect):
 		self.fleets = {}
@@ -368,7 +376,7 @@ class Map(util.BufferedWindow):
 			dc.SetPen(wx.Pen(colour=config.options['map'][col_type], width=1, style=wx.SHORT_DASH))
 			frx,fry = self.relPos((int(fx), int(fy)))
 			dc.DrawLine(rx, ry, frx, fry)
-			
+	
 	def paint(self, dc, rect=None):
 		
 		#if self.turn and self.turn > 0:
