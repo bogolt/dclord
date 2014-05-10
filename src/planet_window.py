@@ -214,7 +214,7 @@ class FleetPanel(scrolled.ScrolledPanel):
 		self.fleets = {}
 		
 		x,y = evt.attr1
-		for fleet in db.db.iter_objects_list(db.Db.FLEET, {'=':{'x':x, 'y':y}}):
+		for fleet in store.iter_objects_list('fleet', {'x':x, 'y':y}):
 			print 'draw fleet %s'%(fleet,)
 			self.add_fleet(fleet)
 
@@ -223,35 +223,37 @@ class FleetPanel(scrolled.ScrolledPanel):
 		self.sizer.Add(cp)
 		pane = cp.GetPane()
 		
-		owner_name = db.get_player_name(fleet['owner_id'])
+		u = store.get_user(fleet['user_id'])
+		if u:
+			owner_name = u['name']
+		else:
+			owner_name = '<unknown>'
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		sizer.Add(wx.StaticText(pane, label='owner: %s'%(owner_name,)), 1, wx.EXPAND)
 		
-		our_fleet = False
-		for unit in db.db.iter_objects_list(db.Db.UNIT,{'=':{'fleet_id':fleet['id']}}):
-			our_fleet = True
+		for unit in store.get_fleet_units(fleet['fleet_id']):
 			hbox = wx.BoxSizer(wx.HORIZONTAL)
 			sizer.Add(hbox, 1, wx.EXPAND)
 			
-			proto = db.db.get_object(db.Db.PROTO, {'=':{'id':unit['class']}})
-			obj_carp = int(unit['class']), int(proto['carapace']), int(proto['color'])
+			proto = store.get_object('proto', {'proto_id':unit['proto_id']})
+			obj_carp = int(unit['proto_id']), int(proto['carapace']), int(proto['color'])
 
-			img = image.get_image( int(unit['class']), int(proto['carapace']), int(proto['color']) )
+			img = image.get_image( int(unit['proto_id']), int(proto['carapace']), int(proto['color']) )
 			
 			if img:
 				bitmap = wx.StaticBitmap(pane)
 				bitmap.SetBitmap(img)
 				hbox.Add(bitmap, 1, wx.EXPAND)
 			else:
-				print 'image not found for unit %s, bc %s, carp %s, color %s'%(unit['id'], int(unit['class']), int(proto['carapace']), int(proto['color']) )
+				print 'image not found for unit %s, bc %s, carp %s, color %s'%(unit['unit_id'], int(unit['proto_id']), int(proto['carapace']), int(proto['color']) )
 
 			name = proto['name']
 			if not name:
 				name = get_unit_name(int(proto['carapace']))
 			hbox.Add(wx.StaticText(pane, label=name), 1, wx.EXPAND)
 		
-		if not our_fleet:
-			for unit in db.db.iter_objects_list(db.Db.ALIEN_UNIT,{'=':{'fleet_id':fleet['id']}}):
+		if None:
+			for unit in store.get_db.db.iter_objects_list(db.Db.ALIEN_UNIT,{'=':{'fleet_id':fleet['id']}}):
 				hbox = wx.BoxSizer(wx.HORIZONTAL)
 				sizer.Add(hbox, 1, wx.EXPAND)
 			
