@@ -399,6 +399,9 @@ class Store:
 		cur = self.conn.cursor()
 		
 		data = extract(raw_data, tables[table])
+		for k,v in data.items():
+			if len(v) == 0:
+				del data[k]
 		
 		s = 'insert or replace into %s(%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key_name,) for key_name in data.iterkeys()]))
 		#print s, data
@@ -418,8 +421,8 @@ class Store:
 		
 	def update_data(self, table, filter_keys, data):
 		'check data turn for max value'
-		if not 'turn' in data or not data['turn']:
-			return
+		#if not 'turn' in data or not data['turn']:
+		#	return
 		u = self.get_object(table, {k:v for k,v in data.iteritems() if k in filter_keys})
 		if u and u['turn'] and int(u['turn']) > int(data['turn']):
 			return
@@ -489,14 +492,15 @@ class Store:
 		cur = self.conn.cursor()
 		table = 'planet'
 		keys = ['x', 'y', 'user_id', 's']
-		s = 'select %s from %s JOIN planet_size USING(x,y) WHERE x >= ? AND x <= ? AND y >= ? AND y <= ?'%(','.join(keys), table,)
+		x0,x1,y0,y1 = rect
+		s = 'select %s from planet JOIN planet_size USING(x,y) WHERE x BETWEEN %s AND %s AND y BETWEEN %s AND %s'%(','.join(keys), x0,x1,y0,y1)
 		if owned:
 			s += ' AND user_id IN (select user_id from user WHERE login != null)'
 		elif inhabited:
-			s += ' AND user_id != null'
+			s += ' AND not user_id is null'
 			
 		#print '%s with %s'%(s, rect)
-		cur.execute(s, rect)
+		cur.execute(s)
 		for r in cur.fetchall():
 			yield dict(zip(keys, r))
 
@@ -526,7 +530,7 @@ class Store:
 		if conds_str:
 			s+=' WHERE '+' AND '.join(conds_str)
 		#print '"%s" with %s'%(s, type(s))
-		cur.execute(unicode(s))#, tuple(conds.values()))
+		cur.execute(s)#, tuple(conds.values()))
 		for r in cur.fetchall():
 			yield dict(zip(tables[table], r))
 

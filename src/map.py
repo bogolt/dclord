@@ -220,13 +220,13 @@ class Map(util.BufferedWindow):
 			brush_type = 1
 			
 			u = store.get_user(owner_id)
-			
+
 			if self.selected_user_id == owner_id:
 				color = 'orange'
 			elif not u:
 				color='black'
 				brush_type=None
-			elif 'login' in u and u['login']:
+			elif 'login' in u and u['login']:# and len(u['login']>0):
 				color = 'red'
 			else:
 				color = 'green'
@@ -347,7 +347,7 @@ class Map(util.BufferedWindow):
 		#cond = ['owner_id is not null'] 
 		x = self.offset_pos[0], self.offset_pos[0]+self.screen_size[0]
 		y = self.offset_pos[1], self.offset_pos[1]+self.screen_size[1]
-
+		
 		ax,bx = x
 		ay,by = y
 		
@@ -366,7 +366,7 @@ class Map(util.BufferedWindow):
 		if int(config.options['filter']['access_planets'])==1:
 			area['in'] = {'owner_id':db.get_objects_list(db.Db.USER)}
 		
-		for p in store.iter_planets((ax,bx,ay,by), owned = False):
+		for p in store.iter_planets((ax,bx,ay,by), inhabited = True):
 			self.drawPlanet(dc, p)
 			#if self.draw_geo:
 			#	self.drawPlanetGeo(dc, p)
