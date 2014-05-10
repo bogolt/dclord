@@ -345,9 +345,9 @@ class Map(util.BufferedWindow):
 			
 	def drawFleets(self, dc, rect):
 		self.fleets = {}
-		for p in store.iter_objects_list('fleet', {}, rect):# db.fleets(self.turn, self.visibleAreaFilter()):
+		for p in store.iter_objects_list('fleet', {}, rect):
 			self.drawFleet(dc, p)
-		for p in db.flyingFleets(self.turn, self.visibleAreaFilter()):
+		for p in store.iter_objects_list('flying_fleet', {}, rect):
 			self.drawFlyingFleet(dc, p)
 	
 	def drawFleet(self, dc, fleet):
@@ -366,13 +366,13 @@ class Map(util.BufferedWindow):
 		self.fleets[pos] = v+1
 		rx,ry = self.relPos(pos)
 		diff = min(self.cell_size, 3)
-		col_type = 'own_flying_fleet_color' if is_owned(fleet['owner_id']) else 'flying_fleet_color'
+		col_type = 'own_flying_fleet_color' if is_owned(fleet['user_id']) else 'flying_fleet_color'
 		dc.SetPen(wx.Pen(colour=config.options['map'][col_type], width=1))
 		dc.DrawLine(rx+v*2 - self.cell_size/2, ry-self.cell_size/2, rx+v*2 - self.cell_size/2, ry-self.cell_size/2+diff)
 
 		fx,fy = fleet['from_x'],fleet['from_y']
 		if fx and fy:
-			col_type = 'own_fleet_route_color' if is_owned(fleet['owner_id']) else 'fleet_route_color'
+			col_type = 'own_fleet_route_color' if is_owned(fleet['user_id']) else 'fleet_route_color'
 			dc.SetPen(wx.Pen(colour=config.options['map'][col_type], width=1, style=wx.SHORT_DASH))
 			frx,fry = self.relPos((int(fx), int(fy)))
 			dc.DrawLine(rx, ry, frx, fry)
