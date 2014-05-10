@@ -37,10 +37,11 @@ def load_csv_table(path, table):
 		f = os.path.join(path, '%s.csv'%(table,))
 		#last_sync[f] = os.stat(f).st_mtime
 		for p in csv.DictReader(open(f, 'rt')):
-			store.add_data(table, p)
+			store.add_data(table, {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()})
 	except OSError as e:
 		print 'Load csv table %s %s failed: %s'%(path, table, e)
-		return None
+	except IOError as e:
+		print 'Load csv table %s %s failed: %s'%(path, table, e)
 		
 def iter_csv_table(path, table):
 	try:
@@ -133,10 +134,11 @@ def save_data(path):
 	
 def load_user_data(path):
 	for user in iter_csv_table(path, 'user'):
+		print 'load user %s'%(user,)
 		turn = int(user['turn'])
 		store_user = store.get_user(user['user_id'])
 		store_user_turn = store_user['turn']
-		if store_user_turn and int(store_user_turn) >= turn:
+		if store_user_turn and int(store_user_turn) > turn:
 			print 'User %s already exist in db, actual db turn info %s'%(store_user['name'], store_user_turn)
 			continue
 		store.add_user(user)
@@ -271,8 +273,10 @@ def load_data(path):
 	
 	user_base_path = os.path.join(path, 'users')
 	if not os.path.exists(user_base_path):
+		print 'user path %s does not exist'%user_base_path
 		return
 	for p in os.listdir(user_base_path):
+		print 'user dir %s'%p
 		load_user_data(os.path.join(user_base_path, p))
 
 import unittest

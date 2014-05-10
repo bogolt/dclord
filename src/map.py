@@ -345,7 +345,7 @@ class Map(util.BufferedWindow):
 			
 	def drawFleets(self, dc, rect):
 		self.fleets = {}
-		for p in db.fleets(self.turn, self.visibleAreaFilter()):
+		for p in store.iter_objects_list('fleet', {}, rect):# db.fleets(self.turn, self.visibleAreaFilter()):
 			self.drawFleet(dc, p)
 		for p in db.flyingFleets(self.turn, self.visibleAreaFilter()):
 			self.drawFlyingFleet(dc, p)

@@ -509,15 +509,22 @@ class Store:
 		for r in cur.fetchall():
 			yield dict(zip(keys, r))
 			
-	def iter_objects_list(self, table, conds = {}):
+	def iter_objects_list(self, table, conds = {}, rect = None):
 		cur = self.conn.cursor()
 		s = 'select %s from %s'%(','.join(tables[table]), table,)
+		
+		conds_str = []
 
 		if conds and len(conds) > 0:
-			s += ' WHERE %s'%(' and '.join(['%s=?'%(key_name,) for key_name in conds.iterkeys()]),)
+			conds_str += ['%s=%s'%(key_name,value) for key_name,value in conds.iteritems()]
+			
+		if rect:
+			conds_str += ['x between %s AND %s AND y between %s AND %s'%rect]
 
-		#print '%s with %s'%(s, tuple(conds.values()))
-		cur.execute(s, tuple(conds.values()))
+		if conds_str:
+			s+=' WHERE '+' AND '.join(conds_str)
+		#print '"%s" with %s'%(s, type(s))
+		cur.execute(unicode(s))#, tuple(conds.values()))
 		for r in cur.fetchall():
 			yield dict(zip(tables[table], r))
 
