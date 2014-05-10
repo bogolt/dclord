@@ -164,6 +164,8 @@ def load_user_data(path):
 		load_csv_table(path, 'unit')
 		load_csv_table(path, 'proto_action')
 		
+		store.normalize_user_fleets(user['user_id'])
+		
 
 geo_size_loaded = set()
 def load_geo_size(path, left_top, size):
@@ -263,6 +265,8 @@ def load_common_data(path):
 
 	for data in iter_csv_table(path, 'alien_fleet'):
 		store.update_data('alien_fleet', ['fleet_id'], data)
+	
+	store.normalize_fleets()
 		
 	load_csv_table(path, 'planet_geo')
 	load_csv_table(path, 'alien_unit')

@@ -444,6 +444,20 @@ class Store:
 		self.add_data('garrison_unit', unit_data)
 		self.add_data('unit', unit_data)
 		
+	def normalize_user_fleets(self, user_id):
+		cur = self.conn.cursor()
+		for fleet in self.get_objects_list('alien_fleet', {'user_id':user_id}):
+			cur.execute('delete from alien_unit WHERE fleet_id=%s'%(fleet['fleet_id'],))
+			
+		cur.execute('delete from alien_fleet WHERE user_id=%s'%(user_id,))
+		self.conn.commit()
+
+	def normalize_fleets(self):
+		for u in self.iter_objects_list('user'):
+			if 'login' in u and u['login']:
+				self.normalize_user_fleets(u['user_id'])
+			
+		
 	#def add_flying_alien_fleet(self, fleet):
 	#	matching_fleets = self.get_objects_list('flying_alien_fleet', fleet)
 	#	
