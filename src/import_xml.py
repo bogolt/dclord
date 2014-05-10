@@ -44,7 +44,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	def __init__(self, db = None):
 		xml.sax.handler.ContentHandler.__init__(self)
 
-		self.user_id = 0		
+		self.user_id = 0
 		self.user = {}
 		self.parent = None
 		self.error_code = 0
@@ -52,11 +52,18 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		self.parent_id = 0
 		self.parent_coord = None
 		self.store = db if db else store.store
+		#self.data_type = None
 		
 	def startElement(self, name, attrs):
 		if 'dc' == name:
 			self.user = getAttrs(attrs, {'user':'name', 'id':'user_id', 'turn-n':'turn', 'main-res':'resource_main', 'second-res':'resource_secondary', 'money':'money'})
 			self.user_id = int(self.user['user_id'])
+
+			
+			args = attrs['this-url'].split('/')
+			if args:
+				self.user['request'] = args[-1]
+				#self.data_type = 
 			
 			# all info read, erase everything related to this user
 			if attrs['this-url'].endswith('/all/'):

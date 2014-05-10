@@ -1,6 +1,7 @@
 import db
 import util
 import math
+from store import store
 
 def pos(name, coord):
 	return val(name, '%s:%s'%(coord[0],coord[1]))
@@ -42,12 +43,9 @@ class RequestMaker:
 		act = self.act('move_fleet', pos('move_to', to)+val('fleet_id',fleetId))
 		
 		# save fleet info
-		fleet = None
-		for f in db.fleets(db.getTurn(), ['id=%s'%(fleetId,)]):
-			fleet = f
-			break
+		fleet = store.get_object('fleet', {'fleet_id':fleetId})
 		
-		speed, rng = db.get_fleet_speed_range(fleetId)
+		speed, rng = store.get_fleet_speed_range(fleetId)
 		cur_pos = util.get_coord(fleet)
 		dist = util.distance(to, cur_pos)
 		
@@ -56,9 +54,14 @@ class RequestMaker:
 			print 'Error - attempt to move fleet %s to distance %s which is longer then fleet max range %s'%(fleetId, dist, rng)
 		
 		turns = int(math.ceil(dist / speed))
+		u = store.get_user(fleet['user_id'])
+		cur_turn = u['turn']
 		
-		db.add_pending_action(self.act_id, db.Db.FLEET, 'erase', ['id=%s'%(fleetId,)])
-		db.add_pending_action(self.act_id, db.Db.FLYING_FLEET, 'insert', {'x':to[0], 'y':to[1], 'owner_id':self.user_id, 'id':fleetId, 'from_x':fleet['x'], 'from_y':fleet['y'], 'arrival_turn':turns + db.getTurn()})
+		store.add_pending_action(self.act_id, 'fleet', 'erase', {'fleet_id':fleetId})
+		store.add_pending_action(self.act_id, 'flying_fleet', 'insert', {'x':to[0], 'y':to[1], 'user_id':self.user_id, 'id':fleetId, 'from_x':fleet['x'], 'from_y':fleet['y'], 'arrival_turn':turns + cur_turn})
+		
+		#db.add_pending_action(self.act_id, db.Db.FLEET, 'erase', ['id=%s'%(fleetId,)])
+		#db.add_pending_action(self.act_id, db.Db.FLYING_FLEET, 'insert', {'x':to[0], 'y':to[1], 'owner_id':self.user_id, 'id':fleetId, 'from_x':fleet['x'], 'from_y':fleet['y'], 'arrival_turn':turns + db.getTurn()})
 		return act
 		
 	
@@ -67,7 +70,7 @@ class RequestMaker:
 		plId = pos('planetid', planet)
 		nm = val('new_fleet_name', name)
 		act = self.act('create_new_fleet', plId + nm)
-		db.add_pending_action(self.act_id, db.Db.FLEET, 'insert', {'name':name, 'x':planet[0], 'y':planet[1], 'owner_id':self.user_id})
+		#db.add_pending_action(self.act_id, db.Db.FLEET, 'insert', {'name':name, 'x':planet[0], 'y':planet[1], 'owner_id':self.user_id})
 		return act
 	
 	def get_action_id(self):

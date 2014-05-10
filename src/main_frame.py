@@ -19,6 +19,7 @@ import history
 import algorithm
 import math
 import loader
+from store import store
 
 from datetime import datetime
 
@@ -766,7 +767,6 @@ class DcFrame(wx.Frame):
 	def onExploreGeoAll(self, _):
 		'upload pending events on server'
 		
-		turn = db.getTurn()
 		explore_owned_planets = True
 		
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
@@ -782,7 +782,7 @@ class DcFrame(wx.Frame):
 			fleet_planet = {}
 			pl = {}
 			
-			for fleet in db.fleets(turn, ['owner_id=%s'%(acc['id'],)] ):
+			for fleet in store.iter_objects_list('fleet', {'user_id':acc['id']} ):
 				#print 'got fleet %s'%(fleet,)
 				coord = get_coord(fleet)
 				
@@ -790,22 +790,17 @@ class DcFrame(wx.Frame):
 					pl[coord].add(fleet['id'])
 					continue
 				
-				planet = db.get_planet(coord)
-				if planet:
-					# skip if occupied
-					if planet['owner_id'] and not explore_owned_planets:
-						#print 'planet %s occupied, skip'%(planet,)
-						continue
-					if planet['o'] and planet['e'] and planet['m'] and planet['t']:
-						#print 'planet %s explored, skip'%(planet,)
-						continue
-				#check holes and stars
-				if not db.is_planet(coord):
-					#print 'Coord %s not a planet'%(coord,)
+				geo = store.get_object('planet_geo', {'x':coord[0], 'y':coord[1]})
+				if geo:
 					continue
+				planet = store.get_object('planet', {'x':coord[0], 'y':coord[1]})
+				#check holes and stars
+				if not planet:
+					continue
+				
 				if not coord in pl:
 					pl[coord] = set()
-				pl[ coord ].add(fleet['id'])
+				pl[ coord ].add(fleet['fleet_id'])
 				#print 'Add to exploration list planet %s'%(planet,)
 			
 			acts = {}
@@ -813,18 +808,18 @@ class DcFrame(wx.Frame):
 			# get all fleet units, check if explore capable
 			for coord, planet_fleets in pl.iteritems():
 				for fleet_id in planet_fleets:
-					for unit in db.units(turn, ['fleet_id=%s'%(fleet_id,)]):
+					for unit in store.get_fleet_units(fleet_id):
 						#print '%s %s unit %s'%(coord, fleet_id, unit)
 						# ok unit
-						bc = unit['class']
+						bc = unit['proto_id']
 						
 						#for proto in db.prototypes(['id=%s'%(bc,)]):
 						#	print 'proto %s'%(proto,)
 
 						#type 1 probably geo explore
-						for act in db.proto_actions(['proto_id=%s'%(bc,), 'type=1']):
+						for act in store.iter_objects_list('proto_action',{'proto_id':bc, 'proto_action_id':request.RequestMaker.GEO_EXPLORE}):
 							#print 'ACTION: %s %s %s'%(coord, bc, act)
-							acts[coord] = unit['id']
+							acts[coord] = unit['unit_id']
 
 			self.pending_actions.user_id = int(acc['id'])
 			#self.pendingActions[int(acc['id'])] = actions
@@ -869,6 +864,9 @@ class DcFrame(wx.Frame):
 	def onLog(self, evt):
 		self.log_dlg.AppendText(str(datetime.now()) + " " + evt.attr1 + '\n')
 	
+	def process_performed_actions(self, user_id):
+		pass
+	
 	def onDownloadRawData(self, evt):
 		key = evt.attr1
 		data = evt.attr2
@@ -894,6 +892,9 @@ class DcFrame(wx.Frame):
 		if not user:
 			#status_text = 'Not authorized' if status == import_raw.XmlHandler.StatusAuthError else 'Turn in progress'
 			self.log('Error processing %s'%(key))
+		else:
+			if '1' == user['request']:
+				self.process_performed_actions(user['user_id'])
 		
 		if key in self.recv_data_callback:
 			func, user_id, data = self.recv_data_callback[key]

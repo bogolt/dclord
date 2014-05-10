@@ -431,6 +431,9 @@ class Store:
 	def add_action_result(self, action_id, is_ok, return_id = None):
 		self.conn.cursor().execute('update requested_action set is_ok=?, return_id=? WHERE action_id=?', (is_ok, return_id, action_id))
 		self.conn.commit()
+	
+	def add_pending_action(self, act_id, table, action, data_filter):
+		pass
 		
 	def keys(self, table):
 		return tables[table]
@@ -547,6 +550,16 @@ class Store:
 		for r in cur.fetchall():
 			yield dict(zip(tables[table], r))
 
+	def get_fleet_speed_range(self, fleet_id):
+		
+		min_speed, min_range = None
+		for u in self.get_fleet_units(fleet_id):
+			proto = self.get_object('proto', {'proto_id':u['proto_id']})
+			if min_speed and min_speed < proto['fly_speed']:
+				min_speed = proto['min_speed']
+			if min_range and min_range < proto['fly_range']:
+				min_range = proto['fly_range']
+		return min_speed, min_range
 
 store = Store()
 
