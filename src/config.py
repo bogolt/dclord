@@ -9,6 +9,7 @@ import logging
 import util
 import codecs
 import json
+import time
 
 log = logging.getLogger('dclord')
 
@@ -28,7 +29,8 @@ options = {
 			'geo-size':'image_size_map',
 			'known_planets':1,
 			'load_known_planets':1,
-			'sync_path':''
+			'sync_path':'',
+			'sync_key':None
 			},
 		'network':{
 		  'host':'www.the-game.ru',
@@ -101,6 +103,9 @@ def loadOptions():
 		
 	for k,v in data.iteritems():
 		options[k].update(v)
+		
+	if not options['data']['sync_key']:
+		options['data']['sync_key'] = str(time.time())
 
 def saveOptions():
 	path = os.path.join(getOptionsDir(), config_file_name)

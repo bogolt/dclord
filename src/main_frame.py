@@ -251,8 +251,8 @@ class DcFrame(wx.Frame):
 			self.sync_data()
 			
 	def sync_data(self):
-		serialization.load_sync_data()
-		serialization.save_sync_data()
+		save_load.load_local_data()
+		save_load.save_local_data()
 		
 	def onCalculateRoutes(self, evt):
 		planets = []
@@ -877,10 +877,10 @@ class DcFrame(wx.Frame):
 			#local_data_path = config.options['data']['path']
 			#save_load.save_common_data(os.path.join(local_data_path, 'common')
 			
-			sync_data_path = config.options['data']['sync_path']
-			if sync_data_path:
-				save_load.save_common_data(sync_data_path)
-				
+			#sync_data_path = config.options['data']['sync_path']
+			#if sync_data_path:
+			#	save_load.save_common_data(os.path.join(sync_data_path), config.options['data']['sync_key'])
+			self.map.update()
 			return
 		if not data:
 			log.error('failed to load info for user %s'%(key,))

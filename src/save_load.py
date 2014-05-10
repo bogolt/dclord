@@ -51,6 +51,8 @@ def iter_csv_table(path, table):
 			yield {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()}
 	except OSError as e:
 		print 'Load csv table %s %s failed: %s'%(path, table, e)	
+	except IOError as e:
+		print 'Load csv table %s %s failed: %s'%(path, table, e)
 		
 def iter_csv(path):
 	objs = []
@@ -123,6 +125,9 @@ def is_updated(path):
 	
 def save_local_data():
 	save_data(config.options['data']['path'])
+	
+	if config.options['data']['sync_path']:
+		save_data(os.path.join(config.options['data']['sync_path'], config.options['data']['sync_key']))
 	
 def save_data(path):
 	save_common_data(os.path.join(path, 'common'))
@@ -277,6 +282,13 @@ def load_common_data(path):
 def load_local_data():
 	load_data(config.options['data']['path'])
 
+	if config.options['data']['sync_path']:
+		if os.path.exists(config.options['data']['sync_path']):
+			for f in os.listdir(config.options['data']['sync_path']):
+				if f == config.options['data']['sync_key']:
+					continue
+				load_data(os.path.join(os.path.join(config.options['data']['sync_path'], f)))
+
 def load_data(path):
 	
 	user_base_path = os.path.join(path, 'users')
@@ -285,7 +297,7 @@ def load_data(path):
 			load_user_data(os.path.join(user_base_path, p))
 
 	load_common_data(os.path.join(path, 'common'))
-
+	
 import unittest
 class TestSaveLoad(unittest.TestCase):
 	def setUp(self):
