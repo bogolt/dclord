@@ -215,9 +215,52 @@ class FleetPanel(scrolled.ScrolledPanel):
 		
 		x,y = evt.attr1
 		for fleet in store.iter_objects_list('fleet', {'x':x, 'y':y}):
-			print 'draw fleet %s'%(fleet,)
 			self.add_fleet(fleet)
 
+		for fleet in store.iter_objects_list('alien_fleet', {'x':x, 'y':y}):
+			self.add_alien_fleet(fleet)
+
+	def add_alien_fleet(self, fleet):
+		cp = wx.CollapsiblePane(self, label=fleet['name'], style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
+		self.sizer.Add(cp)
+		pane = cp.GetPane()
+		
+		u = store.get_user(fleet['user_id'])
+		if u:
+			owner_name = u['name']
+		else:
+			owner_name = '<unknown>'
+		sizer = wx.BoxSizer(wx.VERTICAL)
+		sizer.Add(wx.StaticText(pane, label='owner: %s'%(owner_name,)), 1, wx.EXPAND)		
+
+		for unit in store.iter_objects_list('alien_unit', {'fleet_id':fleet['fleet_id']}):
+			hbox = wx.BoxSizer(wx.HORIZONTAL)
+			sizer.Add(hbox, 1, wx.EXPAND)
+		
+			img = image.getCarapaceImage(int(unit['carapace']), int(unit['color']) )
+			
+			if img:
+				bitmap = wx.StaticBitmap(pane)
+				bitmap.SetBitmap(img)
+				hbox.Add(bitmap, 1, wx.EXPAND)
+			else:
+				print 'image not found for unit %s, carp %s, color %s'%(unit['unit_id'],  int(unit['carapace']), int(unit['color']) )
+
+			name = get_unit_name(int(unit['carapace']))
+			hbox.Add(wx.StaticText(pane, label=name), 1, wx.EXPAND)
+
+		border = wx.BoxSizer()
+		border.Add(sizer, 1, wx.EXPAND|wx.ALL)
+		pane.SetSizer(border)
+		
+		self.sizer.Layout()
+		
+		self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.OnPaneChanged, cp)
+		cp.Expand()
+		
+		cp.Bind(wx.EVT_LEFT_DOWN, self.onFleetSelect)
+		self.fleets[cp] = fleet
+		
 	def add_fleet(self, fleet):
 		cp = wx.CollapsiblePane(self, label=fleet['name'], style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
 		self.sizer.Add(cp)
