@@ -330,9 +330,8 @@ class Store:
 
 		# garrisons
 		for user_planet in self.iter_objects_list('user_planet', {'user_id':user_id}):
-			cur.execute('delete from unit WHERE unit_id IN ( select unit_id from garrison_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?)'%(user_planet['x'], user_planet['y']))
-			cur.execute('delete from garrison_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?)'%(user_planet['x'], user_planet['y']))
-			
+			cur.execute('delete from unit WHERE unit_id IN ( select unit_id from garrison_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?)', (user_planet['x'], user_planet['y']))
+			cur.execute('delete from garrison_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?', (user_planet['x'], user_planet['y']))
 
 		cur.execute('delete from user_planet WHERE user_id=?', (user_id,))
 		cur.execute('delete from fleet WHERE user_id=?', (user_id,))
@@ -400,7 +399,7 @@ class Store:
 		
 		data = extract(raw_data, tables[table])
 		for k,v in data.items():
-			if len(v) == 0:
+			if isinstance(v, str) and len(v) == 0:
 				del data[k]
 		
 		s = 'insert or replace into %s(%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key_name,) for key_name in data.iterkeys()]))
@@ -590,7 +589,7 @@ class TestStore(unittest.TestCase):
 		user_none = self.store.get_user(user_id+1)
 		self.assertIsNone(user_none)
 		
-		self.assertEqual([], self.store.get_objects_list('user', {'name':u'test'}))
+		self.assertEqual([], self.store.get_objects_list('user', {'name':u'"test"'}))
 		users = self.store.get_objects_list('user')
 		self.assertEqual(len(users), 1)
 		self.assertEqual(users[0], user_data)
