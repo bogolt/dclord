@@ -138,7 +138,7 @@ def load_user_data(path):
 		turn = int(user['turn'])
 		store_user = store.get_user(user['user_id'])
 		store_user_turn = store_user['turn']
-		if store_user_turn and int(store_user_turn) > turn:
+		if store_user_turn and int(store_user_turn) >= turn:
 			print 'User %s already exist in db, actual db turn info %s'%(store_user['name'], store_user_turn)
 			continue
 		store.add_user(user)
@@ -251,6 +251,8 @@ def load_geo_size_at(center):
 def load_common_data(path):	
 
 	for data in iter_csv_table(path, 'user'):
+		# it will not load user specific info otherwise
+		del data['turn']
 		store.update_data('user', ['user_id'], data)
 	
 	for data in iter_csv_table(path, 'planet'):

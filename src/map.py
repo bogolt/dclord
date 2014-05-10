@@ -356,7 +356,7 @@ class Map(util.BufferedWindow):
 		self.fleets[pos] = v+1
 		rx,ry = self.relPos(pos)
 		diff = min(self.cell_size, 3)
-		col_type = 'own_fleet_color' if is_owned(fleet['owner_id']) else 'fleet_color'
+		col_type = 'own_fleet_color' if is_owned(fleet['user_id']) else 'fleet_color'
 		dc.SetPen(wx.Pen(colour=config.options['map'][col_type], width=1))
 		dc.DrawLine(rx+v*2 - self.cell_size/2, ry-self.cell_size/2, rx+v*2 - self.cell_size/2, ry-self.cell_size/2+diff)
 		
