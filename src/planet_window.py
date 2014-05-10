@@ -221,7 +221,7 @@ class FleetPanel(scrolled.ScrolledPanel):
 			self.add_alien_fleet(fleet)
 
 	def add_alien_fleet(self, fleet):
-		cp = wx.CollapsiblePane(self, label=fleet['name'], style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
+		cp = wx.CollapsiblePane(self, label='%s'%fleet['name'], style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
 		self.sizer.Add(cp)
 		pane = cp.GetPane()
 		
@@ -262,7 +262,7 @@ class FleetPanel(scrolled.ScrolledPanel):
 		self.fleets[cp] = fleet
 		
 	def add_fleet(self, fleet):
-		cp = wx.CollapsiblePane(self, label=fleet['name'], style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
+		cp = wx.CollapsiblePane(self, label='%s'%fleet['name'], style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
 		self.sizer.Add(cp)
 		pane = cp.GetPane()
 		
