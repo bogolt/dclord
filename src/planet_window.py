@@ -319,9 +319,9 @@ class BuildingsWindows(wx.Frame):
 		dups = {}
 		protos = {}
 		# buildings	if ours
-		for building in db.db.iter_objects_list(db.Db.UNIT, {'=':{'x':coord[0], 'y':coord[1], 'fleet_id':0}}):
-			bc = building['class']
-			p = db.get_prototype(bc,('id', 'class', 'carapace', 'hp', 'name', 'is_building', 'max_count'))
+		for building in store.get_garrison_units(coord):# db.db.iter_objects_list(db.Db.UNIT, {'=':{'x':coord[0], 'y':coord[1], 'fleet_id':0}}):
+			bc = building['proto_id']
+			p = store.get_object('proto', {'proto_id':bc})
 			if int(p['is_building']) != 1:
 				continue
 				
@@ -366,28 +366,31 @@ class PlanetPanel(wx.Panel):
 		
 		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, '%s:%s'%coord) )
 		
-		planet = db.get_planet(coord)
+		planet = store.get_object('planet', {'x':coord[0], 'y':coord[1]})
 		owner = None
 		name = None
 		if not planet:
 			self.sizer.Layout()
 			return
 		
-		if 'o' in planet:
-			self.sizer.Add( wx.StaticText(self, wx.ID_ANY, 'o: %s, e: %s, m: %s, t: %s, s: %s'%(planet['o'], planet['e'], planet['m'], planet['t'], planet['s'])) )
+		geo = store.get_object('planet_geo', {'x':coord[0], 'y':coord[1]})
+		if geo:
+			self.sizer.Add( wx.StaticText(self, wx.ID_ANY, 'o: %s, e: %s, m: %s, t: %s, s: %s'%(geo['o'], geo['e'], geo['m'], geo['t'], geo['s'])) )
 		
 		if 'name' in planet and planet['name']:
 			self.sizer.Add( wx.StaticText(self, wx.ID_ANY, planet['name']) )
 		
-		if 'owner_id' not in planet:
+		if 'user_id' not in planet:
 			self.sizer.Layout()
 			return
-		owner_id = planet['owner_id']
+		owner_id = planet['user_id']
 		if not owner_id:
 			self.sizer.Layout()
 			return
-		owner_name = db.get_player_name(owner_id)
-		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, owner_name) )
+		u = store.get_user(owner_id)
+		if u:
+			owner_name = u['name']
+			self.sizer.Add( wx.StaticText(self, wx.ID_ANY, owner_name) )
 		
 		buildings = BuildingsWindows(self)
 		buildings.set_coord(coord)
