@@ -552,7 +552,7 @@ class Store:
 
 	def get_fleet_speed_range(self, fleet_id):
 		
-		min_speed, min_range = None
+		min_speed, min_range = None, None
 		for u in self.get_fleet_units(fleet_id):
 			proto = self.get_object('proto', {'proto_id':u['proto_id']})
 			if min_speed and min_speed < proto['fly_speed']:

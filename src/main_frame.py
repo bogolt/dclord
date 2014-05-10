@@ -677,9 +677,10 @@ class DcFrame(wx.Frame):
 			self.perform_actions()
 				
 	def onFlyHomeScouts(self, _):
-		turn = db.getTurn()
 				
 		for acc in config.accounts():
+			if not 'id' in acc:
+				continue
 			user_id = int(acc['id'])
 			self.pending_actions.user_id = user_id
 			#print 'fly home scouts for user %s %s'%(user_id, acc['login'])
@@ -694,19 +695,21 @@ class DcFrame(wx.Frame):
 			#TODO: beware escapes
 			if fleet_name:
 				fleet_flt.append( 'name="%s"'%(fleet_name,) ) 
-			for fleet in db.fleets(turn, fleet_flt):
+			for fleet in store.iter_objects_list('fleet', {'user_id':user_id}):
 				#print 'found fleet %s'%(fleet,)
 				# if fleet over empty planet - jump back home
 				coord = get_coord(fleet)
-				planet = db.get_planet( coord )
+				coord_filter = {'x':coord[0], 'y':coord[1]}
+				planet = store.get_object('planet', coord_filter )
 				#TODO: allow jump on all open-planets ( not only owned by user )
-				user_open_planet = db.db.get_object(db.Db.OPEN_PLANET, {'=':{'x':coord[0], 'y':coord[1], 'user_id':user_id}})
+				coord_filter['user_id'] = user_id
+				user_open_planet = store.get_object('open_planet', coord_filter )
 				if user_open_planet:
 					continue
 
 				#print 'fleet %s not at home'%(fleet['id'],)
 				units = []
-				for unit in db.units(turn, ['fleet_id=%s'%(fleet['id'],)]):
+				for unit in store.get_fleet_units(fleet['fleet_id']):
 					#print 'fleet %s has unit %s'%(fleet['id'], unit)
 					units.append(unit)
 				
@@ -716,10 +719,10 @@ class DcFrame(wx.Frame):
 					#print 'fleet %s has %s units, while required 1'%(fleet['id'], len(units))
 					continue
 
-				if int(units[0]['id']) in self.manual_control_units:
+				if int(units[0]['unit_id']) in self.manual_control_units:
 					continue
 
-				proto = db.get_prototype(units[0]['class'])
+				proto = store.get_object('proto', {'proto_id':units[0]['proto_id']})
 				if proto['carapace'] != CARAPACE_PROBE:
 					#print 'fleet %s unit %s is not a probe'%(fleet['id'], units[0])
 					continue
@@ -733,7 +736,7 @@ class DcFrame(wx.Frame):
 				continue
 			
 			coords = []
-			for planet in db.db.iter_objects_list(db.Db.OPEN_PLANET, {'=':{'user_id':user_id}}):
+			for planet in store.iter_objects_list('open_planet', {'user_id':user_id}):
 				coord = get_coord(planet)
 				coords.append( coord )
 				#print 'possible home planet %s'%(coord,)
@@ -754,7 +757,7 @@ class DcFrame(wx.Frame):
 				
 				# ok, found then jump
 				#print 'Jump (%s) %s'%(closest_planet, fleet)
-				self.pending_actions.fleetMove( fleet['id'], closest_planet )
+				self.pending_actions.fleetMove( fleet['fleet_id'], closest_planet )
 			
 			self.perform_actions()
 		
@@ -772,6 +775,9 @@ class DcFrame(wx.Frame):
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
 		for acc in config.accounts():
+			if not 'id' in acc:
+				continue
+				
 			log.info('requesting user %s info'%(acc['login'],))
 			# find if there is any explore-capable fleets over unexplored planets
 			# or simply tell explore to every unit =))) game server will do the rest
@@ -787,7 +793,7 @@ class DcFrame(wx.Frame):
 				coord = get_coord(fleet)
 				
 				if coord in pl:
-					pl[coord].add(fleet['id'])
+					pl[coord].add(fleet['fleet_id'])
 					continue
 				
 				geo = store.get_object('planet_geo', {'x':coord[0], 'y':coord[1]})
