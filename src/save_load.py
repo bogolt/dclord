@@ -160,6 +160,8 @@ def load_user_data(path):
 		
 		load_csv_table(path, 'proto_action')
 		load_csv_table(path, 'fleet_unit')
+		load_csv_table(path, 'garrison_unit')
+		load_csv_table(path, 'unit')
 		load_csv_table(path, 'proto_action')
 		
 

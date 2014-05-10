@@ -6,6 +6,7 @@ import event
 import config
 import image
 import unit_list
+from store import store
 
 import  wx.lib.scrolledpanel as scrolled
 
@@ -420,8 +421,8 @@ class GarrisonPanel(wx.Panel):
 		self.sizer.Layout()
 		self.units = {}
 		
-		planet = db.get_planet(coord)
-		if not planet or 'owner_id' not in planet:
+		planet = store.get_object('planet', {'x':coord[0], 'y':coord[1]})
+		if not planet or 'user_id' not in planet:
 			return
 		
 		item_windows = {}
@@ -431,13 +432,14 @@ class GarrisonPanel(wx.Panel):
 
 		items = {}
 		
-		for unit in db.db.iter_objects_list(db.Db.UNIT, {'=':{'x':coord[0], 'y':coord[1], 'fleet_id':0}}):
-			bc = unit['class']
+		gu = store.get_garrison_units(coord)
+		for unit in gu:
+			bc = unit['proto_id']
 			if bc in items:
 				items[bc].append(unit)
 				continue
 				
-			p = db.get_prototype(bc,('id', 'class', 'carapace', 'color', 'hp', 'name', 'is_building', 'transport_capacity', 'is_spaceship', 'is_serial', 'fly_speed', 'fly_range', 'support_main', 'support_second'))
+			p = store.get_object('proto', {'proto_id':bc})
 			if int(p['is_building']) == 1:
 				continue
 			items[bc] = [unit]
