@@ -254,12 +254,8 @@ def load_common_data(path):
 	for data in iter_csv_table(path, 'user'):
 		# it will not load user specific info otherwise
 		data['turn'] = '0'
-		print 'upd user %s %s'%(data['user_id'], data['name'])
 		store.update_data('user', ['user_id'], data)
 		
-	for u in store.iter_objects_list('user'):
-		print u['name']
-	
 	for data in iter_csv_table(path, 'planet'):
 		store.update_data('planet', ['x', 'y'], data)
 
