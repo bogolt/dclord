@@ -137,10 +137,11 @@ def load_user_data(path):
 		print 'load user %s'%(user,)
 		turn = int(user['turn'])
 		store_user = store.get_user(user['user_id'])
-		store_user_turn = store_user['turn']
-		if store_user_turn and int(store_user_turn) >= turn:
-			print 'User %s already exist in db, actual db turn info %s'%(store_user['name'], store_user_turn)
-			continue
+		if store_user and 'turn' in store_user:
+			store_user_turn = store_user['turn']
+			if store_user_turn and int(store_user_turn) >= turn:
+				print 'User %s already exist in db, actual db turn info %s'%(store_user['name'], store_user_turn)
+				continue
 		store.add_user(user)
 	
 		# no need to make it on this level, as there should be only one user
@@ -271,15 +272,13 @@ def load_local_data():
 	load_data(config.options['data']['path'])
 
 def load_data(path):
-	load_common_data(os.path.join(path, 'common'))
 	
 	user_base_path = os.path.join(path, 'users')
-	if not os.path.exists(user_base_path):
-		print 'user path %s does not exist'%user_base_path
-		return
-	for p in os.listdir(user_base_path):
-		print 'user dir %s'%p
-		load_user_data(os.path.join(user_base_path, p))
+	if os.path.exists(user_base_path):
+		for p in os.listdir(user_base_path):
+			load_user_data(os.path.join(user_base_path, p))
+
+	load_common_data(os.path.join(path, 'common'))
 
 import unittest
 class TestSaveLoad(unittest.TestCase):

@@ -912,8 +912,8 @@ class DcFrame(wx.Frame):
 	
 	def onSelectUser(self, evt):
 		user_id = evt.attr1
+
 		#user_id = int(config.users[login]['id'])
 		#self.unit_list.setPlayer( user_id )
-		#print 'selecting user %s'%(user_id, )
 		self.map.selectUser( user_id)
  

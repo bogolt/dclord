@@ -1,6 +1,6 @@
 import wx
 import logging
-import db
+from store import store
 import event
 import config
 import serialization
@@ -40,12 +40,13 @@ class PlayerFilter(wx.Window):
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		
 		self.users = {}
-		for user in db.users():
-			checkbox = wx.CheckBox(self, label=user['name'])
-			checkbox.Bind(wx.EVT_CHECKBOX, self.userChanged)
-			self.users[int(user['id'])] = checkbox
-			checkbox.SetValue(False)
-			sizer.Add(checkbox)
+		for user in store.iter_objects_list('user'):
+			if 'login' in user and user['login']:
+				checkbox = wx.CheckBox(self, label=user['name'])
+				checkbox.Bind(wx.EVT_CHECKBOX, self.userChanged)
+				self.users[int(user['user_id'])] = checkbox
+				checkbox.SetValue(False)
+				sizer.Add(checkbox)
 			
 		self.SetSizer(sizer)
 		
@@ -182,17 +183,17 @@ class FilterFrame(wx.Panel):
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.sizer.Add(self.players)
 		self.sizer.Add(self.buildings)
-		self.pl = PlanetList(self)
-		self.sizer.Add(self.pl)
+		#self.pl = PlanetList(self)
+		#self.sizer.Add(self.pl)
 		self.SetSizer(self.sizer)
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
-		self.pl.addPlanets(self.players)
+		#self.pl.addPlanets(self.players)
 	
 	def updatePlanets(self):
 		self.pl.Destroy()
-		self.pl = PlanetList(self)
+		#self.pl = PlanetList(self)
 		self.sizer.Add(self.pl)
-		self.pl.addPlanets(self.players, self.buildings.get_selected_buildings())
+		#self.pl.addPlanets(self.players, self.buildings.get_selected_buildings())
 		self.sizer.Layout()
 		
 		wx.PostEvent(self.GetParent(), event.MapUpdate())
@@ -226,9 +227,12 @@ class FilterPanel(wx.Panel):
 		
 	def update(self):
 		log.debug('update tasks %d'%(len(self.accounts),))
-		for r in db.users([], ('id', 'name')):
-			user_id = r['id']
+		for r in store.iter_objects_list('user'):
+			user_id = int(r['user_id'])
 			name = r['name']
+			
+			if not 'login' in r or not r['login']:
+				continue
 
 			if user_id in self.accounts:
 				continue
@@ -245,7 +249,7 @@ class FilterPanel(wx.Panel):
 	def onChangeUser(self, evt):
 		for login, obj in self.accounts.iteritems():
 			if obj == evt.GetEventObject():
-				print 'choosing user %s'%(login,)
+				#print 'choosing user %s'%(login,)
 				self.selectUser(login)
 				
 	def selectUser(self, user_id):

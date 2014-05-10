@@ -212,6 +212,34 @@ class Map(util.BufferedWindow):
 		owner_id = 0
 		if 'user_id' in planet and planet['user_id']:
 			owner_id = planet.get('user_id', 0)
+		
+		if not owner_id or owner_id == 0:
+			color = 'black'
+			brush_type = None
+		else:
+			brush_type = 1
+			
+			u = store.get_user(owner_id)
+			
+			if self.selected_user_id == owner_id:
+				color = 'orange'
+			elif not u:
+				color='black'
+				brush_type=None
+			elif 'login' in u and u['login']:
+				color = 'red'
+			else:
+				color = 'green'
+		
+		dc.SetPen(wx.Pen(color, width=1))
+		
+		brush = wx.Brush(color)
+		if not brush_type:
+			brush.SetStyle(wx.TRANSPARENT)
+		dc.SetBrush(brush)
+
+		dc.DrawCircle(rx, ry, self.relSize(sz))
+		return
 			
 		dc.SetPen(wx.Pen(colour='black', width=1))
 		if not owner_id:
@@ -456,12 +484,15 @@ class Map(util.BufferedWindow):
 		dc.DestroyClippingRegion()
 
 	def selectUser(self, user_id):
-		pos = db.getUserHw(user_id, db.getTurn())
-		self.centerAt( pos )
-		serialization.load_geo_size_center( pos, 12 )
+		hw_pos = store.get_object('hw', {'user_id': user_id})
+		if not hw_pos:
+			print 'cannot get hw of %s'%user_id
+			return
+		self.selected_user_id = user_id
+		self.centerAt( (int(hw_pos['x']), int(hw_pos['y'])) )
 		self.selected_user_id = user_id
 		try:
-			self.user_race = db.get_user_race(self.selected_user_id)
+			self.user_race = store.get_object('race', {'user_id': self.selected_user_id})
 		except:
 			pass
 		self.update()

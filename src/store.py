@@ -418,6 +418,8 @@ class Store:
 		
 	def update_data(self, table, filter_keys, data):
 		'check data turn for max value'
+		if not 'turn' in data or not data['turn']:
+			return
 		u = self.get_object(table, {k:v for k,v in data.iteritems() if k in filter_keys})
 		if u and u['turn'] and int(u['turn']) > int(data['turn']):
 			return
