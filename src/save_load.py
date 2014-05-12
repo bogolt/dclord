@@ -90,10 +90,15 @@ def save_user_data(user_id, path):
 			unit_writer.writerow( store.get_object('unit', {'unit_id':fleet_unit['unit_id']}) )
 			
 	garrison_unit_writer = csv_open(os.path.join(path, 'garrison_unit.csv'), store.keys('garrison_unit'))
+	garrison_queue_unit_writer = csv_open(os.path.join(path, 'garrison_queue_unit.csv'), store.keys('garrison_queue_unit'))
+	#save_csv_table(path, 'garrison_queue_unit')
 	for planet in store.iter_objects_list('user_planet', {'user_id':user_id}):
 		for garrison_unit in store.iter_objects_list('garrison_unit', {'x':planet['x'], 'y':planet['y']}):
 			garrison_unit_writer.writerow(garrison_unit)
 			unit_writer.writerow( store.get_object('unit', {'unit_id':garrison_unit['unit_id']}) )
+			
+		for queue_unit in store.iter_objects_list('garrison_queue_unit', {'x':planet['x'], 'y':planet['y']}):
+			garrison_queue_unit_writer.writerow( queue_unit )
 	
 	proto_actions_writer = csv_open(os.path.join(path, 'proto_action.csv'), store.keys('proto_action'))
 	for proto in store.iter_objects_list('proto', {'user_id':user_id}):
@@ -166,6 +171,8 @@ def load_user_data(path):
 		load_csv_table(path, 'proto_action')
 		load_csv_table(path, 'fleet_unit')
 		load_csv_table(path, 'garrison_unit')
+		load_csv_table(path, 'garrison_queue_unit')
+		
 		load_csv_table(path, 'unit')
 		load_csv_table(path, 'proto_action')
 		

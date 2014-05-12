@@ -481,6 +481,9 @@ class Store:
 	def get_garrison_units(self, coord):
 		return self.execute('unit', """select %s from %s
 						JOIN garrison_unit ON unit.unit_id=garrison_unit.unit_id WHERE garrison_unit.x = ? AND garrison_unit.y = ?""", coord)
+	def get_building_queue(self, coord):
+		return self.execute('garrison_queue_unit', """select %s from %s
+						WHERE x = ? AND y = ? ORDER BY build_order""", coord)
 						
 	def get_user(self, user_id):
 		return self.get_object('user', {'user_id':user_id})
