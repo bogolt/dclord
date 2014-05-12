@@ -464,8 +464,9 @@ class Store:
 				self.normalize_user_fleets(u['user_id'])
 
 	def normalize_planets(self):
+		c = self.conn.cursor()
 		for p in self.iter_objects_list('planet_geo'):
-			self.execute('planet_size', 'delete from %s WHERE x = ? AND y = ?', (p['x'], p['y']))
+			c.execute('delete from planet_size WHERE x = ? AND y = ?', (p['x'], p['y']))
 		self.conn.commit()
 		
 	def execute(self, table, query, args):
