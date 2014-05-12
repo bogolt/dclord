@@ -198,7 +198,7 @@ class BuildingsWindows(wx.Frame):
 		dups = {}
 		protos = {}
 		# buildings	if ours
-		for building in store.get_garrison_units(coord):# db.db.iter_objects_list(db.Db.UNIT, {'=':{'x':coord[0], 'y':coord[1], 'fleet_id':0}}):
+		for building in store.get_garrison_units(coord):
 			bc = building['proto_id']
 			p = store.get_object('proto', {'proto_id':bc})
 			if int(p['is_building']) != 1:
@@ -229,7 +229,80 @@ class BuildingsWindows(wx.Frame):
 			
 			txt = wx.StaticText(self, -1, 'x %s'%(len(builds),))
 			wsizer.Add(txt)
+
+		
+		has_bq = None
+		prev_units = []
+		for unit in store.get_building_queue(coord):
+			if not has_bq:
+				self.sizer.Add(wx.StaticText(self, label='build queue:'))
+				has_bq = True
+				
+			if unit['done'] > 0:
+				self.draw_build_stack(prev_units)
+				prev_units = []
+				
+				proto = store.get_object('proto', {'proto_id':unit['proto_id']})
+				
+				img = image.getBcImage(unit['proto_id'], 20)
+				if not img:
+					img = image.getCarapaceImage(proto['carapace'], proto['color'])
+				wsizer = wx.BoxSizer(wx.HORIZONTAL)
+				self.sizer.Add(wsizer)
+				
+				wnd = wx.StaticBitmap(self, wx.ID_ANY)
+				if img:
+					wnd.SetBitmap(img)
+				wsizer.Add(wnd)
+				
+				name = proto['name']
+				if not name:
+					name = get_unit_name(int(proto['carapace']))
+				
+				txt = wx.StaticText(self, -1, ' %d%% %s'%(unit['done']*100/proto['build_speed'],name))
+				wsizer.Add(txt)
+				continue
+			
+			
+			if prev_units == [] or unit['proto_id'] == prev_units[0]['proto_id']:
+				prev_units.append(unit)
+				continue
+			
+			# draw prev_units
+			self.draw_build_stack(prev_units)
+			prev_units = [unit]
+		self.draw_build_stack(prev_units)
+			
+			
 		self.sizer.Layout()
+		
+	def draw_build_stack(self, units):
+		if len(units) == 0:
+			return
+		wsizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.sizer.Add(wsizer)
+		
+		proto = store.get_object('proto', {'proto_id':units[0]['proto_id']})
+		#if proto['is_building'] == 1:
+		img = image.getBcImage(units[0]['proto_id'], 20)
+		if not img:
+			img = image.getCarapaceImage(proto['carapace'], proto['color'])
+
+		#img = image.getBcImage(units[0]['proto_id'], 20)
+		wnd = wx.StaticBitmap(self, wx.ID_ANY)
+		if img:
+			wnd.SetBitmap(img)
+		wsizer.Add(wnd)
+		
+		name = proto['name']
+		if not name:
+			name = get_unit_name(int(proto['carapace']))
+		
+		count_text = ''
+		if len(units)>1:
+			count_text = 'x%s '%(len(units),)
+		txt = wx.StaticText(self, -1, '%s%s'%(count_text, name))
+		wsizer.Add(txt)
 
 class PlanetPanel(wx.Panel):
 	def __init__(self, parent):

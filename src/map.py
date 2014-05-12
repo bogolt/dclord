@@ -342,7 +342,6 @@ class Map(util.BufferedWindow):
 		sz = util.add(sz, (1,1))
 		return ['x>=%d AND y>=%d AND x<=%d AND y<=%d'%(ps[0], ps[1], ps[0]+sz[0], ps[1]+sz[1])]
 		
-	@util.timed
 	def drawPlanets(self, dc, rect):
 		#cond = ['owner_id is not null'] 
 		x = self.offset_pos[0], self.offset_pos[0]+self.screen_size[0]
