@@ -235,10 +235,11 @@ class FilterPanel(wx.Panel):
 				continue
 
 			if user_id in self.accounts:
+				self.accounts[user_id].SetLabel('%s (%s)'%(name, r['turn']))
 				continue
 
 			log.debug("%s => %s"%(user_id, name))
-			login = wx.StaticText(self,wx.ID_ANY, '%s'%(name,))
+			login = wx.StaticText(self,wx.ID_ANY, '%s (%s)'%(name, r['turn']))
 			self.accounts[user_id] = login
 			self.sizer.Add(login)
 			if not self.active_user:
@@ -262,6 +263,4 @@ class FilterPanel(wx.Panel):
 	
 	def onShowKnown(self, evt):
 		config.options['filter']['inhabited_planets'] = int(self.show_known.IsChecked())
-		if not config.options['filter']['inhabited_planets']:
-			serialization.loadGeoPlanets()
 		wx.PostEvent(self.GetParent(), event.MapUpdate(attr1=None, attr2=None))
