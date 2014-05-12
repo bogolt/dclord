@@ -76,7 +76,7 @@ class DcFrame(wx.Frame):
 		self.planet_panel = planet_window.PlanetPanel(self)
 		self.garrison_panel = planet_window.GarrisonPanel(self)
 		self.object_filter = object_filter.FilterPanel(self)
-		self.planet_filter = object_filter.FilterFrame(self)
+		#self.planet_filter = object_filter.FilterFrame(self)
 		#self.unit_list = unit_list.UnitPrototypeListWindow(self, 0)
 		#self.history = history.HistoryPanel(self)
 		#self.area_list = area_panel.AreaListWindow(self)
@@ -87,7 +87,7 @@ class DcFrame(wx.Frame):
 		
 		self.map = map.Map(self)
 		self.map.turn = db.getTurn()
-		self.map.set_planet_filter(self.planet_filter)
+		#self.map.set_planet_filter(self.planet_filter)
 		print 'map turn is set to %s'%(self.map.turn,)
 		self.map.update()
 
@@ -120,7 +120,7 @@ class DcFrame(wx.Frame):
 		#self._mgr.AddPane(self.info_panel, wx.RIGHT, "Info")
 		self._mgr.AddPane(self.planet_panel, wx.RIGHT, "Planet")
 		self._mgr.AddPane(self.garrison_panel, wx.RIGHT, "Garrison")
-		self._mgr.AddPane(self.planet_filter, wx.LEFT, "Planets")
+		#self._mgr.AddPane(self.planet_filter, wx.LEFT, "Planets")
 		self._mgr.AddPane(self.object_filter, wx.LEFT, "Filter")
 		#self._mgr.AddPane(self.unit_list, wx.RIGHT, "Units")
 		self._mgr.AddPane(self.log_dlg, wx.BOTTOM, "Log")
