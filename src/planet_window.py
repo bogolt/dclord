@@ -283,12 +283,10 @@ class BuildingsWindows(wx.Frame):
 		self.sizer.Add(wsizer)
 		
 		proto = store.get_object('proto', {'proto_id':units[0]['proto_id']})
-		#if proto['is_building'] == 1:
 		img = image.getBcImage(units[0]['proto_id'], 20)
 		if not img:
 			img = image.getCarapaceImage(proto['carapace'], proto['color'])
 
-		#img = image.getBcImage(units[0]['proto_id'], 20)
 		wnd = wx.StaticBitmap(self, wx.ID_ANY)
 		if img:
 			wnd.SetBitmap(img)

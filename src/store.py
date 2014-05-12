@@ -408,6 +408,10 @@ class Store:
 		self.conn.commit()
 		
 	def add_planet_size(self, planet):
+		
+		if self.get_object('planet_geo', {'x':planet['x'], 'y':planet['y']}):
+			return
+		
 		cur = self.conn.cursor()
 		
 		#data = extract(raw_data, ['x','y','s', 'image'])
@@ -458,11 +462,11 @@ class Store:
 		for u in self.iter_objects_list('user'):
 			if 'login' in u and u['login']:
 				self.normalize_user_fleets(u['user_id'])
-			
-		
-	#def add_flying_alien_fleet(self, fleet):
-	#	matching_fleets = self.get_objects_list('flying_alien_fleet', fleet)
-	#	
+
+	def normalize_planets(self):
+		for p in self.iter_objects_list('planet_geo'):
+			self.execute('planet_size', 'delete from %s WHERE x = ? AND y = ?', (p['x'], p['y']))
+		self.conn.commit()
 		
 	def execute(self, table, query, args):
 		cur = self.conn.cursor()
@@ -472,6 +476,12 @@ class Store:
 		res = []
 		for r in cur.fetchall():
 			res.append( dict(zip(tables[table], r)))
+		return res
+		
+	def get_governers(self, user_id):
+		GOVERN_PROTO_ID=13
+		res  = self.execute('unit', 'select %s from %s JOIN fleet_unit USING(unit_id) JOIN fleet USING(fleet_id) WHERE unit.proto_id=? AND fleet.user_id=?', (GOVERN_PROTO_ID, user_id ))
+		res += self.execute('unit', 'select %s from %s JOIN garrison_unit USING(unit_id) JOIN user_planet USING(x,y) WHERE unit.proto_id=? AND user_planet.user_id=?', (GOVERN_PROTO_ID, user_id ))
 		return res
 		
 	def get_fleet_units(self, fleet_id):
@@ -508,6 +518,29 @@ class Store:
 		return objs
 
 	def iter_planets(self, rect, owned = False, inhabited = False):
+		cur = self.conn.cursor()
+		x0,x1,y0,y1 = rect
+
+		keys = ['x', 'y', 'user_id', 'o', 'e', 'm','t','s']
+		s = 'select %s from planet JOIN planet_geo USING(x,y) WHERE x BETWEEN %s AND %s AND y BETWEEN %s AND %s'%(','.join(keys), x0,x1,y0,y1)
+		cur.execute(s)
+		for r in cur.fetchall():
+			yield dict(zip(keys, r))
+
+		table = 'planet'
+		keys = ['x', 'y', 'user_id', 's']
+		s = 'select %s from planet JOIN planet_size USING(x,y) WHERE x BETWEEN %s AND %s AND y BETWEEN %s AND %s'%(','.join(keys), x0,x1,y0,y1)
+		if owned:
+			s += ' AND user_id IN (select user_id from user WHERE login != null)'
+		elif inhabited:
+			s += ' AND not user_id is null'
+			
+		#print '%s with %s'%(s, rect)
+		cur.execute(s)
+		for r in cur.fetchall():
+			yield dict(zip(keys, r))
+		
+	def ixter_planets(self, rect, owned = False, inhabited = False):
 		cur = self.conn.cursor()
 		table = 'planet'
 		keys = ['x', 'y', 'user_id', 's']
@@ -694,7 +727,9 @@ class TestStore(unittest.TestCase):
 		
 		self.store.update_data('planet', ['x', 'y'], self.PLANET_OLD)
 		self.assertEqual(self.PLANET, self.store.get_object('planet', {'x':self.PLANET['x'], 'y':self.PLANET['y']}))
-		
+	
+	def test_get_governers(self):
+		self.assertEqual([], self.store.get_governers(3))
 		
 		
 

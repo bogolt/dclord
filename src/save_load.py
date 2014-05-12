@@ -107,6 +107,8 @@ def save_user_data(user_id, path):
 def save_common_data(path):
 	util.assureDirExist(path)
 	
+	store.normalize_planets()
+	
 	save_csv_table(path, 'user', {})
 	save_csv_table(path, 'planet', {})
 	save_csv_table(path, 'planet_geo', {})

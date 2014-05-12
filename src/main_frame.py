@@ -62,6 +62,8 @@ class DcFrame(wx.Frame):
 		
 		if int(config.options['window']['is_maximized'])==1:
 			self.Maximize()
+			
+		self.makeMenu()
 					
 		#import_raw.processAllUnpacked()
 		#self.map.turn = db.db.max_turn
@@ -87,6 +89,8 @@ class DcFrame(wx.Frame):
 		
 		self.map = map.Map(self)
 		self.map.turn = db.getTurn()
+		if 1 == int(config.options['map']['show_good']):
+			self.onShowGood(None)
 		#self.map.set_planet_filter(self.planet_filter)
 		print 'map turn is set to %s'%(self.map.turn,)
 		self.map.update()
@@ -146,8 +150,6 @@ class DcFrame(wx.Frame):
 		#	self._mgr.LoadPerspective( p )
 		
 		self.recv_data_callback = {}
-		
-		self.makeMenu()
 		
 		self.Bind(event.EVT_DATA_DOWNLOAD, self.onDownloadRawData)
 		self.Bind(event.EVT_MAP_UPDATE, self.onMapUpdate)
@@ -279,17 +281,16 @@ class DcFrame(wx.Frame):
 			wx.Yield()
 	
 	def onShowGeo(self, evt):
-		show_geo = 1 == int(config.options['map']['draw_geo'])
-		show_geo = 0 if show_geo==1 else 1
+		
+		show_geo = self.view.IsChecked( self.view_show_geo.GetId() )
 		config.options['map']['draw_geo'] = show_geo
-		self.map.draw_geo = 1==show_geo
+		self.map.draw_geo = show_geo
 		
 		#self.view.Check(self.view_show_geo.GetId(), bool())
 		self.map.update()
 
 	def onShowGood(self, evt):
-		show_good = 1 == int(config.options['map']['show_good'])
-		show_good = 0 if show_good==1 else 1
+		show_good = self.view.IsChecked( self.view_show_good_planets.GetId() )
 		config.options['map']['show_good'] = show_good
 		self.map.showGood(show_good)
 				

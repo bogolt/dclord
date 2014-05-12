@@ -249,9 +249,10 @@ class TestXmlImport(unittest.TestCase):
 		user_id = user['user_id']
 		load_xml('/tmp/dclord/raw_xml/niki_known_planets.xml')
 		
-		save_load.save_user_data(user_id, '/tmp/dclord/out/')
-		save_load.save_all_data('/tmp/dclord/out/')
+		#save_load.save_user_data(user_id, '/tmp/dclord/out/')
+		save_load.save_data('/tmp/dclord/out/')
 		
+		print store.store.get_governers(user_id)
 		
 if __name__ == '__main__':
 	unittest.main()

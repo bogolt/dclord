@@ -61,6 +61,7 @@ class Map(util.BufferedWindow):
 		self.turn = 0
 		self.selected_user_id = 0
 		self.user_race = None
+		self.selected_user_governers_count = 0
 		self.planet_filter_ptr = None
 		#self.filterDrawAreas = bool(config.options['filter']['areas'])
 		self.show_good_planets = None
@@ -200,6 +201,44 @@ class Map(util.BufferedWindow):
 	def screenPosToLogic(self, pos):
 		return util.add(self.offset_pos, util.div(pos, self.cell_size))
 		
+	
+	def draw_good_planet(self, dc, planet):
+		if not 'o' in planet:
+			return []
+		if not self.user_race:
+			return []
+		#if sz < 80:
+		#	return
+
+		B1 = float(self.user_race['population_growth'])
+		B2 = float(self.user_race['temperature_optimal'])
+		B3 = float(self.user_race['temperature_delta'])
+		B4 = self.selected_user_governers_count
+		A1 = float(planet['t'])
+
+		nature_value = int(planet[self.user_race['resource_nature']])
+		main_value = int(planet[self.user_race['resource_main']])
+		second_value = int(planet[self.user_race['resource_secondary']])
+		
+		A2 = float(nature_value)
+		A4 = float(planet['s'])
+		
+		A5 = 5000 #colony or use 30000 for ark
+		
+		planet_population_growth = min(1, 2-A5/A4/1000) * min(1, 2-math.fabs(B2-A1)/B3) * A2 * 0.5 * (1+B1/100) / (B4+3)
+		
+		col = 'black'
+		if planet_population_growth >= 3.0:
+			col = 'green'
+		elif planet_population_growth >= 1.0:
+			col = '#00dd00'
+		elif planet_population_growth >= 0.0:
+			col = 'yellow'
+		else:
+			return []
+
+		return [col]
+
 	def drawPlanet(self, dc, planet):
 		planetPos = objPos(planet)
 		rx,ry = self.relPos(planetPos)
@@ -210,12 +249,19 @@ class Map(util.BufferedWindow):
 
 		col = None
 		owner_id = 0
+		width = 1
 		if 'user_id' in planet and planet['user_id']:
 			owner_id = planet.get('user_id', 0)
 		
 		if not owner_id or owner_id == 0:
 			color = 'black'
 			brush_type = None
+			
+			if self.show_good_planets:
+				li = self.draw_good_planet(dc, planet)
+				if li:
+					color = li[0]
+					width = 2
 		else:
 			brush_type = 1
 			
@@ -231,7 +277,7 @@ class Map(util.BufferedWindow):
 			else:
 				color = 'green'
 		
-		dc.SetPen(wx.Pen(color, width=1))
+		dc.SetPen(wx.Pen(color, width=width))
 		
 		brush = wx.Brush(color)
 		if not brush_type:
@@ -242,36 +288,8 @@ class Map(util.BufferedWindow):
 		return
 			
 		dc.SetPen(wx.Pen(colour='black', width=1))
-		if not owner_id:
+		if not owner_id :
 			owner_id = 0
-			if self.show_good_planets and self.user_race:
-				if not 'o' in planet:
-					return
-				if not self.user_race:
-					return
-				if sz < 80:
-					return
-
-				B1 = float(self.user_race['population_growth'])
-				B2 = float(self.user_race['temperature_optimal'])
-				B3 = float(self.user_race['temperature_delta'])
-				B4 = 3 #governers count
-				A1 = float(planet['t'])
-
-				nature_value = int(planet[self.user_race['resource_nature']])
-				main_value = int(planet[self.user_race['resource_main']])
-				second_value = int(planet[self.user_race['resource_secondary']])
-				
-				A2 = float(nature_value)
-				A4 = float(sz)
-				
-				A5 = 5000 #colony or use 30000 for ark
-				
-				planet_population_growth = min(1, 2-A5/A4/1000) * min(1, 2-math.fabs(B2-A1)/B3) * A2 * 0.5 * (1+B1/100) / (B4+3)
-				if planet_population_growth >= 1.0:
-					dc.SetPen(wx.Pen(colour='green', width=3))
-					dc.DrawCircle(rx, ry, self.relSize(sz))
-					#print 'found planet %s with growth %s'%(planet, planet_population_growth)
 		else:
 			owner_id = int(owner_id)
 			
@@ -365,7 +383,7 @@ class Map(util.BufferedWindow):
 		if int(config.options['filter']['access_planets'])==1:
 			area['in'] = {'owner_id':db.get_objects_list(db.Db.USER)}
 		
-		for p in store.iter_planets((ax,bx,ay,by), inhabited = True):
+		for p in store.iter_planets((ax,bx,ay,by), inhabited = False):
 			self.drawPlanet(dc, p)
 			#if self.draw_geo:
 			#	self.drawPlanetGeo(dc, p)
@@ -484,6 +502,7 @@ class Map(util.BufferedWindow):
 
 	def selectUser(self, user_id):
 		hw_pos = store.get_object('hw', {'user_id': user_id})
+		self.selected_user_governers_count = 0
 		if not hw_pos:
 			print 'cannot get hw of %s'%user_id
 			return
@@ -492,13 +511,17 @@ class Map(util.BufferedWindow):
 		self.selected_user_id = user_id
 		try:
 			self.user_race = store.get_object('race', {'user_id': self.selected_user_id})
+			self.selected_user_governers_count = len(store.get_governers(self.selected_user_id))
 		except:
 			pass
 		self.update()
 		
 	def showGood(self, show_good):
 		self.show_good_planets = show_good
-		self.user_race = db.get_user_race(self.selected_user_id)
+		if self.show_good_planets:
+			self.user_race = store.get_object('race', {'user_id':self.selected_user_id})
+			self.selected_user_governers_count = len(store.get_governers(self.selected_user_id))
+
 		self.update()
 
 	def show_route(self, pf):
