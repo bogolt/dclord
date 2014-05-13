@@ -336,8 +336,8 @@ class Store:
 		# garrisons
 		for user_planet in self.iter_objects_list('user_planet', {'user_id':user_id}):
 			cur.execute('delete from unit WHERE unit_id IN ( select unit_id from garrison_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?)', (user_planet['x'], user_planet['y']))
-			cur.execute('delete from garrison_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?', (user_planet['x'], user_planet['y']))
-			cur.execute('delete from garrison_queue_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?', (user_planet['x'], user_planet['y']))
+			cur.execute('delete from garrison_unit WHERE x = ? and y = ?', (user_planet['x'], user_planet['y']))
+			cur.execute('delete from garrison_queue_unit WHERE x = ? and y = ?', (user_planet['x'], user_planet['y']))
 
 		cur.execute('delete from user_planet WHERE user_id=?', (user_id,))
 		cur.execute('delete from fleet WHERE user_id=?', (user_id,))
