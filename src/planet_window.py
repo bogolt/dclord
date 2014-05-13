@@ -261,7 +261,7 @@ class BuildingsWindows(wx.Frame):
 				
 				img = image.getBcImage(unit['proto_id'], 20)
 				if not img:
-					img = image.getCarapaceImage(proto['carapace'], proto['color'])
+					img = image.getCarapaceImage(proto['carapace'], proto['color'], 20)
 				wsizer = wx.BoxSizer(wx.HORIZONTAL)
 				self.sizer.Add(wsizer)
 				
@@ -300,7 +300,7 @@ class BuildingsWindows(wx.Frame):
 		proto = store.get_object('proto', {'proto_id':units[0]['proto_id']})
 		img = image.getBcImage(units[0]['proto_id'], 20)
 		if not img:
-			img = image.getCarapaceImage(proto['carapace'], proto['color'])
+			img = image.getCarapaceImage(proto['carapace'], proto['color'], 20)
 
 		wnd = wx.StaticBitmap(self, wx.ID_ANY)
 		if img:
