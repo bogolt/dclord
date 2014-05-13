@@ -51,8 +51,12 @@ class FleetPanel(scrolled.ScrolledPanel):
 		for fleet in store.iter_objects_list('fleet', {'x':x, 'y':y}):
 			self.add_fleet(fleet)
 
+		for fleet in store.iter_objects_list('flying_fleet', {'x':x, 'y':y}):
+			self.add_fleet(fleet)
+
 		for fleet in store.iter_objects_list('alien_fleet', {'x':x, 'y':y}):
 			self.add_alien_fleet(fleet)
+			
 
 	def add_alien_fleet(self, fleet):
 		cp = wx.CollapsiblePane(self, label='%s'%fleet['name'], style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
@@ -96,7 +100,11 @@ class FleetPanel(scrolled.ScrolledPanel):
 		self.fleets[cp] = fleet
 		
 	def add_fleet(self, fleet):
-		cp = wx.CollapsiblePane(self, label='%s'%fleet['name'], style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
+		nm = ''
+		if 'arrival_turn' in fleet:
+			nm = '[%d] '%(fleet['arrival_turn'] - store.max_turn(),)
+		nm += fleet['name']
+		cp = wx.CollapsiblePane(self, label=nm, style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
 		self.sizer.Add(cp)
 		pane = cp.GetPane()
 		

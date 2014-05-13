@@ -441,6 +441,12 @@ class Store:
 		
 	def keys(self, table):
 		return tables[table]
+	
+	def max_turn(self):
+		c = self.conn.cursor()
+		c.execute('select max(turn) from user')
+		r = c.fetchone()
+		return int(r[0])
 		
 	def add_fleet_unit(self, fleet_id, unit_data):
 		self.add_data('fleet_unit', {'fleet_id':fleet_id, 'unit_id':unit_data['unit_id']})
@@ -456,6 +462,9 @@ class Store:
 			cur.execute('delete from alien_unit WHERE fleet_id=%s'%(fleet['fleet_id'],))
 			
 		cur.execute('delete from alien_fleet WHERE user_id=%s'%(user_id,))
+		
+		cur.execute('delete from flying_fleet WHERE fleet_id IN (select fleet_id from fleet)')
+		
 		self.conn.commit()
 
 	def normalize_fleets(self):
