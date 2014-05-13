@@ -122,6 +122,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			else:
 				# ok, this is known planet
 				data = getAttrs(attrs, {'x':'x', 'y':'y', 'owner-id':'user_id', 'name':'name','o':'o','e':'e','m':'m','t':'t','s':'s','turn':'turn'})
+				save_load.load_geo_size_at((int(data['x']), int(data['y'])))
 				self.store.update_planet(data)
 				
 				if 'open' in attrs and 1==int(attrs['open']):

@@ -416,7 +416,8 @@ class Store:
 		
 	def add_planet_size(self, planet):
 		
-		if self.get_object('planet', {'x':planet['x'], 'y':planet['y']}):
+		pl = self.get_object('planet', {'x':planet['x'], 'y':planet['y']})
+		if pl and 's' in pl and pl['s']:
 			return
 		
 		cur = self.conn.cursor()
@@ -440,8 +441,15 @@ class Store:
 		self.add_data(table, data)
 		
 	def update_planet(self, planet):
-		pl = self.get_object('planet', {'x':planet['x'], 'y':planet['y']})
+		coord = {'x':planet['x'], 'y':planet['y']}
+		pl = self.get_object('planet', coord)
 		if not pl:
+		#	if not 's' in planet or not planet['s']:
+		#		size_obj = self.get_object('planet_size', coord)
+		#		if size_obj:
+		#			planet['s'] = size_obj['s']
+		#		else:
+		#			print 'Wrong planet_size data for %s'%(coord,)
 			self.add_data('planet', planet)
 			return True
 		
@@ -506,11 +514,14 @@ class Store:
 	def remove_duplicate_planets(self):
 		cur = self.conn.cursor()
 		for p in self.iter_objects_list('planet'):
-			if 's' in p and p['s']:
+			if 's' in p and p['s'] and p['s'] != 0:
 				cur.execute('delete from planet_size WHERE x=:x AND y=:y', p)
+			else:
+				psize = self.get_object('planet_size', {'x':p['x'], 'y':p['y']})
+				if psize:
+					cur.execute('update planet set s=:s WHERE x=:x AND y=:y', psize)
 		
 		self.conn.commit()
-				
 		
 	def execute(self, table, query, args):
 		cur = self.conn.cursor()

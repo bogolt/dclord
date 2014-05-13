@@ -379,6 +379,7 @@ class DcFrame(wx.Frame):
 				continue
 			log.info('requesting user %s info'%(acc['login'],))
 			l.getUserInfo(self, acc['login'], out_dir)
+			l.getKnownPlanets(self, acc['login'], out_dir)
 		l.start()
 
 	def onUpload(self, event):
@@ -796,13 +797,14 @@ class DcFrame(wx.Frame):
 				if coord in pl:
 					pl[coord].add(fleet['fleet_id'])
 					continue
-				
-				geo = store.get_object('planet_geo', {'x':coord[0], 'y':coord[1]})
-				if geo:
-					continue
+
 				planet = store.get_object('planet', {'x':coord[0], 'y':coord[1]})
 				#check holes and stars
 				if not planet:
+					continue
+				
+				# check if already explored
+				if 'o' in planet and planet['o']:
 					continue
 				
 				if not coord in pl:
@@ -824,9 +826,13 @@ class DcFrame(wx.Frame):
 						#	print 'proto %s'%(proto,)
 
 						#type 1 probably geo explore
-						for act in store.iter_objects_list('proto_action',{'proto_id':bc, 'proto_action_id':request.RequestMaker.GEO_EXPLORE}):
-							#print 'ACTION: %s %s %s'%(coord, bc, act)
+						action_geo_explore = store.get_object('proto_action',{'proto_id':bc, 'proto_action_id':request.RequestMaker.GEO_EXPLORE})
+						if action_geo_explore:
 							acts[coord] = unit['unit_id']
+							break
+					# no need to request more then one explore of a single planet
+					if coord in acts:
+						break
 
 			self.pending_actions.user_id = int(acc['id'])
 			#self.pendingActions[int(acc['id'])] = actions

@@ -190,7 +190,7 @@ def load_geo_size(path, left_top, size):
 		#print 'no double loading %s'%path
 		return
 	try:
-		#print 'loading geo %s'%path
+		print 'loading geo %s'%path
 		for p in csv.DictReader(open(path, 'rt')):
 			#x=int(p['x'])
 			#y=int(p['y'])
@@ -289,6 +289,8 @@ def load_common_data(path):
 	
 	for planet in store.iter_objects_list('planet'):
 		load_geo_size_at((int(planet['x']), int(planet['y'])))
+		
+	store.remove_duplicate_planets()
 	
 def load_local_data():
 	load_data(config.options['data']['path'])
