@@ -39,9 +39,11 @@ def load_csv_table(path, table):
 		for p in csv.DictReader(open(f, 'rt')):
 			store.add_data(table, {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()})
 	except OSError as e:
-		print 'Load csv table %s %s failed: %s'%(path, table, e)
+		pass
+		#print 'Load csv table %s %s failed: %s'%(path, table, e)
 	except IOError as e:
-		print 'Load csv table %s %s failed: %s'%(path, table, e)
+		pass
+		#print 'Load csv table %s %s failed: %s'%(path, table, e)
 		
 def iter_csv_table(path, table):
 	try:
@@ -50,9 +52,11 @@ def iter_csv_table(path, table):
 		for p in csv.DictReader(open(f, 'rt')):
 			yield {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()}
 	except OSError as e:
-		print 'Load csv table %s %s failed: %s'%(path, table, e)	
+		pass
+		#print 'Load csv table %s %s failed: %s'%(path, table, e)	
 	except IOError as e:
-		print 'Load csv table %s %s failed: %s'%(path, table, e)
+		pass
+		#print 'Load csv table %s %s failed: %s'%(path, table, e)
 		
 def iter_csv(path):
 	objs = []
@@ -111,12 +115,10 @@ def save_user_data(user_id, path):
 	
 def save_common_data(path):
 	util.assureDirExist(path)
-	
-	store.normalize_planets()
+	store.remove_duplicate_planets()
 	
 	save_csv_table(path, 'user', {})
 	save_csv_table(path, 'planet', {})
-	save_csv_table(path, 'planet_geo', {})
 	save_csv_table(path, 'alien_fleet', {})
 	save_csv_table(path, 'alien_unit', {})
 	
@@ -129,11 +131,6 @@ def is_updated(path):
 		if last_sync[f] != os.stat(f).st_mtime:
 			return True
 	return False
-	
-#def sync_common_data(path):
-#	if is_updated(path):
-#		load_common_data(path)
-#	save_common_data(path)
 	
 def save_local_data():
 	save_data(config.options['data']['path'])
@@ -280,14 +277,14 @@ def load_common_data(path):
 		store.update_data('user', ['user_id'], data)
 		
 	for data in iter_csv_table(path, 'planet'):
-		store.update_data('planet', ['x', 'y'], data)
+		store.update_planet(data)
 
 	for data in iter_csv_table(path, 'alien_fleet'):
 		store.update_data('alien_fleet', ['fleet_id'], data)
 	
 	store.normalize_fleets()
 		
-	load_csv_table(path, 'planet_geo')
+	#load_csv_table(path, 'planet_geo')
 	load_csv_table(path, 'alien_unit')
 	
 	for planet in store.iter_objects_list('planet'):

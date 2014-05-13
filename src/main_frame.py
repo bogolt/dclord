@@ -364,7 +364,7 @@ class DcFrame(wx.Frame):
 		for acc in config.accounts():
 			log.info('requesting user %s info'%(acc['login'],))
 			d = os.path.join(util.getTempDir(), 'raw_data') if not out_dir else out_dir
-			l.getDcData(self, acc['login'], 'known_planets', d)
+			l.getKnownPlanets( self, acc['login'], d)
 		l.start()
 
 	def onUpdate(self, event):

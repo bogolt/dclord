@@ -77,8 +77,10 @@ class AsyncLoader(Thread):
 	def getUserInfo(self, cb, login, out_dir = None):
 		d = os.path.join(util.getTempDir(), 'raw_data') if not out_dir else out_dir
 		self.getDcData(cb, login, 'all', d)
-		if 0!=int(config.options['data']['load_known_planets']):
-			self.getDcData(cb, login, 'known_planets', d)
+		
+	def getKnownPlanets(self, cb, login, out_dir = None):
+		d = os.path.join(util.getTempDir(), 'raw_data') if not out_dir else out_dir
+		self.getDcData(cb, login, 'known_planets', d)
 		
 	def sendActions(self, cb, login, actions, out_dir):
 		#if actions.is_empty():

@@ -121,6 +121,9 @@ class FleetPanel(scrolled.ScrolledPanel):
 			sizer.Add(hbox, 1, wx.EXPAND)
 			
 			proto = store.get_object('proto', {'proto_id':unit['proto_id']})
+			if not proto:
+				print 'Prototype not found for %s'%(unit,)
+				continue
 			obj_carp = int(unit['proto_id']), int(proto['carapace']), int(proto['color'])
 
 			img = image.get_image( int(unit['proto_id']), int(proto['carapace']), int(proto['color']) )
@@ -209,10 +212,14 @@ class BuildingsWindows(wx.Frame):
 		for building in store.get_garrison_units(coord):
 			bc = building['proto_id']
 			p = store.get_object('proto', {'proto_id':bc})
+			if not p:
+				print 'proto not found for %s'%(building,)
+				continue
+				
 			if int(p['is_building']) != 1:
 				continue
 				
-			if int(p['max_count'])!=1:
+			if 'max_count' in p and int(p['max_count'])!=1:
 				dups.setdefault(bc, []).append(building)
 				continue
 				
@@ -330,10 +337,13 @@ class PlanetPanel(wx.Panel):
 		if not planet:
 			self.sizer.Layout()
 			return
-		
-		geo = store.get_object('planet_geo', {'x':coord[0], 'y':coord[1]})
-		if geo:
-			self.sizer.Add( wx.StaticText(self, wx.ID_ANY, 'o: %s, e: %s, m: %s, t: %s, s: %s'%(geo['o'], geo['e'], geo['m'], geo['t'], geo['s'])) )
+
+		if 'o' in planet and planet['o']:
+			self.sizer.Add( wx.StaticText(self, wx.ID_ANY, 'o: %s, e: %s, m: %s, t: %s, s: %s'%(planet['o'], planet['e'], planet['m'], planet['t'], planet['s'])) )
+		else:
+			pl_sz = store.get_object('planet_size', {'x':coord[0], 'y':coord[1]})
+			if pl_sz:
+				self.sizer.Add( wx.StaticText(self, wx.ID_ANY, 's: %s'%(pl_sz['s'],)) )
 		
 		if 'name' in planet and planet['name']:
 			self.sizer.Add( wx.StaticText(self, wx.ID_ANY, planet['name']) )

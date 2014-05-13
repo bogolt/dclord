@@ -362,28 +362,17 @@ class Map(util.BufferedWindow):
 		
 	def drawPlanets(self, dc, rect):
 		#cond = ['owner_id is not null'] 
-		x = self.offset_pos[0], self.offset_pos[0]+self.screen_size[0]
-		y = self.offset_pos[1], self.offset_pos[1]+self.screen_size[1]
-		
-		ax,bx = x
-		ay,by = y
-		
-		if int(config.options['filter']['inhabited_planets'])==0 and int(config.options['filter']['size_planets'])==1:
-			area = {'between':{'x':x, 'y':y}}
+		ax,bx = self.offset_pos[0], self.offset_pos[0]+self.screen_size[0]
+		ay,by = self.offset_pos[1], self.offset_pos[1]+self.screen_size[1]
+
+		inhabitedOnly = int(config.options['filter']['inhabited_planets'])==1
+		ownedOnly = int(config.options['filter']['owned_planets'])==1
+
+		if not inhabitedOnly and not ownedOnly:
 			for p in store.iter_planets_size((ax,bx,ay,by)):
 				self.drawPlanet(dc, p)
-
-		area = {'between':{'x':x, 'y':y}}
-		if int(config.options['filter']['inhabited_planets'])==1:
-			area['>'] = {'owner_id': 0}
 			
-		if int(config.options['filter']['owned_planets'])==1:
-			area['in'] = {'owner_id':config.user_id_dict.keys()}
-			
-		if int(config.options['filter']['access_planets'])==1:
-			area['in'] = {'owner_id':db.get_objects_list(db.Db.USER)}
-		
-		for p in store.iter_planets((ax,bx,ay,by), inhabited = False):
+		for p in store.iter_planets((ax,bx,ay,by), inhabited = inhabitedOnly, owned = ownedOnly):
 			self.drawPlanet(dc, p)
 			#if self.draw_geo:
 			#	self.drawPlanetGeo(dc, p)

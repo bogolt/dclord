@@ -12,8 +12,8 @@ def to_str_list(lst):
 
 log = logging.getLogger('dclord')
 
-tables = {'planet':['x', 'y', 'user_id', 'name', 'turn'],
-		'planet_geo':['x','y', 'o','e','m','t','s'],
+tables = {'planet':['x', 'y', 'o','e','m','t','s', 'user_id', 'name', 'turn'],
+		'planet_size':['x','y','image','s'],
 		'open_planet':['x','y','user_id'], #open planets for specified user-id
 		'user_planet':['x','y','user_id', 'corruption', 'population', 'is_open'],
 		'fleet':['x','y','user_id','fleet_id','name', 'times_spotted', 'is_hidden'],
@@ -115,6 +115,11 @@ class Store:
 		cur.execute("""create table if not exists planet(
 				x integer(2) not null,
 				y integer(2) not null,
+				o integer(1),
+				e integer(1),
+				m integer(1),
+				t integer(1),
+				s integer(1),
 				user_id integer,
 				name text,
 				turn integer default 0,
@@ -379,10 +384,12 @@ class Store:
 		planet_data['turn'] = self.get_user_turn(planet_data['user_id'])
 		self.add_data('user_planet', planet_data)
 		self.add_data('planet', planet_data)
-		self.add_data('planet_geo', planet_data)
 		self.add_data('open_planet', planet_data)
 		
 	def add_known_planet(self, data):
+		
+		self.update_planet(data)
+		return
 		
 		# there is nothing except x,y,open for open_planet, so skip them here, not to clean our db
 		if 'turn' in data:
@@ -409,7 +416,7 @@ class Store:
 		
 	def add_planet_size(self, planet):
 		
-		if self.get_object('planet_geo', {'x':planet['x'], 'y':planet['y']}):
+		if self.get_object('planet', {'x':planet['x'], 'y':planet['y']}):
 			return
 		
 		cur = self.conn.cursor()
@@ -431,6 +438,30 @@ class Store:
 			return
 		
 		self.add_data(table, data)
+		
+	def update_planet(self, planet):
+		pl = self.get_object('planet', {'x':planet['x'], 'y':planet['y']})
+		if not pl:
+			self.add_data('planet', planet)
+			return True
+		
+		cur = self.conn.cursor()
+		
+		# check if need to update geo
+		if (not 'o' in pl or not pl['o']) and ('o' in planet and planet['o']):
+			print 'update geo planet %s'%(planet,)
+			cur.execute('update planet set o=:o, e=:e, m=:m, t=:t, s=:s WHERE x=:x AND y=:y', planet)
+			self.conn.commit()
+		
+		if 'turn' in planet and planet['turn'] and int(planet['turn']) > pl['turn']:
+			print 'update planet %s'%(planet,)
+			# make sure they will be cleaned up if currently exists ( removing user from planet )
+			if not 'user_id' in planet:
+				planet['user_id'] = None
+			if not 'name' in planet:
+				planet['name'] = None
+			cur.execute('update planet set user_id=:user_id, name=:name, turn=:turn WHERE x=:x AND y=:y', planet)
+			self.conn.commit()
 		
 	def add_action_result(self, action_id, is_ok, return_id = None):
 		self.conn.cursor().execute('update requested_action set is_ok=?, return_id=? WHERE action_id=?', (is_ok, return_id, action_id))
@@ -471,12 +502,15 @@ class Store:
 		for u in self.iter_objects_list('user'):
 			if 'login' in u and u['login']:
 				self.normalize_user_fleets(u['user_id'])
-
-	def normalize_planets(self):
-		c = self.conn.cursor()
-		for p in self.iter_objects_list('planet_geo'):
-			c.execute('delete from planet_size WHERE x = ? AND y = ?', (p['x'], p['y']))
+				
+	def remove_duplicate_planets(self):
+		cur = self.conn.cursor()
+		for p in self.iter_objects_list('planet'):
+			if 's' in p and p['s']:
+				cur.execute('delete from planet_size WHERE x=:x AND y=:y', p)
+		
 		self.conn.commit()
+				
 		
 	def execute(self, table, query, args):
 		cur = self.conn.cursor()
@@ -510,15 +544,20 @@ class Store:
 		
 	def get_object(self, table, conds):
 		cur = self.conn.cursor()
-		s = 'select %s from %s WHERE %s'%(','.join(tables[table]), table, ' and '.join(['%s=?'%(key_name,) for key_name in conds.iterkeys()]))
-		#print s
+		keys = tables[table]
+		s = 'select %s from %s WHERE %s'%(','.join(keys), table, ' and '.join(['%s=?'%(key_name,) for key_name in conds.iterkeys()]))
 		cur.execute(s, tuple(conds.values()))
 		r = cur.fetchone()
 		if not r:
 			#print 'empty result'
 			return None
-		#print 'result %s'%(r,)
-		return dict(zip(tables[table], r))
+		return dict(zip(keys, r))
+		
+		#res = {}
+		#for ind, value in enumerate(r):
+		#	if value:
+		#		res[keys[ind]]=value
+		#return res
 		
 	def get_objects_list(self, table, conds = {}):
 		
@@ -528,25 +567,15 @@ class Store:
 		return objs
 
 	def iter_planets(self, rect, owned = False, inhabited = False):
-		cur = self.conn.cursor()
-		x0,x1,y0,y1 = rect
-
-		keys = ['x', 'y', 'user_id', 'o', 'e', 'm','t','s']
-		s = 'select %s from planet JOIN planet_geo USING(x,y) WHERE x BETWEEN %s AND %s AND y BETWEEN %s AND %s'%(','.join(keys), x0,x1,y0,y1)
-		cur.execute(s)
-		for r in cur.fetchall():
-			yield dict(zip(keys, r))
-
-		table = 'planet'
-		keys = ['x', 'y', 'user_id', 's']
-		s = 'select %s from planet JOIN planet_size USING(x,y) WHERE x BETWEEN %s AND %s AND y BETWEEN %s AND %s'%(','.join(keys), x0,x1,y0,y1)
+		keys = self.keys('planet')
+		s = 'select %s from planet WHERE x BETWEEN ? AND ? AND y BETWEEN ? AND ?'%(','.join(keys),)
 		if owned:
-			s += ' AND user_id IN (select user_id from user WHERE login != null)'
+			s+=' AND user_id IN (select user_id from user WHERE login IS NOT null)'
 		elif inhabited:
-			s += ' AND not user_id is null'
-			
-		#print '%s with %s'%(s, rect)
-		cur.execute(s)
+			s+=' AND user_id IS NOT NULL'
+		
+		cur = self.conn.cursor()
+		cur.execute(s, rect)
 		for r in cur.fetchall():
 			yield dict(zip(keys, r))
 		
@@ -571,8 +600,7 @@ class Store:
 		table = 'planet'
 		keys = ['x', 'y', 's']
 		s = 'select %s from planet_size WHERE x >= ? AND x <= ? AND y >= ? AND y <= ?'%(','.join(keys),)
-			
-		#print '%s with %s'%(s, rect)
+
 		cur.execute(s, rect)
 		for r in cur.fetchall():
 			yield dict(zip(keys, r))

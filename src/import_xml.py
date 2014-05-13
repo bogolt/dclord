@@ -122,7 +122,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			else:
 				# ok, this is known planet
 				data = getAttrs(attrs, {'x':'x', 'y':'y', 'owner-id':'user_id', 'name':'name','o':'o','e':'e','m':'m','t':'t','s':'s','turn':'turn'})
-				self.store.add_known_planet(data)
+				self.store.update_planet(data)
 				
 				if 'open' in attrs and 1==int(attrs['open']):
 					# do not care about planet
@@ -252,7 +252,9 @@ class TestXmlImport(unittest.TestCase):
 		#save_load.save_user_data(user_id, '/tmp/dclord/out/')
 		save_load.save_data('/tmp/dclord/out/')
 		
-		print store.store.get_governers(user_id)
+		
+		
+		#print store.store.get_governers(user_id)
 		
 if __name__ == '__main__':
 	unittest.main()
