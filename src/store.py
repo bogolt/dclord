@@ -18,7 +18,7 @@ tables = {'planet':['x', 'y', 'o','e','m','t','s', 'user_id', 'name', 'turn'],
 		'user_planet':['x','y','user_id', 'corruption', 'population', 'is_open'],
 		'fleet':['x','y','user_id','fleet_id','name', 'times_spotted', 'is_hidden'],
 		'alien_fleet':['x','y','user_id','fleet_id','name', 'is_hidden', 'turn'],
-		'flying_fleet':['x','y','user_id','fleet_id','name', 'from_x', 'from_y', 'arrival_turn'],
+		'flying_fleet':['x','y','user_id','fleet_id','name', 'from_x', 'from_y', 'arrival_turn', 'in_transit'],
 		'flying_alien_fleet':['x','y','user_id','from_x', 'from_y', 'arrival_turn', 'weight'], #user_id who spot fleet, no primary key, no fleet user owner
 		'unit':['unit_id', 'hp', 'proto_id'],
 		'fleet_unit':['unit_id', 'fleet_id'],
@@ -636,13 +636,12 @@ class Store:
 			yield dict(zip(tables[table], r))
 
 	def get_fleet_speed_range(self, fleet_id):
-		
 		min_speed, min_range = None, None
 		for u in self.get_fleet_units(fleet_id):
 			proto = self.get_object('proto', {'proto_id':u['proto_id']})
-			if min_speed and min_speed < proto['fly_speed']:
-				min_speed = proto['min_speed']
-			if min_range and min_range < proto['fly_range']:
+			if not min_speed or min_speed < proto['fly_speed']:
+				min_speed = proto['fly_speed']
+			if not min_range or min_range < proto['fly_range']:
 				min_range = proto['fly_range']
 		return min_speed, min_range
 
