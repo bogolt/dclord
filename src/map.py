@@ -63,6 +63,8 @@ class Map(util.BufferedWindow):
 		self.user_race = None
 		self.selected_user_governers_count = 0
 		self.planet_filter_ptr = None
+		self.jump_fleets = set()
+		self.selected_planet = None
 		#self.filterDrawAreas = bool(config.options['filter']['areas'])
 		self.show_good_planets = None
 		
@@ -84,6 +86,10 @@ class Map(util.BufferedWindow):
 		self.Bind(wx.EVT_MOTION, self.onMotion)
 		self.Bind(wx.EVT_MOUSEWHEEL, self.onScroll)
 		self.Bind(wx.EVT_TIMER, self.onClickTimer, self.click_timer)
+		
+	def select_pos(self, coord):
+		self.selected_planet = coord
+		self.update()
 		
 	def resize(self, evt = None):
 		util.BufferedWindow.resize(self, evt)
@@ -376,7 +382,15 @@ class Map(util.BufferedWindow):
 			self.drawPlanet(dc, p)
 			#if self.draw_geo:
 			#	self.drawPlanetGeo(dc, p)
+	
+	def toggle_fleet_jump(self, fleet_id):
+		if fleet_id in self.jump_fleets:
+			self.jump_fleets.remove(fleet_id)
+		else:
+			self.jump_fleets.add(fleet_id)
 			
+		self.update()
+		
 	def drawFleets(self, dc, rect):
 		self.fleets = {}
 		for p in store.iter_objects_list('fleet', {}, rect):
@@ -423,9 +437,36 @@ class Map(util.BufferedWindow):
 		
 		if self.pf:
 			self.drawPathFind(dc)
+			
+		if self.jump_fleets and self.selected_planet:
+			self.draw_jump_fleets(dc)
 		
 		#if self.filterDrawAreas:
 		#	self.drawAreas(dc, rect)
+		
+	def draw_jump_fleets(self, dc):
+		if not self.jump_fleets or not self.selected_planet:
+			return
+			
+		for fleet_id in self.jump_fleets:
+			fleet = store.get_object('fleet', {'fleet_id':fleet_id})
+			start_pos = fleet['x'], fleet['y']
+			spd, rng = store.get_fleet_speed_range(fleet_id)
+			if rng >= util.distance(start_pos, self.selected_planet):
+				self.draw_route(dc, start_pos, self.selected_planet, 'blue')
+			else:
+				self.draw_route(dc, start_pos, self.selected_planet, 'red')
+			#self.draw_path(fleet_id, self.selected_planet)
+			
+	#def draw_path(self, fleet_id, coord):
+	#	fleet = store.get_object('fleet', {'fleet_id':fleet_id})
+		
+	def draw_route(self, dc, start_pos, end_pos, color):
+		sx,sy = self.relPos(start_pos)
+		dx,dy = self.relPos(end_pos)
+
+		dc.SetPen(wx.Pen(colour=color, width=2))
+		dc.DrawLine(sx, sy, dx, dy)
 		
 	def drawPathFind(self, dc):
 		

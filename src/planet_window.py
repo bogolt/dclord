@@ -115,6 +115,20 @@ class FleetPanel(scrolled.ScrolledPanel):
 			owner_name = '<unknown>'
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		sizer.Add(wx.StaticText(pane, label='owner: %s'%(owner_name,)), 1, wx.EXPAND)
+
+		speed, rng = store.get_fleet_speed_range(fleet['fleet_id'])
+		if speed and rng:
+			sizer.Add(wx.StaticText(pane, label='%0.2f / %0.2f'%(speed, rng)), 1, wx.EXPAND)
+
+		#can we contrl the fleet?
+		if 'login' in u and u['login'] in config.users and rng >= 1 and (not 'in_transit' in fleet or fleet['in_transit']==0):
+			jump_button = wx.ToggleButton(pane, label='jump')
+			jump_button.fleet_id = fleet['fleet_id']
+			sizer.Add(jump_button, 1, wx.EXPAND)
+			
+			self.Bind(wx.EVT_TOGGLEBUTTON, self.on_jump, jump_button)
+		else:
+			print 'user %s not controllable'%(u,)
 		
 		for unit in store.get_fleet_units(fleet['fleet_id']):
 			hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -168,6 +182,10 @@ class FleetPanel(scrolled.ScrolledPanel):
 		
 		cp.Bind(wx.EVT_LEFT_DOWN, self.onFleetSelect)
 		self.fleets[cp] = fleet
+	
+	def on_jump(self, evt):
+		self.GetParent().on_fleet_jump_prepare(evt.GetEventObject().fleet_id)
+		#print 'jump from %s'%(
 	
 	def OnPaneChanged(self, evt=None):
 		self.sizer.Layout()

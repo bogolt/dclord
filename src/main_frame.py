@@ -160,6 +160,7 @@ class DcFrame(wx.Frame):
 		#self.Bind(event.EVT_SELECT_OBJECT, self.planet_panel.select_coord)
 		#self.Bind(event.EVT_SELECT_OBJECT, self.garrison_panel.select_coord)
 		self.Bind(event.EVT_LOG_APPEND, self.onLog)
+		#self.Bind(event.EVT_FLEET_JUMP, self.on_fleet_jump_prepare)
 	
 		#import_raw.processAllUnpacked()
 		#serialization.save()
@@ -174,6 +175,7 @@ class DcFrame(wx.Frame):
 		self.garrison_panel.select_coord(evt)
 		#self.info_panel.selectObject(evt)
 		self.fleets.set_fleets(evt)
+		self.map.select_pos( evt.attr1 )
 		
 	def makeMenu(self):
 		fileMenu = wx.Menu()
@@ -255,6 +257,9 @@ class DcFrame(wx.Frame):
 	def sync_data(self):
 		save_load.load_local_data()
 		save_load.save_local_data()
+		
+	def on_fleet_jump_prepare(self, fleet_id):
+		self.map.toggle_fleet_jump(fleet_id)
 		
 	def onCalculateRoutes(self, evt):
 		planets = []
