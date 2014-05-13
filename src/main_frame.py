@@ -180,7 +180,7 @@ class DcFrame(wx.Frame):
 		exit_action = fileMenu.Append(wx.ID_ANY, "E&xit")
 		self.Bind(wx.EVT_MENU, self.onClose, exit_action)
 		self.Bind(wx.EVT_MENU, self.onAbout, fileMenu.Append(wx.ID_ANY, "&About dcLord"))
-		self.Bind(wx.EVT_MENU, self.onExport, fileMenu.Append(wx.ID_ANY, "Export planets to clipboard"))
+		self.Bind(wx.EVT_MENU, self.onExport, fileMenu.Append(wx.ID_ANY, "Export planets"))
 		
 		gameMenu = wx.Menu()
 		self.updateMenu = gameMenu.Append(wx.ID_ANY, "&Download from sever")
