@@ -337,6 +337,7 @@ class Store:
 		for user_planet in self.iter_objects_list('user_planet', {'user_id':user_id}):
 			cur.execute('delete from unit WHERE unit_id IN ( select unit_id from garrison_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?)', (user_planet['x'], user_planet['y']))
 			cur.execute('delete from garrison_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?', (user_planet['x'], user_planet['y']))
+			cur.execute('delete from garrison_queue_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?', (user_planet['x'], user_planet['y']))
 
 		cur.execute('delete from user_planet WHERE user_id=?', (user_id,))
 		cur.execute('delete from fleet WHERE user_id=?', (user_id,))
@@ -639,6 +640,8 @@ class Store:
 		min_speed, min_range = None, None
 		for u in self.get_fleet_units(fleet_id):
 			proto = self.get_object('proto', {'proto_id':u['proto_id']})
+			if not proto:
+				continue
 			if not min_speed or min_speed < proto['fly_speed']:
 				min_speed = proto['fly_speed']
 			if not min_range or min_range < proto['fly_range']:
