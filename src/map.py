@@ -209,38 +209,42 @@ class Map(util.BufferedWindow):
 		
 	
 	def draw_good_planet(self, dc, planet):
-		if not 'o' in planet:
+		if not 'o' in planet or not planet['o']:
 			return []
 		if not self.user_race:
 			return []
 		#if sz < 80:
 		#	return
 
-		B1 = float(self.user_race['population_growth'])
-		B2 = float(self.user_race['temperature_optimal'])
-		B3 = float(self.user_race['temperature_delta'])
-		B4 = self.selected_user_governers_count
-		A1 = float(planet['t'])
+		try:
+			B1 = float(self.user_race['population_growth'])
+			B2 = float(self.user_race['temperature_optimal'])
+			B3 = float(self.user_race['temperature_delta'])
+			B4 = self.selected_user_governers_count
+			A1 = float(planet['t'])
 
-		nature_value = int(planet[self.user_race['resource_nature']])
-		main_value = int(planet[self.user_race['resource_main']])
-		second_value = int(planet[self.user_race['resource_secondary']])
-		
-		A2 = float(nature_value)
-		A4 = float(planet['s'])
-		
-		A5 = 5000 #colony or use 30000 for ark
-		
-		planet_population_growth = min(1, 2-A5/A4/1000) * min(1, 2-math.fabs(B2-A1)/B3) * A2 * 0.5 * (1+B1/100) / (B4+3)
-		
-		col = 'black'
-		if planet_population_growth >= 3.0:
-			col = 'green'
-		elif planet_population_growth >= 1.0:
-			col = '#00dd00'
-		elif planet_population_growth >= 0.0:
-			col = 'yellow'
-		else:
+			nature_value = int(planet[self.user_race['resource_nature']])
+			main_value = int(planet[self.user_race['resource_main']])
+			second_value = int(planet[self.user_race['resource_secondary']])
+			
+			A2 = float(nature_value)
+			A4 = float(planet['s'])
+			
+			A5 = 5000 #colony or use 30000 for ark
+			
+			planet_population_growth = min(1, 2-A5/A4/1000) * min(1, 2-math.fabs(B2-A1)/B3) * A2 * 0.5 * (1+B1/100) / (B4+3)
+			
+			col = 'black'
+			if planet_population_growth >= 3.0:
+				col = 'green'
+			elif planet_population_growth >= 1.0:
+				col = '#00dd00'
+			elif planet_population_growth >= 0.0:
+				col = 'yellow'
+			else:
+				return []
+		except TypeError as e:
+			print 'Error %s with planet %s'%(e, planet)
 			return []
 
 		return [col]
