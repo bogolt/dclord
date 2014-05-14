@@ -49,21 +49,15 @@ class Router:
 		self.dest_pos = dest_pos
 		self.exclude_planets = []
 		
-		self.cur_pos = None
-		planet_opts = {'x':fleet['x'], 'y':fleet['y'], 'user_id':'user_id'}
-		start_planet = store.get_object('open_planet', planet_opts)
-		if start_planet:
-			self.cur_pos = start_planet
-			self.exclude_planets = [self.cur_pos]
 	
 	def find_route(self):
-		print 'route: %s to %s, fly range: %0.2f'%(self.start_pos, self.dest_pos, self.fly_range)
-		if self.cur_pos and util.distance(self.cur_pos, self.dest_pos) <= self.fly_range:
-			print 'route found: direct jump'
-			return [self.cur_pos, self.dest_pos]
-		
-		if self.cur_pos:
-			return self.route_next(self.cur_pos, [self.cur_pos])
+		planet_opts = {'x':self.start_pos[0], 'y':self.start_pos[1], 'user_id':self.user_id}
+		start_planet = store.get_object('open_planet', planet_opts)
+		if start_planet:
+			r = self.route_next(self.start_pos)
+			if r:
+				return [self.start_pos] + r
+			return []
 		
 		print 'route: fleet needs landing'
 		# fleet starts on non-jumpable planet
@@ -73,14 +67,13 @@ class Router:
 				continue
 				
 			self.exclude_planets.append(pl)
-			self.cur_pos = pl
 			print 'route: landing found %s'%(pl,)
 			
-			if self.cur_pos == self.dest_pos:
+			if pl == self.dest_pos:
 				print 'route found: direct jump'
 				return [self.start_pos, pl]
 			
-			r = self.route_next(self.cur_pos)
+			r = self.route_next(pl)
 			if r:
 				return [self.start_pos, pl] + r
 		
@@ -95,22 +88,24 @@ class Router:
 			print 'route found: direct jump from %s'%(cur_pos,)
 			return [self.dest_pos]
 		
-		for pl in store.iter_open_planets(self.fly_range * 2, cur_pos, self.dest_pos, self.exclude_planets):
-			r = [pl]
+		for pl in store.iter_open_planets(self.fly_range*2, cur_pos, self.dest_pos, self.exclude_planets):
 			if pl in self.exclude_planets:
 				continue
+
+			d2 = util.distance(pl, self.dest_pos)
+			if d2 >= dist:
+				continue
+
+			r = [pl]
 			intermediate_pt = None
 			jump_dist = util.distance(cur_pos, pl)
 			if jump_dist > self.fly_range:
 				intermediate_pt = self.find_intermediate_jump_point(cur_pos, pl)
 				if not intermediate_pt:
 					continue
-				intermediate_pt = cur_pos[0]+intermediate_pt[0], cur_pos[1]+intermediate_pt[1]
+				#intermediate_pt = cur_pos[0]+intermediate_pt[0], cur_pos[1]+intermediate_pt[1]
 				r.append(intermediate_pt)
 			
-			d2 = util.distance(pl, self.dest_pos)
-			if d2 >= dist:
-				continue
 
 			self.exclude_planets.append(pl)
 			#if intermediate_pt:
@@ -128,11 +123,21 @@ class Router:
 		return []
 	
 	def find_intermediate_jump_point(self, start, end):
+		dx = start[0]-end[0]
+		dy = start[1]-end[1]
+		center_pos = start[0]-dx, start[1]-dy
+		if self.fly_range > util.distance(start, center_pos):
+			return None
+		return center_pos
+		
+	def xfind_intermediate_jump_point(self, start, end):
 		center = get_center(start, end)
 		max_center = math.ceil(center[0]), math.ceil(center[1])
 		dist = get_distance((0,0), max_center)
 		if dist <= self.fly_range:
-			return max_center
+			min_x = min(start[0], end[0])
+			min_y = min(start[1], end[1])
+			return max_center[0]+min_x, max_center[1]+min_y
 		
 		min_center = math.floor(center[0]), math.floor(center[1])
 		if get_distance((0,0), min_center) >= self.fly_range:
@@ -147,7 +152,10 @@ class Router:
 		dist_b = get_distance((0,0), center_b)
 		if dist_b > self.fly_range:
 			return None
-		return center_b
+
+		min_x = min(start[0], end[0])
+		min_y = min(start[1], end[1])
+		return center_b[0]+min_x, center_b[1]+min_y
 				
 
 def route_find(fleet, fly_range, dest_pos):
