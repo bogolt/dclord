@@ -19,6 +19,7 @@ import history
 import algorithm
 import math
 import loader
+import action
 from store import store
 
 from datetime import datetime
@@ -85,7 +86,7 @@ class DcFrame(wx.Frame):
 
 		self.sync_path = config.options['data']['sync_path']
 		#self.info_panel.turn = db.getTurn()
-		print 'db max turn is %s'%(db.getTurn(),)
+		self.jump_fleets = set()
 		
 		self.map = map.Map(self)
 		self.map.turn = db.getTurn()
@@ -117,6 +118,7 @@ class DcFrame(wx.Frame):
 		info.CaptionVisible(False)
 		
 		self.fleets = planet_window.FleetPanel(self)
+		self.actions = action.ActionPanel(self)
 		
 		self._mgr.AddPane(self.map, info)
 		#self._mgr.AddPane(self.history, wx.RIGHT, "Turn")
@@ -125,6 +127,7 @@ class DcFrame(wx.Frame):
 		self._mgr.AddPane(self.planet_panel, wx.RIGHT, "Planet")
 		self._mgr.AddPane(self.garrison_panel, wx.RIGHT, "Garrison")
 		#self._mgr.AddPane(self.planet_filter, wx.LEFT, "Planets")
+		self._mgr.AddPane(self.actions, wx.LEFT, "Actions")
 		self._mgr.AddPane(self.object_filter, wx.LEFT, "Filter")
 		#self._mgr.AddPane(self.unit_list, wx.RIGHT, "Units")
 		self._mgr.AddPane(self.log_dlg, wx.BOTTOM, "Log")
@@ -176,6 +179,15 @@ class DcFrame(wx.Frame):
 		#self.info_panel.selectObject(evt)
 		self.fleets.set_fleets(evt)
 		self.map.select_pos( evt.attr1 )
+		
+		routes = []
+		for fleet_id in self.jump_fleets:
+			routes.append( self.calculate_route( store.get_object('fleet', {'fleet_id':fleet_id}), evt.attr1 ) )
+			
+		self.map.jump_fleets_routes = routes
+		self.map.update()
+		#self.map.set_fleet_routes(routes)
+		
 		
 	def makeMenu(self):
 		fileMenu = wx.Menu()
@@ -232,7 +244,7 @@ class DcFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.onSendScouts, self.send_scouts)
 		self.Bind(wx.EVT_MENU, self.onFlyHomeScouts, self.fly_home_menu)
 		self.Bind(wx.EVT_MENU, self.onMakeScoutFleets, self.make_fleets_menu)
-		self.Bind(wx.EVT_MENU, self.onCalculateRoutes, routesMenu)
+		#self.Bind(wx.EVT_MENU, self.onCalculateRoutes, routesMenu)
 		self.Bind(wx.EVT_MENU, self.onSetSyncPath, set_sync_dir)
 	
 		self.Bind(wx.EVT_CLOSE, self.onClose, self)
@@ -259,23 +271,26 @@ class DcFrame(wx.Frame):
 		save_load.save_local_data()
 		
 	def on_fleet_jump_prepare(self, fleet_id):
-		self.map.toggle_fleet_jump(fleet_id)
+
+		if fleet_id in self.jump_fleets:
+			self.jump_fleets.remove(fleet_id)
+		else:
+			self.jump_fleets.add(fleet_id)
+
+		#self.calculate_route(store.get_object('fleet', {'fleet_id':fleet_id}), self.map
+		#self.map.toggle_fleet_jump(fleet_id)
 		
-	def onCalculateRoutes(self, evt):
-		planets = []
-		for p in db.planets(self.map.turn, ['owner_id is not null'], ('x', 'y')):
-			planets.append( (int(p['x']), int(p['y'])))
-			
+	def calculate_route(self, fleet, dest_point):
 		
-		self.pf = algorithm.PathFinder(planets[0], planets[1], 1.2, 6, planets)
-		self.map.show_route(self.pf)
-		self.map.update()
+		open_planets = store.get_objects_list('open_planet', {'user_id':fleet['user_id']})
+		start_point = int(fleet['x']), int(fleet['y'])
 		
-		while self.pf.angle < 120:
-			self.findRoute()
-			if self.pf.is_found():
-				break
-			self.pf.extend()
+		spd,rng = store.get_fleet_speed_range(fleet['fleet_id'])
+		return algorithm.route_find(fleet, rng, dest_point)
+		#self.pf = algorithm.PathFinder(start_point, dest_point, spd,rng , [(int(p['x']),int(p['y'])) for p in open_planets])
+		#self.map.show_route(self.pf)
+		#self.map.update()
+		
 		
 	def findRoute(self):
 		

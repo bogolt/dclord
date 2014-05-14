@@ -63,8 +63,8 @@ class Map(util.BufferedWindow):
 		self.user_race = None
 		self.selected_user_governers_count = 0
 		self.planet_filter_ptr = None
-		self.jump_fleets = set()
 		self.selected_planet = None
+		self.jump_fleets_routes = []
 		#self.filterDrawAreas = bool(config.options['filter']['areas'])
 		self.show_good_planets = None
 		
@@ -388,10 +388,6 @@ class Map(util.BufferedWindow):
 			#	self.drawPlanetGeo(dc, p)
 	
 	def toggle_fleet_jump(self, fleet_id):
-		if fleet_id in self.jump_fleets:
-			self.jump_fleets.remove(fleet_id)
-		else:
-			self.jump_fleets.add(fleet_id)
 			
 		self.update()
 		
@@ -439,27 +435,34 @@ class Map(util.BufferedWindow):
 		#	print 'wrong turn %s'%(self.turn,)
 		self.drawCoordinates(dc)
 		
-		if self.pf:
-			self.drawPathFind(dc)
+		#if self.pf:
+		#	self.drawPathFind(dc)
 			
-		if self.jump_fleets and self.selected_planet:
+		if self.jump_fleets_routes:
 			self.draw_jump_fleets(dc)
 		
 		#if self.filterDrawAreas:
 		#	self.drawAreas(dc, rect)
-		
+
 	def draw_jump_fleets(self, dc):
-		if not self.jump_fleets or not self.selected_planet:
+		if not self.jump_fleets_routes or not self.selected_planet:
 			return
 			
-		for fleet_id in self.jump_fleets:
-			fleet = store.get_object('fleet', {'fleet_id':fleet_id})
-			start_pos = fleet['x'], fleet['y']
-			spd, rng = store.get_fleet_speed_range(fleet_id)
-			if rng >= util.distance(start_pos, self.selected_planet):
-				self.draw_route(dc, start_pos, self.selected_planet, 'blue')
-			else:
-				self.draw_route(dc, start_pos, self.selected_planet, 'red')
+		for route in self.jump_fleets_routes:
+			if not route or route==[]:
+				continue
+			prev_point = route[0]
+			for next_point in route[1:]:
+				self.draw_route(dc, prev_point, next_point, 'blue')
+				prev_point = next_point
+			
+			#fleet = store.get_object('fleet', {'fleet_id':fleet_id})
+			#start_pos = fleet['x'], fleet['y']
+			#spd, rng = store.get_fleet_speed_range(fleet_id)
+			#if rng >= util.distance(start_pos, self.selected_planet):
+			#	self.draw_route(dc, start_pos, self.selected_planet, 'blue')
+			#else:
+			#	self.draw_route(dc, start_pos, self.selected_planet, 'red')
 			#self.draw_path(fleet_id, self.selected_planet)
 			
 	#def draw_path(self, fleet_id, coord):
@@ -471,6 +474,9 @@ class Map(util.BufferedWindow):
 
 		dc.SetPen(wx.Pen(colour=color, width=2))
 		dc.DrawLine(sx, sy, dx, dy)
+		
+		dc.SetBrush(wx.Brush(colour='red'))
+		dc.DrawCircle(dx, dy, 3)
 		
 	def drawPathFind(self, dc):
 		

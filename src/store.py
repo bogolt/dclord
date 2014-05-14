@@ -458,12 +458,11 @@ class Store:
 		
 		# check if need to update geo
 		if (not 'o' in pl or not pl['o']) and ('o' in planet and planet['o']):
-			print 'update geo planet %s'%(planet,)
+			#print 'update geo planet %s'%(planet,)
 			cur.execute('update planet set o=:o, e=:e, m=:m, t=:t, s=:s WHERE x=:x AND y=:y', planet)
 			self.conn.commit()
 		
 		if 'turn' in planet and planet['turn'] and int(planet['turn']) > pl['turn']:
-			print 'update planet %s'%(planet,)
 			# make sure they will be cleaned up if currently exists ( removing user from planet )
 			if not 'user_id' in planet:
 				planet['user_id'] = None
@@ -647,6 +646,21 @@ class Store:
 			if not min_range or min_range < proto['fly_range']:
 				min_range = proto['fly_range']
 		return min_speed, min_range
+		
+	def iter_open_planets(self, fly_range, pos, dest_pos, exclude_planets = []):
+		dist_condition = '((:x0-x)*(:x0-x)+(:y0-y)*(:y0-y))<=:fly_range'
+		
+		exclude_condition = ''
+		if exclude_planets:
+			 exclude_condition = ' AND %s'%(' AND '.join(['(x!=%d AND y!=%d)'%(x,y) for x,y in exclude_planets]))
+		min_condition = ' ORDER BY ((:x1-x)*(:x1-x)+(:y1-y)*(:y1-y))'
+		args = {'x0':pos[0], 'y0':pos[1], 'x1':dest_pos[0], 'y1':dest_pos[1], 'fly_range':fly_range*fly_range}
+		cur = self.conn.cursor()
+		s = 'select x,y from open_planet WHERE %s%s%s'%(dist_condition, exclude_condition, min_condition)
+		#print s, args
+		cur.execute(s, args)
+		for r in cur.fetchall():
+			yield r[0], r[1]
 
 store = Store()
 

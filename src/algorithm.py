@@ -5,6 +5,7 @@ import event
 import config
 import math
 from vec2d import vec2d
+from store import store
 
 log = logging.getLogger('dclord')
 
@@ -38,6 +39,146 @@ def nearest(dest, points):
 	for pt in points:
 		m = min(m, get_distance(dest, pt))
 	return m
+
+class Router:
+	def __init__(self, fleet, fly_range, dest_pos):
+		self.fleet = fleet
+		self.fly_range = fly_range
+		self.user_id = fleet['user_id']
+		self.start_pos = fleet['x'], fleet['y']
+		self.dest_pos = dest_pos
+		self.exclude_planets = []
+		
+		self.cur_pos = None
+		planet_opts = {'x':fleet['x'], 'y':fleet['y'], 'user_id':'user_id'}
+		start_planet = store.get_object('open_planet', planet_opts)
+		if start_planet:
+			self.cur_pos = start_planet
+			self.exclude_planets = [self.cur_pos]
+	
+	def find_route(self):
+		print 'route: %s to %s, fly range: %0.2f'%(self.start_pos, self.dest_pos, self.fly_range)
+		if self.cur_pos and util.distance(self.cur_pos, self.dest_pos) <= self.fly_range:
+			print 'route found: direct jump'
+			return [self.cur_pos, self.dest_pos]
+		
+		if self.cur_pos:
+			return self.route_next(self.cur_pos, [self.cur_pos])
+		
+		print 'route: fleet needs landing'
+		# fleet starts on non-jumpable planet
+		for pl in store.iter_open_planets(self.fly_range, self.start_pos, self.dest_pos, self.exclude_planets):
+			# it can appear here
+			if pl in self.exclude_planets:
+				continue
+				
+			self.exclude_planets.append(pl)
+			self.cur_pos = pl
+			print 'route: landing found %s'%(pl,)
+			
+			if self.cur_pos == self.dest_pos:
+				print 'route found: direct jump'
+				return [self.start_pos, pl]
+			
+			r = self.route_next(self.cur_pos)
+			if r:
+				return [self.start_pos, pl] + r
+		
+		# sorry, not route to host
+		return []
+		
+	def route_next(self, cur_pos):
+		dist = util.distance(cur_pos, self.dest_pos)
+		print 'route: looking from %s (%f left)'%(cur_pos, dist)
+		# are we close enough for direct jump?
+		if dist <= self.fly_range:
+			print 'route found: direct jump from %s'%(cur_pos,)
+			return [self.dest_pos]
+		
+		for pl in store.iter_open_planets(self.fly_range * 2, cur_pos, self.dest_pos, self.exclude_planets):
+			r = [pl]
+			if pl in self.exclude_planets:
+				continue
+			intermediate_pt = None
+			jump_dist = util.distance(cur_pos, pl)
+			if jump_dist > self.fly_range:
+				intermediate_pt = self.find_intermediate_jump_point(cur_pos, pl)
+				if not intermediate_pt:
+					continue
+				intermediate_pt = cur_pos[0]+intermediate_pt[0], cur_pos[1]+intermediate_pt[1]
+				r.append(intermediate_pt)
+			
+			d2 = util.distance(pl, self.dest_pos)
+			if d2 >= dist:
+				continue
+
+			self.exclude_planets.append(pl)
+			#if intermediate_pt:
+			#	print 'route: jump to %s (though %s), distance: %s'%(pl, intermediate_pt, jump_dist)
+			#else:
+			#	print 'route: jump to %s, distance: %s'%(pl, jump_dist)
+			
+			if cur_pos == self.dest_pos:
+				print 'route found: %s'%(pl,)
+				return r
+
+			res = self.route_next(pl)
+			if res:
+				return r + res
+		return []
+	
+	def find_intermediate_jump_point(self, start, end):
+		center = get_center(start, end)
+		max_center = math.ceil(center[0]), math.ceil(center[1])
+		dist = get_distance((0,0), max_center)
+		if dist <= self.fly_range:
+			return max_center
+		
+		min_center = math.floor(center[0]), math.floor(center[1])
+		if get_distance((0,0), min_center) >= self.fly_range:
+			return None
+		
+		center_a = max_center[1], min_center[0]
+		dist_a = get_distance((0,0), center_a)
+		if dist_a > self.fly_range:
+			return None
+		
+		center_b = max_center[0], min_center[1]
+		dist_b = get_distance((0,0), center_b)
+		if dist_b > self.fly_range:
+			return None
+		return center_b
+				
+
+def route_find(fleet, fly_range, dest_pos):
+	r = Router( fleet, fly_range, dest_pos )
+	res = r.find_route()
+	print res
+	return res
+
+import unittest
+
+class AlgorithmTest(unittest.TestCase):
+	
+	def setUp(self):
+		store.add_open_planet({'x':100, 'y':100, 'user_id':1})
+		store.add_open_planet({'x':110, 'y':110, 'user_id':1})
+		store.add_open_planet({'x':130, 'y':100, 'user_id':1})
+		store.add_open_planet({'x':113, 'y':123, 'user_id':1})
+		store.add_open_planet({'x':117, 'y':124, 'user_id':1})
+	
+	def test_iter_open_planets(self):
+		router = Router({'x':111, 'y':122, 'user_id':1}, fly_range=8, dest_pos=(100,99))
+		store.add_open_planet({'x':112, 'y':121, 'user_id':1})
+		store.add_open_planet({'x':111, 'y':121, 'user_id':1})
+		store.add_open_planet({'x':105, 'y':104, 'user_id':1})
+		store.add_open_planet({'x':110, 'y':121, 'user_id':1})
+		res = router.find_route()
+		print '%s'%(res,)
+		
+if __name__ == '__main__':
+	unittest.main()
+
 
 #TODO
 # * jump to/from closed planet
@@ -75,7 +216,7 @@ class PathFinder:
 	def is_done(self):
 		return len(self.new_routes) == 0
 		
-	def best_route(self):
+	def old_best_route(self):
 		route = {}
 		
 		#ps = self.routes[self.end_pos]
@@ -86,6 +227,20 @@ class PathFinder:
 			ps = self.routes[prev]
 			route[prev] = ps
 			print 'route: %s %s'%(prev, ps[0])
+			prev = ps[0]
+		
+		print 'ret route %s'%(route,)
+		return route
+
+	def best_route(self):
+		route = [self.end_pos]
+		
+		prev = self.end_pos
+		while prev != self.start_pos:
+			ps = self.routes[prev]
+			route.append(ps[0])
+			#route[prev] = ps
+			#print 'route: %s %s'%(prev, ps[0])
 			prev = ps[0]
 		
 		print 'ret route %s'%(route,)

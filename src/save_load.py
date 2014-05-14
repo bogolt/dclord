@@ -148,7 +148,7 @@ def save_data(path):
 	
 def load_user_data(path):
 	for user in iter_csv_table(path, 'user'):
-		print 'load user %s'%(user,)
+		#print 'load user %s'%(user,)
 		turn = int(user['turn'])
 		store_user = store.get_user(user['user_id'])
 		if store_user and 'turn' in store_user:
@@ -190,7 +190,7 @@ def load_geo_size(path, left_top, size):
 		#print 'no double loading %s'%path
 		return
 	try:
-		print 'loading geo %s'%path
+		#print 'loading geo %s'%path
 		for p in csv.DictReader(open(path, 'rt')):
 			#x=int(p['x'])
 			#y=int(p['y'])
