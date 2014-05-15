@@ -465,7 +465,6 @@ class DcFrame(wx.Frame):
 		return None
 
 	def onSendScouts(self, _):
-		turn = db.getTurn()
 		min_size = 70
 		max_size = 99
 		
@@ -489,18 +488,18 @@ class DcFrame(wx.Frame):
 			fly_range = 0.0
 			ready_scout_fleets = {}
 			# get all fleets over our planets
-			for planet in db.db.iter_objects_list(db.Db.OPEN_PLANET, {'=':{'user_id':user_id}}):
+			for planet in store.iter_objects_list('open_planet', {'user_id':user_id}):
 				print 'open planet %s'%(planet,)
 				coord = get_coord(planet)
-				for fleet in db.db.iter_objects_list(db.Db.FLEET, {'=':{'owner_id':user_id, 'x':coord[0], 'y':coord[1]}}):
+				for fleet in store.iter_objects_list('fleet', {'user_id':user_id, 'x':coord[0], 'y':coord[1]}):
 					if value_in(self.exclude_fleet_names, fleet['name']):
 						continue
-					units = db.db.get_objects_list(db.Db.UNIT, {'=':{'fleet_id':fleet['id']}})
+					units = store.get_fleet_units({'fleet_id':fleet['fleet_id']})
 					if len(units) != 1:
 						print 'fleet %s has wrong units count ( != 1 ) %s, skipping it'%(fleet, units)						
 						continue
 					unit = units[0]
-					if int(unit['id']) in self.manual_control_units:
+					if int(unit['unit_id']) in self.manual_control_units:
 						print 'unit %s reserved for manual control, skipping it'%(unit,)
 						continue
 
@@ -511,14 +510,14 @@ class DcFrame(wx.Frame):
 					print 'unit %s on planet %s for fleet %s is geo-scout'%(unit, coord, fleet)
 					# ok, this is geo-scout, single unit in fleet, on our planet
 					#ready_scout_fleets.append((coord, fleet))
-					r = self.get_unit_range(unit)
+					_,r = store.get_fleet_speed_range(fleet['fleet_id'])
 					fly_range = max(fly_range, r)
 					ready_scout_fleets.setdefault(coord, []).append((fleet, r))
 					
 			
 			# get possible planets to explore in nearest distance
 			for coord in ready_scout_fleets.keys():
-				serialization.load_geo_size_center(coord, int(fly_range))
+				save_load.load_geo_size_center(coord, int(fly_range))
 			
 			# jump to nearest/biggest unexplored planet
 			exclude = set()
@@ -529,7 +528,9 @@ class DcFrame(wx.Frame):
 				#s<=99 - skip stars
 				dx = lt[0]-fly_range, lt[0]+fly_range
 				dy = lt[1]-fly_range, lt[1]+fly_range
-				for p in db.db.iter_objects_list(db.Db.PLANET_SIZE, {'between':{'s':(min_size,max_size), 'x':dx, 'y':dy}}):
+				for p in store.iter_planets_size((lt[0]-fly_range, lt[0]+fly_range, lt[1]-fly_range, lt[1]+fly_range)):
+					if not (p['size']>=min_size and p['size']<=max_size):
+						continue
 					dest = get_coord(p)
 					if dest in exclude:
 						continue
@@ -542,6 +543,8 @@ class DcFrame(wx.Frame):
 						continue
 					
 					has_flying_geo_scouts = False
+					# check if currently there is some explore fleet on planet, or explore fleet already fly there
+					
 					# get list of all flying fleets ( or our allies and mults ) to this planet 
 					for fleet in db.db.iter_objects_list(db.Db.FLYING_FLEET, {'=':{'x':dest[0], 'y':dest[1]}, 'in': {'owner_id':friend_geo_scout_ids}}):
 						# check if the fleet is geo-scout
