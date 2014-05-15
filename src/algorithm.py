@@ -96,7 +96,7 @@ class Router:
 			if d2 >= dist:
 				continue
 
-			r = [pl]
+			r = []
 			intermediate_pt = None
 			jump_dist = util.distance(cur_pos, pl)
 			if jump_dist > self.fly_range:
@@ -119,13 +119,13 @@ class Router:
 
 			res = self.route_next(pl)
 			if res:
-				return r + res
+				return r + [pl] + res
 		return []
 	
 	def find_intermediate_jump_point(self, start, end):
 		dx = start[0]-end[0]
 		dy = start[1]-end[1]
-		center_pos = start[0]-dx, start[1]-dy
+		center_pos = start[0]-dx/2, start[1]-dy/2
 		if self.fly_range > util.distance(start, center_pos):
 			return None
 		return center_pos
