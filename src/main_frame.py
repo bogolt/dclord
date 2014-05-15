@@ -272,10 +272,12 @@ class DcFrame(wx.Frame):
 		
 	def on_fleet_jump_prepare(self, fleet_id):
 
-		if fleet_id in self.jump_fleets:
-			self.jump_fleets.remove(fleet_id)
-		else:
-			self.jump_fleets.add(fleet_id)
+		#if fleet_id in self.jump_fleets:
+		#	self.jump_fleets.remove(fleet_id)
+		#else:
+		#self.jump_fleets.add(fleet_id)
+		self.jump_fleets.clear()
+		self.jump_fleets.add(fleet_id)
 
 		#self.calculate_route(store.get_object('fleet', {'fleet_id':fleet_id}), self.map
 		#self.map.toggle_fleet_jump(fleet_id)

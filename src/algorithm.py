@@ -125,7 +125,7 @@ class Router:
 	def find_intermediate_jump_point(self, start, end):
 		dx = start[0]-end[0]
 		dy = start[1]-end[1]
-		center_pos = start[0]-dx/2, start[1]-dy/2
+		center_pos = int(math.ceil(start[0]-dx/2.0)), int(math.ceil(start[1]-dy/2.0))
 		if self.fly_range > util.distance(start, center_pos):
 			return None
 		return center_pos

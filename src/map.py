@@ -330,6 +330,16 @@ class Map(util.BufferedWindow):
 			dc.SetBrush(wx.Brush('white'))
 				#dc.SetPen(wx.Pen(colour=col, width=2))
 				#dc.DrawCircle(rx, ry, self.relSize(sz))
+				
+	def draw_open_planet(self, dc, planet):
+		planetPos = objPos(planet)
+		rx,ry = self.relPos(planetPos)
+		dc.SetPen(wx.Pen('blue', width=2))
+		rx-=self.cell_size/2
+		ry+=self.cell_size/2
+		dc.DrawLine(rx, ry, rx + self.cell_size, ry)
+		#dc.SetBrush(wx.Brush('white', style=wx.TRANSPARENT))
+		#dc.DrawCircle(rx, ry, )
 	
 	def drawPlanetGeo(self, dc, planet):
 		if not all(k in planet and k != unicode('') for k in('o','e','m','s')):
@@ -386,6 +396,10 @@ class Map(util.BufferedWindow):
 			self.drawPlanet(dc, p)
 			#if self.draw_geo:
 			#	self.drawPlanetGeo(dc, p)
+			
+		if self.selected_user_id:
+			for p in store.iter_objects_list('open_planet', {'user_id':self.selected_user_id}):
+				self.draw_open_planet(dc, p)
 	
 	def toggle_fleet_jump(self, fleet_id):
 			
