@@ -46,6 +46,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 			fleet_id = action.opts['fleet_id']
 			fleet = store.get_object('fleet', {'fleet_id':fleet_id})
 			coord = action.opts['planet']
+			store.command_jump_fleet(fleet_id, coord)
 			self.sizer.Add( wx.StaticText(self, label='Jump %s[%s] to %d:%d from %d:%d'%(store.get_user_name(user_id), fleet['name'], coord[0], coord[1], fleet['x'], fleet['y'])))
 			self.actions[(action.name, fleet_id)] = action
 		elif action.name == 'exlopre':
@@ -56,18 +57,17 @@ class ActionPanel(scrolled.ScrolledPanel):
 			if 'fleet_id' in action.opts:
 				fleet_id = action.opts['fleet_id']
 				unit_id = action.opts['unit_id']
-				store.move_unit_to_fleet(unit_id, fleet_id)
+				store.command_move_unit_to_fleet(unit_id, fleet_id)
 				
 				unit_name = store.get_unit_name(unit_id)
 				fleet_name = store.get_fleet_name(fleet_id)
 				user_name = store.get_user_name(user_id)
 				x,y = action.opts['planet']
 				self.sizer.Add( wx.StaticText(self, label='Unit %s move to fleet %s[%s] at %d:%d'%(unit_name, fleet_name, user_name, x, y)))
-				#store.get_user_name(action.user_id), coord[0], coord[1])))
 				
 		elif 'create_fleet' == action.name:
 			coord = action.opts['planet']
-			ret_id = store.create_fleet(action.user_id, coord, action.opts['name'])
+			ret_id = store.command_create_fleet(action.user_id, coord, action.opts['name'])
 			action.opts['fleet_id'] = ret_id
 			self.sizer.Add( wx.StaticText(self, label='Create fleet %s %s %d:%d'%(action.opts['name'], store.get_user_name(action.user_id), coord[0], coord[1])))
 			self.actions[(action.name, ret_id)] = action

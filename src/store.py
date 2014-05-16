@@ -2,6 +2,7 @@ import sqlite3
 import logging
 import sys, traceback
 import util
+import math
 
 def to_pos(a,b):
 	return int(a),int(b)
@@ -495,7 +496,7 @@ class Store:
 	def add_pending_action(self, act_id, table, action, data_filter):
 		pass
 	
-	def create_fleet(self, user_id, coord, name):
+	def command_create_fleet(self, user_id, coord, name):
 		cur = self.conn.cursor()
 		fleet_id = 0
 		cur.execute('select max(fleet_id) from fleet')
@@ -506,15 +507,12 @@ class Store:
 		self.add_data('fleet', {'user_id':user_id, 'x':coord[0], 'y':coord[1], 'name':name, 'fleet_id':fleet_id})
 		return fleet_id
 		
-	def move_unit_to_fleet(self, unit_id, fleet_id):
-		print 'move unit to fleet %s %s %s %s'%(unit_id, type(unit_id), fleet_id, type(fleet_id))
+	def command_move_unit_to_fleet(self, unit_id, fleet_id):
 		# find current unit location ( fleet or garrison )
 		cur = self.conn.cursor()
 		tables = ['fleet_unit', 'garrison_unit']
 		for table in tables:
-			s = 'select * from %s WHERE unit_id=?'%(table,)
-			print s
-			cur.execute(s, (unit_id,))
+			cur.execute('select * from %s WHERE unit_id=?'%(table,), (unit_id,))
 			res = cur.fetchone()
 			if res:
 				# ok it's here
@@ -524,6 +522,22 @@ class Store:
 		
 		#insert it to the fleet
 		self.add_data('fleet_unit', {'fleet_id':fleet_id, 'unit_id':unit_id})
+		
+	def command_jump_fleet(self, fleet_id, coord):
+		fleet = self.get_object('fleet', {'fleet_id':fleet_id})
+		if not fleet:
+			return
+		
+		fleet['from_x'] = fleet['x']
+		fleet['from_y'] = fleet['y']
+		start_pos = fleet['x'], fleet['y']
+		fleet['x'] = coord[0]
+		fleet['y'] = coord[1]
+		spd, rng = self.get_fleet_speed_range(fleet_id)
+		fleet['arrival_turn'] = self.get_user_turn(fleet['user_id']) + math.ceil( util.distance(start_pos, coord) / spd )
+		
+		self.add_data('flying_fleet', fleet)
+		self.remove_object('fleet', {'fleet_id':fleet_id})
 	
 	def keys(self, table):
 		return tables[table]
@@ -610,6 +624,12 @@ class Store:
 	def get_user(self, user_id):
 		return self.get_object('user', {'user_id':user_id})
 		
+	def remove_object(self, table, conds):
+		cur = self.conn.cursor()
+		s = 'delete from %s WHERE %s'%(table, ' and '.join(['%s=?'%(key_name,) for key_name in conds.iterkeys()]))
+		cur.execute(s, tuple(conds.values()))
+		self.conn.commit()
+
 	def get_object(self, table, conds):
 		cur = self.conn.cursor()
 		keys = tables[table]
@@ -620,12 +640,6 @@ class Store:
 			#print 'empty result'
 			return None
 		return dict(zip(keys, r))
-		
-		#res = {}
-		#for ind, value in enumerate(r):
-		#	if value:
-		#		res[keys[ind]]=value
-		#return res
 		
 	def get_objects_list(self, table, conds = {}):
 		
