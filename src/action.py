@@ -74,7 +74,7 @@ class ActionUnitMove(Action):
 	def create_xml_action(self, act_id):
 		Action.create_xml_action(self, act_id)
 		return self.format_action(act_id, 'move_unit_to_fleet', [tag('fleet_id', self.fleet_id), tag('unit_id', self.unit_id)])
-		
+
 class ActionGeoExplore(Action):
 	NAME = 'explore'
 	def __init__(self, user_id, unit_id, coord):
@@ -106,6 +106,16 @@ class ActionCreateFleet(Action):
 	def create_xml_action(self, act_id):
 		Action.create_xml_action(self, act_id)
 		return self.format_action(act_id, 'create_new_fleet', [tag('new_fleet_name', self.name), tag('planetid', '%d:%d'%self.coord)])
+		
+	def commit_result(self, success, new_id):
+		if not success:
+			return
+			
+		store.update_object('fleet', {'fleet_id':self.fleet_id}, {'fleet_id':new_id})
+		store.update_object('flying_fleet', {'fleet_id':self.fleet_id}, {'fleet_id':new_id})
+		store.update_object('fleet_unit', {'fleet_id':self.fleet_id}, {'fleet_id':new_id})
+		self.fleet_id = new_id
+
 
 class ActionPanel(scrolled.ScrolledPanel):
 	def __init__(self, parent):
@@ -123,6 +133,8 @@ class ActionPanel(scrolled.ScrolledPanel):
 		self.sizer.Add(sz)
 		
 		self.actions = []
+		self.delayed_acts = []
+		self.create_fleet_acts = {}
 				
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
@@ -134,7 +146,32 @@ class ActionPanel(scrolled.ScrolledPanel):
 		self.Bind(wx.EVT_BUTTON, self.on_perform_actions, self.button_perform)
 		self.Bind(wx.EVT_BUTTON, self.on_cancel_actions, self.button_cancel)
 		
+	
+	def update_fleet_id(self, fleet_id, new_id):
+		for act in self.delayed_acts:
+			if act.fleet_id == fleet_id:
+				act.fleet_id = new_id
+				self.actions.append( act )
+	
+	#replyes = {1:(True, 2), 2:(False,0), 3:(True, 99)}
+	def on_reply_received(self, actions_reply):
+		
+		for act_id, act in self.create_fleet_acts.iteritems():
+			if act_id in actions_reply:
+				result, new_id = actions_reply[act_id]
+				if result:
+					self.update_fleet_id(act.fleet_id, new_id)
+				#else:
+				#	self.delete_actions(act.fleet_id)
+		
+		# ok it's time to perform actions that have valid ids
+		
+		
+		self.on_perform_actions(None)
+	
 	def on_perform_actions(self, evt):
+		
+		
 		acts = []
 		delayed_acts = []
 		for act_id, act in enumerate(self.actions):

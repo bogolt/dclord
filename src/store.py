@@ -645,6 +645,12 @@ class Store:
 		s = 'delete from %s WHERE %s'%(table, ' and '.join(['%s=?'%(key_name,) for key_name in conds.iterkeys()]))
 		cur.execute(s, tuple(conds.values()))
 		self.conn.commit()
+		
+	def update_object(self, table, conds, new_values):
+		cur = self.conn.cursor()
+		s = 'update %s set %s WHERE %s'%(table,  ','.join(['%s=?'%(key,) for key in new_values.iterkeys()]), ' and '.join(['%s=?'%(key_name,) for key_name in conds.iterkeys()]))
+		cur.execute(s, tuple(new_values.values() + conds.values()))
+		self.conn.commit()
 
 	def get_object(self, table, conds):
 		cur = self.conn.cursor()
