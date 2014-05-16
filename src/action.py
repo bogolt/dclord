@@ -43,9 +43,14 @@ class ActionPanel(scrolled.ScrolledPanel):
 			fleet_id = action.opts['fleet_id']
 			fleet = store.get_object('fleet', {'fleet_id':fleet_id})
 			coord = action.opts['planet']
-			#fleet = action_opts
 			self.sizer.Add( wx.StaticText(self, label='Jump %s[%s] to %d:%d from %d:%d'%(store.get_user_name(action.user_id), fleet['name'], coord[0], coord[1], fleet['x'], fleet['y'])))
+			self.actions[(action.name, fleet_id)] = action
+		elif action.name = 'exlopre':
+			coord = action.opts['planet']
+			self.sizer.Add( wx.StaticText(self, label='Geo explore %s %d:%d'%(store.get_user_name(action.user_id), coord[0], coord[1])))
+			self.actions[(action.name, action.opts['unit_id'])] = action
 		
 		self.sizer.Layout()
-		#self.actions[(action_type, fleet['fleet_id'])] = fleet
+		
+	def perform_all(self):
 		
