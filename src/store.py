@@ -311,15 +311,15 @@ class Store:
 				)""")
 				
 		cur.execute("""create table if not exists proto_action(
-				proto_action_id integer primary key,
+				proto_action_id integer not null,
 				proto_id integer not null,
 				max_count integer,
 				cost_people integer,
 				cost_main integer,
 				cost_second integer,
 				cost_money integer,
-				planet_can_be text
-				)""")
+				planet_can_be text,
+				PRIMARY KEY(proto_id, proto_action_id))""") # as proto_action_id can easily duplicate
 		
 		self.conn.commit()		
 		
