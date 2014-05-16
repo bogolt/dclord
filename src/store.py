@@ -52,6 +52,7 @@ class Store:
 	def __init__(self):
 		self.conn = sqlite3.connect(':memory:')
 		self.create_tables()
+		self.create_fleet_id = -1
 	
 	def create_tables(self):
 		cur = self.conn.cursor()
@@ -498,14 +499,10 @@ class Store:
 	
 	def command_create_fleet(self, user_id, coord, name):
 		cur = self.conn.cursor()
-		fleet_id = 0
-		cur.execute('select max(fleet_id) from fleet')
-		res = cur.fetchone()
-		if res:
-			fleet_id = int(res[0]) + 1
 
-		self.add_data('fleet', {'user_id':user_id, 'x':coord[0], 'y':coord[1], 'name':name, 'fleet_id':fleet_id})
-		return fleet_id
+		self.create_fleet_id -= 1
+		self.add_data('fleet', {'user_id':user_id, 'x':coord[0], 'y':coord[1], 'name':name, 'fleet_id':self.create_fleet_id})
+		return self.create_fleet_id
 		
 	def command_move_unit_to_fleet(self, unit_id, fleet_id):
 		# find current unit location ( fleet or garrison )
