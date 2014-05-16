@@ -5,6 +5,7 @@ import util
 import shutil
 import logging
 import config
+import sqlite3
 
 log = logging.getLogger('dclord')
 
@@ -181,10 +182,13 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.store.add_data('proto', data)
 		elif 'actions-requested' == name:
 			self.parent = name
-		elif 'act' and self.parent == 'building_class':
+		elif 'act' == name and self.parent == 'building_class':
 			data = getAttrs(attrs, {'action':'proto_action_id', 'maxcount':'max_count', 'cost-pepl':"cost_people", 'cost-main':"cost_main", 'cost-money':"cost_money", 'cost-second':"cost_second", 'planet-can-be':"planet_can_be"})
 			data['proto_id'] = self.parent_id
-			self.store.add_data('proto_action', data)
+			try:
+				self.store.add_data('proto_action', data)
+			except sqlite3.IntegrityError as e:
+				print 'Failed to add proto_action %s: %s, parent is %s, attrs: %s'%(data, e, self.parent_id, attrs)
 		elif 'rel' == name:
 			data = getAttrs(attrs, {'player':'other_user_id', 'name':'name', 'type':'relation'})
 			self.store.add_user_info(data['other_user_id'], data['name'])
@@ -248,10 +252,10 @@ class TestXmlImport(unittest.TestCase):
 		
 		user = load_xml('/tmp/dclord/raw_xml/niki_all.xml')
 		user_id = user['user_id']
-		load_xml('/tmp/dclord/raw_xml/niki_known_planets.xml')
+		#load_xml('/tmp/dclord/raw_xml/niki_known_planets.xml')
 		
 		#save_load.save_user_data(user_id, '/tmp/dclord/out/')
-		save_load.save_data('/tmp/dclord/out/')
+		#save_load.save_data('/tmp/dclord/out/')
 		
 		
 		
