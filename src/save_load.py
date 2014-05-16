@@ -4,6 +4,7 @@ import os
 import logging
 import util
 import config
+import sqlite3
 
 unicode_strings = [u'name', u'description']
 #last_sync = {}
@@ -43,7 +44,8 @@ def load_csv_table(path, table):
 		#print 'Load csv table %s %s failed: %s'%(path, table, e)
 	except IOError as e:
 		pass
-		#print 'Load csv table %s %s failed: %s'%(path, table, e)
+	except sqlite3.IntegrityError as e:
+		print 'Load csv table %s failed: %s'%(table, e)
 		
 def iter_csv_table(path, table):
 	try:
