@@ -447,15 +447,14 @@ class DcFrame(wx.Frame):
 		self.perform_actions()
 	
 	def is_geo_scout(self, unit):
-		
 		for act in store.iter_objects_list('proto_action', {'proto_id':unit['proto_id']}):
 			if act['proto_action_id']== request.RequestMaker.GEO_EXPLORE:
 				return True
 		return False
 	
-	def is_geo_scout_fleet(self, turn, fleet_id):
-		for u in db.units(turn, ['fleet_id=%s'%(fleet_id,)]):
-			if self.is_geo_scout(u):
+	def is_geo_scout_fleet(self, fleet_id):
+		for u in store.get_fleet_units(fleet_id):
+			if is_geo_scout(u['unit_id']):
 				return True
 		return False
 
