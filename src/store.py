@@ -520,7 +520,11 @@ class Store:
 		#insert it to the fleet
 		self.add_data('fleet_unit', {'fleet_id':fleet_id, 'unit_id':unit_id})
 		
-	def command_jump_fleet(self, fleet_id, coord):
+	def command_move_unit_to_garrison(self, unit_id, coord):
+		self.add_data('garrison_unit', {'x':coord[0], 'y':coord[1], 'unit_id':unit_id})
+		self.remove_object('fleet_unit', {'unit_id':unit_id})
+		
+	def command_fleet_jump(self, fleet_id, coord):
 		fleet = self.get_object('fleet', {'fleet_id':fleet_id})
 		if not fleet:
 			return
@@ -535,6 +539,21 @@ class Store:
 		
 		self.add_data('flying_fleet', fleet)
 		self.remove_object('fleet', {'fleet_id':fleet_id})
+		
+	def command_fleet_cancel_jump(self, fleet_id):
+		fleet = self.get_object('flying_fleet', {'fleet_id':fleet_id})
+		if not fleet:
+			return
+		
+		x,y = fleet['from_x'], fleet['from_y']
+		#fleet['from_x'] = fleet['x']
+		#fleet['from_y'] = fleet['y']
+		#start_pos = fleet['x'], fleet['y']
+		fleet['x'] = x
+		fleet['y'] = y
+		
+		self.add_data('fleet', fleet)
+		self.remove_object('flying_fleet', {'fleet_id':fleet_id})
 	
 	def keys(self, table):
 		return tables[table]

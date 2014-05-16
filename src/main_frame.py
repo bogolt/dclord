@@ -564,7 +564,7 @@ class DcFrame(wx.Frame):
 						if dist > fleet_range:
 							continue
 						# ok fly to it
-						self.actions.add_action( action.Action('jump', user_id, {'planet':planet, 'fleet_id':fleet['fleet_id']}))
+						self.actions.add_action( action.ActionJump(user_id, fleet['fleet_id'], planet ))
 						#self.pending_actions.fleetMove(fleet['id'], planet)
 						exclude.add( planet )
 						print 'jump %s from %s to %s'%(fleet, coord, planet)
@@ -621,8 +621,14 @@ class DcFrame(wx.Frame):
 				#print 'checking harrison for planet %s'%(planet,)
 				for unit in store.get_garrison_units(coord, value_in=('proto_id', probe_ids)):
 					print 'found unit %s on planet %s'%(unit, planet,)
-					fleet_id = self.actions.add_action(action.Action('create_fleet', user_id, {'planet':coord, 'name':fleet_name}))
-					self.actions.add_action(action.Action('unit_move', user_id, {'planet':coord, 'unit_id':unit['unit_id'], 'fleet_id':fleet_id}))
+					action_create = action.ActionCreateFleet(user_id, fleet_name, coord)
+					self.actions.add_action(action_create)
+					fleet_id = action_create.fleet_id
+					
+					self.actions.add_action(action.ActionUnitMove(user_id, fleet_id, unit['unit_id']))
+					
+					#self.actions.add_action(action.Action('unit_move', user_id, {'planet':coord, 'unit_id':unit['unit_id'], 'fleet_id':fleet_id}))
+					#self.actions.add_action(action.Action('unit_move', user_id, {'planet':coord, 'unit_id':unit['unit_id'], 'fleet_id':fleet_id}))
 					
 					#self.pending_actions.createNewFleet(coord, fleet_name)
 					#pending_units.append( (self.pending_actions.get_action_id(), coord, unit['id'] ) )
@@ -789,7 +795,8 @@ class DcFrame(wx.Frame):
 				
 				# ok, found then jump
 				#print 'Jump (%s) %s'%(closest_planet, fleet)
-				self.actions.add_action( action.Action('jump', user_id, {'fleet_id':fleet['fleet_id'], 'planet':closest_planet }))
+				
+				self.actions.add_action( action.ActionJump(user_id, fleet['fleet_id'], closest_planet ))
 				#self.pending_actions.fleetMove( fleet['fleet_id'], closest_planet )
 			
 			#self.perform_actions()
@@ -873,7 +880,8 @@ class DcFrame(wx.Frame):
 			at_least_one = False
 			for coord, unit_id in acts.iteritems():
 				#print 'explore (%s) %s'%(coord, unit_id)
-				self.pending_actions.explore_planet( coord, unit_id )
+				self.actions.add_action(action.ActionGeoExplore(user_id, unit_id, coord))
+				#self.pending_actions.explore_planet( coord, unit_id )
 				at_least_one = True
 			
 			if at_least_one:
