@@ -682,7 +682,7 @@ class Store:
 		cur.execute(s, rect)
 		for r in cur.fetchall():
 			yield dict(zip(keys, r))
-		
+			
 	def ixter_planets(self, rect, owned = False, inhabited = False):
 		cur = self.conn.cursor()
 		table = 'planet'
@@ -699,15 +699,40 @@ class Store:
 		for r in cur.fetchall():
 			yield dict(zip(keys, r))
 
-	def iter_planets_size(self, rect):
+	def iter_planets_size(self, rect = None, pos = None, fly_range = None, bigger_first = None, size_min = None, size_max = None):
 		cur = self.conn.cursor()
-		table = 'planet'
-		keys = ['x', 'y', 's']
-		s = 'select %s from planet_size WHERE x >= ? AND x <= ? AND y >= ? AND y <= ?'%(','.join(keys),)
-
-		cur.execute(s, rect)
+		s = 'select x,y,s from planet_size'
+		values = []
+		conds = []
+		
+		if rect:
+			rect_cond = 'x >= ? AND x <= ? AND y >= ? AND y <= ?'
+			conds.append(rect_cond)
+			values += list(rect)
+		
+		if fly_range:
+			dist_condition = '((?-x)*(?-x)+(?-y)*(?-y))<=?'
+			conds.append(dist_condition)
+			values+=[pos[0], pos[0], pos[1], pos[1], fly_range*fly_range]
+		if size_min:
+			size_min_cond = 's >= ?'
+			conds.append(size_min_cond)
+			values.append(size_min)
+		if size_max:	
+			size_max_cond = 's <= ?'
+			conds.append(size_max_cond)
+			values.append(size_max)
+			
+		if conds:
+			s+=' WHERE %s'%(' AND '.join(conds),)
+			
+		if bigger_first:
+			s+=' ORDER BY s DESC'
+		
+		#print s, values
+		cur.execute(s, tuple(values))
 		for r in cur.fetchall():
-			yield dict(zip(keys, r))
+			yield dict(zip(['x','y','s'], r))
 			
 	def iter_objects_list(self, table, conds = {}, rect = None, controlled = None):
 		cur = self.conn.cursor()
@@ -741,7 +766,7 @@ class Store:
 			if not min_range or min_range < proto['fly_range']:
 				min_range = proto['fly_range']
 		return min_speed, min_range
-		
+	
 	def iter_open_planets(self, fly_range, pos, dest_pos, exclude_planets = []):
 		dist_condition = '((:x0-x)*(:x0-x)+(:y0-y)*(:y0-y))<=:fly_range'
 		

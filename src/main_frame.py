@@ -448,6 +448,7 @@ class DcFrame(wx.Frame):
 	
 	def is_geo_scout(self, unit):
 		for act in store.iter_objects_list('proto_action', {'proto_id':unit['proto_id']}):
+			print 'proto action %s'%(act,)
 			if act['proto_action_id']== request.RequestMaker.GEO_EXPLORE:
 				return True
 		return False
@@ -511,29 +512,35 @@ class DcFrame(wx.Frame):
 			
 			# get possible planets to explore in nearest distance
 			for coord in ready_scout_fleets.keys():
+				print 'load geo size centered at %s with range %s'%(coord, int(fly_range))
 				save_load.load_geo_size_center(coord, int(fly_range))
 			
 			# jump to nearest/biggest unexplored planet
 			exclude = set()
 			for coord, fleets in ready_scout_fleets.iteritems():
-				lt = int(coord[0]-fly_range), int(coord[1]-fly_range)
+				max_fly_range = 0
+				for f,r in fleets:
+					max_fly_range = max(max_fly_range, r)
 				
 				possible_planets = []
 				#s<=99 - skip stars
-				dx = lt[0]-fly_range, lt[0]+fly_range
-				dy = lt[1]-fly_range, lt[1]+fly_range
-				for p in store.iter_planets_size((lt[0]-fly_range, lt[0]+fly_range, lt[1]-fly_range, lt[1]+fly_range)):
+				#dx = lt[0]-fly_range, lt[0]+fly_range
+				#dy = lt[1]-fly_range, lt[1]+fly_range
+				for p in store.iter_planets_size(pos=coord, fly_range=max_fly_range, size_min=min_size, bigger_first = True):
 					if not (p['s']>=min_size and p['s']<=max_size):
+						print 'planet %s not fit the size'%(p,)
 						continue
 					dest = get_coord(p)
 					if dest in exclude:
 						continue
 					dist = util.distance(dest, coord)
 					if dist > fly_range:
+						print 'planet %s is too far away'%(p,)
 						continue
 						
 					planet = db.get_planet(dest)
-					if planet and 'o' in planet:
+					if planet and 'o' in planet and planet['o']:
+						print 'planet %s already explored'%(p,)
 						continue
 					
 					has_flying_geo_scouts = False
@@ -545,6 +552,7 @@ class DcFrame(wx.Frame):
 							already_has_scout = True
 							break
 					if already_has_scout:
+						print 'planet %s has scount fleet on it'%(p,)
 						continue
 						
 					already_fly_geo_scouts = False
@@ -554,13 +562,17 @@ class DcFrame(wx.Frame):
 							self.actions.add_action( action.Action('explore', user_id, {'planet':dest, 'fleet_id':fleet['fleet_id']}))
 							break
 					if already_fly_geo_scouts:
+						print 'planet %s has flying scount fleet'%(p,)
 						continue
 
 					possible_planets.append( (dist, dest) )
+					print 'add possible planet %s'%(dest,)
 
 				for fleet, fleet_range in fleets:
+					print 'check planets for fleet %s'%(fleet,)
 					for dist, planet in sorted(possible_planets):
 						if dist > fleet_range:
+							print 'planet %s too scary'%(p,)
 							continue
 						# ok fly to it
 						self.actions.add_action( action.ActionJump(user_id, fleet['fleet_id'], planet ))
