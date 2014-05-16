@@ -608,28 +608,33 @@ class DcFrame(wx.Frame):
 			#if user_id < 601140:
 			#	continue
 
-			units_classes = db.get_units_class(turn, ['carapace=%s'%(carapace,), 'owner_id=%s'%(user_id,)])
-			any_class = 'class in (%s)'%(','.join([str(cls) for cls in units_classes]),)
+			probes_types = store.get_objects_list('proto', {'carapace':carapace, 'user_id':user_id})
+			#any_class = 'class in (%s)'%(','.join([str(cls) for cls in units_classes]),)
 			#print 'testing user %s with class %s'%(user_id, any_class)
+			probe_ids = [str(proto['proto_id']) for proto in probes_types]
 			
 			self.pending_actions.user_id = user_id
 			pending_units = []
 			
-			for planet in db.planets(turn, ['owner_id=%s'%(user_id,)]):
+			for planet in store.iter_objects_list('user_planet', {'user_id':user_id}):
 				coord = get_coord(planet)
 				#print 'checking harrison for planet %s'%(planet,)
-				for unit in db.db.iter_objects_list(db.Db.UNIT, {'=':{'x':coord[0], 'y':coord[1], 'fleet_id':0}, 'in':{'class':units_classes}}):
+				for unit in store.get_garrison_units(coord, value_in=('proto_id', probe_ids)):
 					print 'found unit %s on planet %s'%(unit, planet,)
-					self.pending_actions.createNewFleet(coord, fleet_name)
-					pending_units.append( (self.pending_actions.get_action_id(), coord, unit['id'] ) )
+					fleet_id = self.actions.add_action(action.Action('create_fleet', user_id, {'planet':coord, 'name':fleet_name}))
+					self.actions.add_action(action.Action('unit_move', user_id, {'planet':coord, 'unit_id':unit['unit_id'], 'fleet_id':fleet_id}))
+					
+					#self.pending_actions.createNewFleet(coord, fleet_name)
+					#pending_units.append( (self.pending_actions.get_action_id(), coord, unit['id'] ) )
+					
 					#print 'found unit %s on planet %s'%(unit, coord )
 			
 			if len(pending_units) == 0:
 				continue
 			
-			self.recv_data_callback[acc['login']] = (self.cb_move_units_to_fleets, user_id, pending_units )
+			#self.recv_data_callback[acc['login']] = (self.cb_move_units_to_fleets, user_id, pending_units )
 			# exec actions to create fleets on the planets
-			self.perform_actions()
+			#self.perform_actions()
 			
 	def cb_move_units_to_fleets(self, user_id, units):
 		
@@ -784,9 +789,10 @@ class DcFrame(wx.Frame):
 				
 				# ok, found then jump
 				#print 'Jump (%s) %s'%(closest_planet, fleet)
-				self.pending_actions.fleetMove( fleet['fleet_id'], closest_planet )
+				self.actions.add_action( action.Action('jump', user_id, {'fleet_id':fleet['fleet_id'], 'planet':closest_planet }))
+				#self.pending_actions.fleetMove( fleet['fleet_id'], closest_planet )
 			
-			self.perform_actions()
+			#self.perform_actions()
 		
 	# geo explore
 	# load known planets

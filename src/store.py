@@ -51,7 +51,6 @@ class Store:
 	def __init__(self):
 		self.conn = sqlite3.connect(':memory:')
 		self.create_tables()
-		#self.owned_user_ids = []
 	
 	def create_tables(self):
 		cur = self.conn.cursor()
@@ -215,15 +214,13 @@ class Store:
 				)""")
 
 		cur.execute("""create table if not exists fleet_unit(
-				unit_id integer,
-				fleet_id integer,
-				PRIMARY KEY(unit_id, fleet_id))""")
+				unit_id integer PRIMARY KEY,
+				fleet_id integer)""")
 
 		cur.execute("""create table if not exists garrison_unit(
-				unit_id integer,
+				unit_id integer PRIMARY KEY,
 				x integer(2),
-				y integer(2),
-				PRIMARY KEY(unit_id, x, y))""")
+				y integer(2))""")
 				
 		
 		cur.execute("""create table if not exists alien_unit(
@@ -386,6 +383,20 @@ class Store:
 		if not user:
 			return '<unknown>'
 		return user['name']
+	def get_fleet_name(self, fleet_id):
+		fleet = self.get_object('fleet', {'fleet_id':fleet_id})
+		if not fleet:
+			return '<none>'
+		return fleet['name']
+	
+	def get_unit_name(self, unit_id):
+		unit = self.get_object('unit', {'unit_id':unit_id})
+		if not unit:
+			return '<none>'
+		proto = self.get_object('proto', {'proto_id':unit['proto_id']})
+		if not proto:
+			return '<proto-unknown>'
+		return proto['name']
 		
 	def add_user_planet(self, planet_data):
 		planet_data['turn'] = self.get_user_turn(planet_data['user_id'])
@@ -483,7 +494,37 @@ class Store:
 	
 	def add_pending_action(self, act_id, table, action, data_filter):
 		pass
+	
+	def create_fleet(self, user_id, coord, name):
+		cur = self.conn.cursor()
+		fleet_id = 0
+		cur.execute('select max(fleet_id) from fleet')
+		res = cur.fetchone()
+		if res:
+			fleet_id = int(res[0]) + 1
+
+		self.add_data('fleet', {'user_id':user_id, 'x':coord[0], 'y':coord[1], 'name':name, 'fleet_id':fleet_id})
+		return fleet_id
 		
+	def move_unit_to_fleet(self, unit_id, fleet_id):
+		print 'move unit to fleet %s %s %s %s'%(unit_id, type(unit_id), fleet_id, type(fleet_id))
+		# find current unit location ( fleet or garrison )
+		cur = self.conn.cursor()
+		tables = ['fleet_unit', 'garrison_unit']
+		for table in tables:
+			s = 'select * from %s WHERE unit_id=?'%(table,)
+			print s
+			cur.execute(s, (unit_id,))
+			res = cur.fetchone()
+			if res:
+				# ok it's here
+				cur.execute('delete from %s WHERE unit_id=?'%(table,), (unit_id,))
+				self.conn.commit()
+				break
+		
+		#insert it to the fleet
+		self.add_data('fleet_unit', {'fleet_id':fleet_id, 'unit_id':unit_id})
+	
 	def keys(self, table):
 		return tables[table]
 	
@@ -549,9 +590,19 @@ class Store:
 		return self.execute('unit', """select %s from %s JOIN fleet_unit ON fleet_unit.unit_id=unit.unit_id
 											WHERE fleet_unit.fleet_id=?""", (fleet_id,))
 
-	def get_garrison_units(self, coord):
-		return self.execute('unit', """select %s from %s
-						JOIN garrison_unit ON unit.unit_id=garrison_unit.unit_id WHERE garrison_unit.x = ? AND garrison_unit.y = ?""", coord)
+	def get_garrison_units(self, coord, value_in = None):
+		conds = ''
+		if value_in:
+			conds = ' AND %s IN (%s)'%(value_in[0], ','.join(value_in[1]))
+		cur = self.conn.cursor()
+		keys = tables['unit']
+		cur.execute("""select %s from unit
+						JOIN garrison_unit USING(unit_id) WHERE garrison_unit.x = ? AND garrison_unit.y = ? %s"""%(','.join(keys), conds), coord)
+		r = []
+		for res in cur.fetchall():
+			r.append( dict(zip(keys, res)))
+		return r
+		
 	def get_building_queue(self, coord):
 		return self.execute('garrison_queue_unit', """select %s from %s
 						WHERE x = ? AND y = ? ORDER BY build_order""", coord)
