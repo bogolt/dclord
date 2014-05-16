@@ -108,7 +108,7 @@ class DcFrame(wx.Frame):
 		
 		self._mgr = wx.aui.AuiManager(self)
 		
-		self.command_selected_user = False
+		self.command_selected_user = True
 		
 		info = wx.aui.AuiPaneInfo()
 		info.CenterPane()
