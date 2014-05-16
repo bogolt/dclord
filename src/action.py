@@ -136,10 +136,22 @@ class ActionPanel(scrolled.ScrolledPanel):
 		
 	def on_perform_actions(self, evt):
 		acts = []
+		delayed_acts = []
 		for act_id, act in enumerate(self.actions):
+			if hasattr(act, 'fleet_id') and not isinstance(act, ActionCreateFleet):
+				if act.fleet_id < 0:
+					delayed_acts.append(act)
+					continue
 			acts.append(act.create_xml_action(act_id))
 			
 		print acts
+
+		acts = []
+		# then go delayed acts, after we get reply, and fill fleet_id with proper values
+		for act_id, act in enumerate(delayed_acts):
+			acts.append(act.create_xml_action(act_id))
+		print acts
+		
 		
 	def on_cancel_actions(self, evt):
 		for act in self.actions:
