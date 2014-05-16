@@ -447,8 +447,9 @@ class DcFrame(wx.Frame):
 		self.perform_actions()
 	
 	def is_geo_scout(self, unit):
-		for act in db.proto_actions(['proto_id=%s'%(unit['class'],)]):
-			if act['type']== request.RequestMaker.GEO_EXPLORE:
+		
+		for act in store.iter_objects_list('proto_action', {'proto_id':unit['proto_id']}):
+			if act['proto_action_id']== request.RequestMaker.GEO_EXPLORE:
 				return True
 		return False
 	
@@ -457,12 +458,6 @@ class DcFrame(wx.Frame):
 			if self.is_geo_scout(u):
 				return True
 		return False
-	
-	def get_unit_range(self, unit):
-		proto = db.db.get_object(db.Db.PROTO, {'=':{'id':unit['class']}})
-		if proto:
-			return float(proto['fly_range'])
-		return None
 
 	def onSendScouts(self, _):
 		min_size = 70
@@ -494,7 +489,7 @@ class DcFrame(wx.Frame):
 				for fleet in store.iter_objects_list('fleet', {'user_id':user_id, 'x':coord[0], 'y':coord[1]}):
 					if value_in(self.exclude_fleet_names, fleet['name']):
 						continue
-					units = store.get_fleet_units({'fleet_id':fleet['fleet_id']})
+					units = store.get_fleet_units(fleet['fleet_id'])
 					if len(units) != 1:
 						print 'fleet %s has wrong units count ( != 1 ) %s, skipping it'%(fleet, units)						
 						continue
@@ -529,7 +524,7 @@ class DcFrame(wx.Frame):
 				dx = lt[0]-fly_range, lt[0]+fly_range
 				dy = lt[1]-fly_range, lt[1]+fly_range
 				for p in store.iter_planets_size((lt[0]-fly_range, lt[0]+fly_range, lt[1]-fly_range, lt[1]+fly_range)):
-					if not (p['size']>=min_size and p['size']<=max_size):
+					if not (p['s']>=min_size and p['s']<=max_size):
 						continue
 					dest = get_coord(p)
 					if dest in exclude:
@@ -543,20 +538,25 @@ class DcFrame(wx.Frame):
 						continue
 					
 					has_flying_geo_scouts = False
+					
 					# check if currently there is some explore fleet on planet, or explore fleet already fly there
-					
-					# get list of all flying fleets ( or our allies and mults ) to this planet 
-					for fleet in db.db.iter_objects_list(db.Db.FLYING_FLEET, {'=':{'x':dest[0], 'y':dest[1]}, 'in': {'owner_id':friend_geo_scout_ids}}):
-						# check if the fleet is geo-scout
-						if self.is_geo_scout_fleet(turn, fleet['id']):
-							has_flying_geo_scouts = True
-							print 'found another scout %s, skip planet %s'%(fleet, dest)
-					if has_flying_geo_scouts:
-						exclude.add(dest)
+					already_has_scout = False
+					for fleet in store.iter_objects_list('fleet', {'x':dest[0], 'y':dest[1]}, controlled = True):
+						if self.is_geo_scout_fleet(fleet['fleet_id']):
+							already_has_scout = True
+							break
+					if already_has_scout:
 						continue
-					
-					#TODO: can check if it will take too long for the other fleet, send ours
-					
+						
+					already_fly_geo_scouts = False
+					for fleet in store.iter_objects_list('flying_fleet', {'x':dest[0], 'y':dest[1]}, controlled = True):
+						if self.is_geo_scout_fleet(fleet['fleet_id']):
+							already_fly_geo_scouts = True
+							self.actions.add_action( action.Action('explore', user_id, {'planet':dest, 'fleet_id':fleet['fleet_id']}))
+							break
+					if already_fly_geo_scouts:
+						continue
+
 					possible_planets.append( (dist, dest) )
 
 				for fleet, fleet_range in fleets:
@@ -564,15 +564,15 @@ class DcFrame(wx.Frame):
 						if dist > fleet_range:
 							continue
 						# ok fly to it
-						self.pending_actions.fleetMove(fleet['id'], planet)
+						self.actions.add_action( action.Action('jump', user_id, {'planet':planet, 'fleet_id':fleet['fleet_id']}))
+						#self.pending_actions.fleetMove(fleet['id'], planet)
 						exclude.add( planet )
 						print 'jump %s from %s to %s'%(fleet, coord, planet)
 						possible_planets.remove( (dist, planet ) )
 						break
 							
-			self.perform_actions()
+			#self.perform_actions()
 
-	
 	def perform_commands(self, acc, cmds):
 		cmds = {'move':[(fleet_id, (x,y))], 'create_fleet':[('name', (x,y))], 'unit_to_fleet':[(unit_id, fleet_id)], 'geo_explore':[unit_id], 'colonize':[unit_id], 'arc_colonize':[unit_id], 'build':[], 'cancel_colonize':[colonize_action], 'cancel_jump':[fleet_id]}
 	

@@ -380,6 +380,12 @@ class Store:
 		if not user:
 			return 0
 		return int(user['turn'])
+	
+	def get_user_name(self, user_id):
+		user = self.get_object('user', {'user_id':user_id})
+		if not user:
+			return '<unknown>'
+		return user['name']
 		
 	def add_user_planet(self, planet_data):
 		planet_data['turn'] = self.get_user_turn(planet_data['user_id'])
@@ -616,7 +622,7 @@ class Store:
 		for r in cur.fetchall():
 			yield dict(zip(keys, r))
 			
-	def iter_objects_list(self, table, conds = {}, rect = None):
+	def iter_objects_list(self, table, conds = {}, rect = None, controlled = None):
 		cur = self.conn.cursor()
 		s = 'select %s from %s'%(','.join(tables[table]), table,)
 		
@@ -627,6 +633,8 @@ class Store:
 			
 		if rect:
 			conds_str += ['x between %s AND %s AND y between %s AND %s'%rect]
+		if controlled:
+			conds_str += ['user_id in (select user_id from user where login is not NULL)']
 
 		if conds_str:
 			s+=' WHERE '+' AND '.join(conds_str)

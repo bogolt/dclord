@@ -13,6 +13,12 @@ import  wx.lib.scrolledpanel as scrolled
 
 log = logging.getLogger('dclord')
 
+class Action:
+	def __init__(self, name, user_id, opts):
+		self.user_id = user_id
+		self.name = name
+		self.opts = opts
+
 class ActionPanel(scrolled.ScrolledPanel):
 	def __init__(self, parent):
 		scrolled.ScrolledPanel.__init__(self, parent)
@@ -33,9 +39,13 @@ class ActionPanel(scrolled.ScrolledPanel):
 			self.Layout()
 		
 	def add_action(self, action):
-		action_type, action_opts = action
-		if action_type == 'jump':
-			fleet = action_opts
-			self.sizer.Add( wx.StaticText(self, label='Jump %s[%s] to %d:%d from %d:%d'%(fleet['name'], store.user_name(fleet['user_id']), fleet['x'], fleet['y'], fleet['from_x'], fleet['from_x'])))
-		self.actions[(action_type, fleet['fleet_id'])] = fleet
+		if action.name == 'jump':
+			fleet_id = action.opts['fleet_id']
+			fleet = store.get_object('fleet', {'fleet_id':fleet_id})
+			coord = action.opts['planet']
+			#fleet = action_opts
+			self.sizer.Add( wx.StaticText(self, label='Jump %s[%s] to %d:%d from %d:%d'%(store.get_user_name(action.user_id), fleet['name'], coord[0], coord[1], fleet['x'], fleet['y'])))
+		
+		self.sizer.Layout()
+		#self.actions[(action_type, fleet['fleet_id'])] = fleet
 		
