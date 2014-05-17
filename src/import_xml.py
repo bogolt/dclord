@@ -140,10 +140,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			data = getAttrs(attrs, fleetDict)
 			self.parent_id = data['fleet_id'] if 'fleet_id' in data else 0
 			table = 'fleet'
-			if 'in_transit' in data and 1==int(data['in_transit']):
+			if 'tta' in data and int(data['tta'])>0:
 				table = 'flying_fleet'
-				
-			if 'tta' in data:
 				data['arrival_turn'] = int(self.user['turn']) + int(data['tta'])
 
 			if 'fleet' == name:
