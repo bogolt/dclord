@@ -182,7 +182,10 @@ class DcFrame(wx.Frame):
 		
 		routes = []
 		for fleet_id in self.jump_fleets:
-			route = self.calculate_route( store.get_object('fleet', {'fleet_id':fleet_id}), evt.attr1 )
+			fleet = store.get_object('fleet', {'fleet_id':fleet_id})
+			if not fleet:
+				continue
+			route = self.calculate_route( fleet, evt.attr1 )
 			if route:
 				routes.append( route )
 				fleet = store.get_object('fleet', {'fleet_id':fleet_id})
