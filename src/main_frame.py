@@ -455,7 +455,7 @@ class DcFrame(wx.Frame):
 	
 	def is_geo_scout_fleet(self, fleet_id):
 		for u in store.get_fleet_units(fleet_id):
-			if is_geo_scout(u['unit_id']):
+			if self.is_geo_scout(u):
 				return True
 		return False
 
@@ -559,7 +559,7 @@ class DcFrame(wx.Frame):
 					for fleet in store.iter_objects_list('flying_fleet', {'x':dest[0], 'y':dest[1]}, controlled = True):
 						if self.is_geo_scout_fleet(fleet['fleet_id']):
 							already_fly_geo_scouts = True
-							self.actions.add_action( action.Action('explore', user_id, {'planet':dest, 'fleet_id':fleet['fleet_id']}))
+							#self.actions.add_action( action.ActionGeoExplore(user_id, ':dest, 'fleet_id':fleet['fleet_id']}))
 							break
 					if already_fly_geo_scouts:
 						print 'planet %s has flying scount fleet'%(p,)
