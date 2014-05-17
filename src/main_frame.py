@@ -108,7 +108,7 @@ class DcFrame(wx.Frame):
 		
 		self._mgr = wx.aui.AuiManager(self)
 		
-		self.command_selected_user = True
+		self.command_selected_user = False
 		
 		info = wx.aui.AuiPaneInfo()
 		info.CenterPane()
@@ -182,7 +182,12 @@ class DcFrame(wx.Frame):
 		
 		routes = []
 		for fleet_id in self.jump_fleets:
-			routes.append( self.calculate_route( store.get_object('fleet', {'fleet_id':fleet_id}), evt.attr1 ) )
+			route = self.calculate_route( store.get_object('fleet', {'fleet_id':fleet_id}), evt.attr1 )
+			if route:
+				routes.append( route )
+				fleet = store.get_object('fleet', {'fleet_id':fleet_id})
+				
+				self.actions.add_action( action.ActionJump(fleet['user_id'], fleet_id, evt.attr1))
 			
 		self.map.jump_fleets_routes = routes
 		self.map.update()

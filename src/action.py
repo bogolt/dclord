@@ -1,11 +1,14 @@
 import wx
 import wx.aui
 import logging
-import db
+import os
+import os.path
+import loader
 import util
 import event
 import config
 import image
+import import_xml
 import unit_list
 from store import store
 
@@ -132,9 +135,13 @@ class ActionPanel(scrolled.ScrolledPanel):
 		sz.Add(self.button_cancel)
 		self.sizer.Add(sz)
 		
-		self.actions = []
-		self.delayed_acts = []
-		self.create_fleet_acts = {}
+		self.stored_actions = {} #user->[actions]
+		self.delayed_actions = {} #user->[actions] -1 fleet-id
+		self.pending_actions = {} #user->{act-id: action}
+		
+		#self.actions = {}
+		#self.delayed_acts = {}
+		#self.create_fleet_acts = {}
 				
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
@@ -145,32 +152,34 @@ class ActionPanel(scrolled.ScrolledPanel):
 		
 		self.Bind(wx.EVT_BUTTON, self.on_perform_actions, self.button_perform)
 		self.Bind(wx.EVT_BUTTON, self.on_cancel_actions, self.button_cancel)
-		
+		self.Bind(event.EVT_DATA_DOWNLOAD, self.on_data_downloaded)
 	
-	def update_fleet_id(self, fleet_id, new_id):
-		for act in self.delayed_acts:
+	def update_fleet_id(self, user_id, fleet_id, new_id):
+		for act in self.delayed_actions[user_id]:
 			if act.fleet_id == fleet_id:
 				act.fleet_id = new_id
-				self.actions.append( act )
+				self.stored_actions.setdefault(user_id, []).append( act )
 	
 	#replyes = {1:(True, 2), 2:(False,0), 3:(True, 99)}
-	def on_reply_received(self, actions_reply):
+	def on_reply_received(self, user_id, actions_reply):
+		user_id = int(user_id)
+		acts = self.pending_actions[user_id]
+		del self.pending_actions[user_id]
 		
-		for act_id, act in self.create_fleet_acts.iteritems():
-			if act_id in actions_reply:
-				result, new_id = actions_reply[act_id]
-				if result:
-					self.update_fleet_id(act.fleet_id, new_id)
-				#else:
-				#	self.delete_actions(act.fleet_id)
+		for act_id, act in acts.iteritems():
+			if not act_id in actions_reply:
+				print 'no reply for action %d'%(act_id,)
+				continue
+			is_ok, ret_id = actions_reply[act_id]
+			if is_ok and isinstance(act, ActionCreateFleet):
+				self.update_fleet_id(user_id, act.fleet_id, ret_id)
 		
-		# ok it's time to perform actions that have valid ids
-		
-		
-		self.on_perform_actions(None)
+		if user_id in self.delayed_actions:
+			del self.delayed_actions[user_id]
 	
 	def on_perform_actions(self, evt):
-		
+		self.do_perform()
+		return
 		
 		acts = []
 		delayed_acts = []
@@ -189,12 +198,78 @@ class ActionPanel(scrolled.ScrolledPanel):
 			acts.append(act.create_xml_action(act_id))
 		print acts
 		
+	def do_perform(self):
+		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
+		util.assureDirClean(out_dir)
+
+		l = loader.AsyncLoader()
+		at_leat_one = False
+		for user_id, acts in self.stored_actions.iteritems():
+			if len(acts) == 0:
+				continue
+			user = store.get_user(user_id)
+			if 'login' in user and user['login']:
+				l.sendActions(self, user['login'], self.prepare_actions_request(user_id), out_dir)
+				at_leat_one = True
 		
+		# clear action list
+		self.remove_action_items()
+		self.stored_actions = {}
+		
+		if at_leat_one:
+			l.start()
+		
+	def on_data_downloaded(self, evt):
+		key = evt.attr1
+		data = evt.attr2
+		if not key:
+			#all data downloaded
+			if len(self.stored_actions) > 0:
+				self.do_perform()
+			return
+			
+		if not data:
+			print 'failed to load info for user %s'%(key,)
+			return
+		
+		user_info = import_xml.processRawData(data)
+		if not user_info:
+			print 'wrong data from %s'%(key,)
+			return
+
+		user_id = user_info['user_id']
+		if 'results' in user_info:
+			actions_result = user_info['results']
+			self.on_reply_received(user_id, actions_result)
+		
+	def prepare_actions_request(self, user_id):
+		act_id = 0
+		s = []
+		
+		# anyway need to clear it
+		self.pending_actions[user_id] = {}
+		for act in self.stored_actions[user_id]:
+			# put all actions involing not yet created fleets ( except fleet-create ) into another dict, it will be processed later, when we have real fleet-id
+			if not isinstance(act, ActionCreateFleet) and hasattr(act, 'fleet_id') and act.fleet_id < 0:
+				self.delayed_actions.setdefault(user_id, []).append(act)
+				continue
+			act_id+=1
+			s.append(act.create_xml_action(act_id))
+			self.pending_actions[user_id][act_id] = act
+		st = tag('x-dc-perform', ''.join(s))
+		print 'User %s actions: %s'%(store.get_user_name(user_id), st)
+		return st
+				
 	def on_cancel_actions(self, evt):
-		for act in self.actions:
-			act.revert()
-			act.label.Destroy()
-		self.actions = []
+		self.remove_action_items(revert_actions = True)
+		self.stored_actions = {}
+		
+	def remove_action_items(self, revert_actions = False):
+		for acts in self.stored_actions.itervalues():
+			for act in acts:
+				if revert_actions:
+					act.revert()
+				act.label.Destroy()
 		self.button_perform.Enable(False)
 		self.button_cancel.Enable(False)
 				
@@ -204,7 +279,8 @@ class ActionPanel(scrolled.ScrolledPanel):
 		
 	def add_action(self, action):
 		
-		self.actions.append(action)
+		self.stored_actions.setdefault(action.user_id,[]).append(action)
+		
 		user_name = store.get_user_name(action.user_id)
 		label = ''
 		if ActionJump.NAME == action.action_type:

@@ -46,7 +46,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		xml.sax.handler.ContentHandler.__init__(self)
 
 		self.user_id = 0
-		self.user = {}
+		self.user = {'results':{}}
 		self.parent = None
 		self.error_code = 0
 		self.error_text = ''
@@ -196,7 +196,9 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.store.add_data('diplomacy', data)
 		elif 'act' == name and not self.parent:
 			ret_id = attrs['return-id'] if 'return-id' in attrs else None
-			self.store.add_action_result(attrs['id'], unicode(attrs['result'])==u'ok', ret_id)
+			if not 'results' in self.user:
+				self.user['results'] = {}
+			self.user['results'][int(attrs['id'])] = (unicode(attrs['result'])==u'ok', ret_id)
 				
 	def endElement(self, name):
 		if name in ['user-planets', 'fleets', 'allien-fleets', 'harrison', 'building_class', 'actions-requested']:
