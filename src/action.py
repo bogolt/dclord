@@ -181,23 +181,6 @@ class ActionPanel(scrolled.ScrolledPanel):
 		self.do_perform()
 		return
 		
-		acts = []
-		delayed_acts = []
-		for act_id, act in enumerate(self.actions):
-			if hasattr(act, 'fleet_id') and not isinstance(act, ActionCreateFleet):
-				if act.fleet_id < 0:
-					delayed_acts.append(act)
-					continue
-			acts.append(act.create_xml_action(act_id))
-			
-		print acts
-
-		acts = []
-		# then go delayed acts, after we get reply, and fill fleet_id with proper values
-		for act_id, act in enumerate(delayed_acts):
-			acts.append(act.create_xml_action(act_id))
-		print acts
-		
 	def do_perform(self):
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
@@ -269,7 +252,8 @@ class ActionPanel(scrolled.ScrolledPanel):
 			for act in acts:
 				if revert_actions:
 					act.revert()
-				act.label.Destroy()
+				#if hasattr(act, 'label'):
+				#	act.label.Destroy()
 		self.button_perform.Enable(False)
 		self.button_cancel.Enable(False)
 				
@@ -314,6 +298,3 @@ class ActionPanel(scrolled.ScrolledPanel):
 			
 		self.button_perform.Enable(True)
 		self.button_cancel.Enable(True)
-		
-	def perform_all(self):
-		pass
