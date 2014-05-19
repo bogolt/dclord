@@ -241,8 +241,8 @@ class Store:
 				x integer(2) not null,
 				y integer(2) not null,
 				proto_id integer not null,
-				done integer,
-				build_order integer
+				done integer default 0,
+				build_order integer default 0
 				)""")
 		
 		cur.execute("""create table if not exists proto(
@@ -499,8 +499,6 @@ class Store:
 		pass
 	
 	def command_create_fleet(self, user_id, coord, name):
-		cur = self.conn.cursor()
-
 		self.create_fleet_id -= 1
 		self.add_data('fleet', {'user_id':user_id, 'x':coord[0], 'y':coord[1], 'name':name, 'fleet_id':self.create_fleet_id})
 		return self.create_fleet_id
@@ -520,6 +518,21 @@ class Store:
 		
 		#insert it to the fleet
 		self.add_data('fleet_unit', {'fleet_id':fleet_id, 'unit_id':unit_id})
+		
+	def command_build(self, coord, proto_id):
+		self.create_fleet_id -= 1
+		cur = self.conn.cursor()
+		cur.execute('select max(build_order) from garrison_queue_unit WHERE x=? and y=?', coord)
+		res = cur.fetchone()
+		build_order = 0
+		if res and res[0]:
+			build_order = int(res[0]) + 1
+		self.add_data('garrison_queue_unit', {'x':coord[0], 'y':coord[1], 'proto_id':proto_id, 'unit_id':self.create_fleet_id, 'build_order':build_order})
+		return self.create_fleet_id
+	
+	def command_destroy(self, unit_id):
+		self.remove_object('unit', {'unit_id':unit_id})
+		self.remove_object('garrison_unit', {'unit_id':unit_id})
 		
 	def command_move_unit_to_garrison(self, unit_id, coord):
 		self.add_data('garrison_unit', {'x':coord[0], 'y':coord[1], 'unit_id':unit_id})

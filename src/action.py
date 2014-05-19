@@ -120,7 +120,236 @@ class ActionCreateFleet(Action):
 		store.update_object('fleet_unit', {'fleet_id':self.fleet_id}, {'fleet_id':new_id})
 		self.fleet_id = new_id
 
+class ActionCancelBuild(Action):
+	NAME = "drop_building_from_que"
+	
+	def __init__(self, user_id, unit_id):
+		Action.__init__(self, self.NAME, user_id)
+		self.unit_id = unit_id
+		self.queue_unit = store.get_object('garrison_queue_unit', {'unit_id':self.unit_id})
+		
+	def perform(self):
+		store.remove_object('garrison_queue_unit', {'unit_id':self.unit_id})
+		
+	def revert(self):
+		store.add_data('garrison_queue_unit', self.queue_unit)
+		
+	def create_xml_action(self, act_id):
+		Action.create_xml_action(self, act_id)
+		return self.format_action(act_id, 'drop_building_from_que', [tag('building_id', self.unit_id)])
+		
+class ActionBuild(Action):
+	NAME = "add_building_to_que"
+	
+	def __init__(self, user_id, coord, proto_id):
+		Action.__init__(self, self.NAME, user_id)
+		self.coord = coord
+		self.proto_id = proto_id
+		self.fleet_id = None #it's actually building_id
+		
+	def perform(self):
+		self.fleet_id = store.command_build(self.coord, self.proto_id)
+		
+	def revert(self):
+		store.remove_object('garrison_queue_unit', {'unit_id':self.fleet_id})
+		self.fleet_id = None
+		
+	def create_xml_action(self, act_id):
+		Action.create_xml_action(self, act_id)
+		return self.format_action(act_id, 'add_building_to_que', [tag('building_id', self.proto_id), tag('planet_id', '%d:%d'%self.coord)])
+		
+	def commit_result(self, success, new_id):
+		if not success:
+			return
+			
+		store.update_object('garrison_queue_unit', {'unit_id':self.fleet_id}, {'unit_id':new_id})
+		self.fleet_id = new_id
+		
+class ActionDestroy(Action):
+	NAME = "demolish_building"
+	
+	def __init__(self, user_id, unit_id):
+		Action.__init__(self, self.NAME, user_id)
+		self.unit_id = unit_id
+		self.unit = store.get_object('unit', {'unit_id':self.unit_id})
+		self.garrison_unit = store.get_object('garrison_unit', {'unit_id':self.unit_id})
+		
+	def perform(self):
+		store.command_destroy(self.unit_id)
+		
+	def revert(self):
+		store.add_data('unit', self.unit)
+		store.add_data('garrison_unit', self.garrison_unit)
+		
+	def create_xml_action(self, act_id):
+		Action.create_xml_action(self, act_id)
+		return self.format_action(act_id, 'garrison_queue_unit', [tag('building_id', self.proto_id), tag('planet_id', '%d:%d'%self.coord)])
+		
+	def commit_result(self, success, new_id):
+		if not success:
+			return
+			
+		store.update_object('garrison_queue_unit', {'unit_id':self.fleet_id}, {'unit_id':new_id})
+		self.fleet_id = new_id
+		
+		
+'''
+cancel_cargo_load
+change_fleet_name
 
+cancel_jump
+accept_nationality_offer
+
+share_fleet_access
+customise_container
+hidefleet
+
+cancel_dip_relation
+create_new_unit_design
+
+create_prototype_design_unit
+
+change_planet_name
+
+change_behaviour
+
+save_interface_settings
+
+store_planet_mark
+
+building_to_top
+
+change_dip_relation
+
+pack_parts
+
+cancel_action
+
+change_planet_perms
+
+unpack_container
+
+renameacc
+
+clear_queue
+			<act name="drop_building_from_que" id="1">
+
+<building_id>16982207</building_id>
+
+</act>
+
+<act name="demolish_building" id="1">
+
+<building_id>8230919</building_id>
+
+</act>
+create_single_design_unit
+
+save_player_settings
+
+add_building_to_que
+
+drop_prototype
+
+customise_container
+
+store_user_vote
+
+save_diplomacy_settings
+
+save_ankete
+
+all_ext_planet_perms
+
+create_new_unit_design
+
+store_planet_fake_stats
+
+hidefleet
+
+cancel_dip_relation
+
+recall_fleet_permission
+
+new_script_weight
+
+drop_building_from_que
+
+gimmeelephant
+
+move_fleet
+
+unshare_me
+
+subscribe_me_to
+
+create_prototype_design_unit
+
+kill_player
+
+move_unit_to_fleet
+
+store_action
+
+change_planet_name
+
+change_behaviour
+
+save_interface_settings
+
+store_planet_mark
+
+building_to_top
+
+activate_free_subscription
+
+change_dip_relation
+
+showpost
+
+set_bid
+
+cancel_percent_change
+
+create_channel
+
+pack_parts
+
+archive_design
+
+enable_fleet_script
+
+drop_design
+
+subscribe_player
+
+drop_fleet_script
+
+remove_ext_permission
+
+add_to_digest
+
+store_messages_cleanup_setup
+
+add_player_to_dip_by_name
+
+rename_channel
+
+create_fleet_from_choosen
+
+alter_channel_permissions
+
+cancel_action
+
+change_planet_perms
+
+unpack_container
+
+renameacc
+
+clear_queue'''
+
+			
 class ActionPanel(scrolled.ScrolledPanel):
 	def __init__(self, parent):
 		scrolled.ScrolledPanel.__init__(self, parent)
@@ -174,7 +403,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 			if not is_ok:
 				# revert action in the local-db ( and on the map )
 				act.revert()
-			elif is_ok and isinstance(act, ActionCreateFleet):
+			elif is_ok and (isinstance(act, ActionCreateFleet) or isinstance(act, ActionBuild)):
 				self.update_fleet_id(user_id, act.fleet_id, ret_id)
 		
 		if user_id in self.delayed_actions:
