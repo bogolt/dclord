@@ -64,7 +64,8 @@ def pack(path_in, path_out):
 		f.write(in_file.read())
 	f.close()
 	
-
+#def backup_xml(path, user_name, turn):
+	
 
 def assureDirExist(d):
 	if os.path.exists(d):

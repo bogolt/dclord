@@ -20,6 +20,7 @@ import algorithm
 import math
 import loader
 import action
+import shutil
 from store import store
 
 from datetime import datetime
@@ -836,6 +837,7 @@ class DcFrame(wx.Frame):
 		for acc in config.accounts():
 			if not 'id' in acc:
 				continue
+			user_id = int(acc['id'])
 				
 			log.info('requesting user %s info'%(acc['login'],))
 			# find if there is any explore-capable fleets over unexplored planets
@@ -940,7 +942,7 @@ class DcFrame(wx.Frame):
 	
 	def onDownloadRawData(self, evt):
 		key = evt.attr1
-		data = evt.attr2
+		path = evt.attr2
 		if not key:
 			log.info('all requested data downloaded')
 			self.log('All requested data downloaded')
@@ -953,34 +955,39 @@ class DcFrame(wx.Frame):
 			#	save_load.save_common_data(os.path.join(sync_data_path), config.options['data']['sync_key'])
 			self.map.update()
 			return
-		if not data:
+		if not path:
 			log.error('failed to load info for user %s'%(key,))
 			self.log('Error: failed to load info for user %s'%(key,))
 			return
 		
-		self.log('Downloaded %s %s'%(key, data))
-		user = import_xml.processRawData(data)
+		self.log('Downloaded %s %s'%(key, path))
+		user = import_xml.processRawData(path)
 		if not user:
 			#status_text = 'Not authorized' if status == import_raw.XmlHandler.StatusAuthError else 'Turn in progress'
 			self.log('Error processing %s'%(key))
 		else:
+			if 'name' in user and 'turn' in user:
+				self.backup_xml(path, user)
 			if '1' == user['request']:
 				self.process_performed_actions(user['user_id'])
 		
-		if key in self.recv_data_callback:
-			func, user_id, data = self.recv_data_callback[key]
-			del self.recv_data_callback[key]
-			func(user_id, data)
-			db.clear_action_result(user_id)
+		#if key in self.recv_data_callback:
+		#	func, user_id, data = self.recv_data_callback[key]
+		#	del self.recv_data_callback[key]
+		#	func(user_id, path)
+		#	db.clear_action_result(user_id)
 		
-		self.map.turn = db.db.max_turn
 		self.map.update()
 		self.object_filter.update()
 		#self.history.updateTurns(self.map.turn)
 		
-		self.started = False
-		self.perform_next_action()
-		
+		#self.started = False
+		#self.perform_next_action()
+	
+	def backup_xml(self, path, user):
+		backup_dir = os.path.join(config.options['data']['path'], '%s/%s_%s/'%(user['turn'], user['user_id'], user['name']))
+		util.assureDirExist(backup_dir)
+		shutil.copy(path, backup_dir)
 	
 	def onSelectUser(self, evt):
 		user_id = evt.attr1

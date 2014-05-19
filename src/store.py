@@ -20,7 +20,7 @@ tables = {'planet':['x', 'y', 'o','e','m','t','s', 'user_id', 'name', 'turn'],
 		'fleet':['x','y','user_id','fleet_id','name', 'times_spotted', 'is_hidden'],
 		'alien_fleet':['x','y','user_id','fleet_id','name', 'is_hidden', 'turn'],
 		'flying_fleet':['x','y','user_id','fleet_id','name', 'from_x', 'from_y', 'arrival_turn', 'in_transit'],
-		'flying_alien_fleet':['x','y','user_id','from_x', 'from_y', 'arrival_turn', 'weight'], #user_id who spot fleet, no primary key, no fleet user owner
+		'alien_flying_fleet':['x','y','user_id','from_x', 'from_y', 'arrival_turn', 'weight'], #user_id who spot fleet, no primary key, no fleet user owner
 		'unit':['unit_id', 'hp', 'proto_id'],
 		'fleet_unit':['unit_id', 'fleet_id'],
 		'garrison_unit':['unit_id', 'x', 'y'],
@@ -197,7 +197,7 @@ class Store:
 				in_transit integer(1)
 				)""")
 						
-		cur.execute("""create table if not exists flying_alien_fleet(
+		cur.execute("""create table if not exists alien_flying_fleet(
 				x integer(2) not null,
 				y integer(2) not null,
 				user_id interger,
@@ -340,6 +340,7 @@ class Store:
 
 		cur.execute('delete from user_planet WHERE user_id=?', (user_id,))
 		cur.execute('delete from fleet WHERE user_id=?', (user_id,))
+		cur.execute('delete from flying_fleet WHERE user_id=?', (user_id,))
 		
 		
 		# mark all user-taken planets as empty
@@ -361,7 +362,7 @@ class Store:
 		cur.execute('delete from diplomacy WHERE user_id=?', (user_id,))
 		
 		# delete flying alien fleets ( unable distinct them from new ones )
-		cur.execute('delete from flying_alien_fleet WHERE user_id=?', (user_id,))
+		cur.execute('delete from alien_flying_fleet WHERE user_id=?', (user_id,))
 		
 		self.conn.commit()
 	

@@ -83,7 +83,7 @@ def save_user_data(user_id, path):
 	save_csv_table(path, 'hw', user_filter)
 
 	save_csv_table(path, 'flying_fleet', user_filter)
-	save_csv_table(path, 'flying_alien_fleet', user_filter)
+	save_csv_table(path, 'alien_flying_fleet', user_filter)
 	save_csv_table(path, 'user_planet', user_filter)
 	save_csv_table(path, 'fleet', user_filter)
 	save_csv_table(path, 'proto', user_filter)
@@ -169,7 +169,7 @@ def load_user_data(path):
 		load_csv_table(path, 'hw')
 
 		load_csv_table(path, 'flying_fleet')
-		load_csv_table(path, 'flying_alien_fleet')
+		load_csv_table(path, 'alien_flying_fleet')
 		load_csv_table(path, 'user_planet')
 		load_csv_table(path, 'fleet')
 		load_csv_table(path, 'proto')
