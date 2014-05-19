@@ -409,8 +409,8 @@ class DcFrame(wx.Frame):
 			if self.command_selected_user and int(acc['id']) != self.map.selected_user_id:
 				continue
 			log.info('requesting user %s info'%(acc['login'],))
-			l.getUserInfo(self, acc['login'], out_dir)
-			l.getKnownPlanets(self, acc['login'], out_dir)
+			for msg_type in ['all', 'known_planets', 'fleetsmessages']:
+				l.getDcData(self, acc['login'], msg_type, out_dir)
 		l.start()
 
 	def onUpload(self, event):
