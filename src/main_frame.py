@@ -985,7 +985,7 @@ class DcFrame(wx.Frame):
 		#self.perform_next_action()
 	
 	def backup_xml(self, path, user):
-		backup_dir = os.path.join(config.options['data']['path'], '%s/%s_%s/'%(user['turn'], user['user_id'], user['name']))
+		backup_dir = os.path.join(config.options['data']['path'], 'backup/%s/%s_%s/'%(user['turn'], user['user_id'], user['name']))
 		util.assureDirExist(backup_dir)
 		shutil.copy(path, backup_dir)
 	
