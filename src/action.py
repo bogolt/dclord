@@ -170,7 +170,10 @@ class ActionPanel(scrolled.ScrolledPanel):
 				print 'no reply for action %d'%(act_id,)
 				continue
 			is_ok, ret_id = actions_reply[act_id]
-			if is_ok and isinstance(act, ActionCreateFleet):
+			if not is_ok:
+				# revert action in the local-db ( and on the map )
+				act.revert()
+			elif is_ok and isinstance(act, ActionCreateFleet):
 				self.update_fleet_id(user_id, act.fleet_id, ret_id)
 		
 		if user_id in self.delayed_actions:
