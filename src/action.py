@@ -7,6 +7,7 @@ import loader
 import util
 import event
 import config
+import save_load
 import image
 import import_xml
 import unit_list
@@ -211,6 +212,10 @@ class ActionPanel(scrolled.ScrolledPanel):
 			#all data downloaded
 			if len(self.stored_actions) > 0:
 				self.do_perform()
+			else:
+				# time to save all performed changes locally
+				save_load.save_local_data()
+				wx.PostEvent(self.GetParent(), event.MapUpdate())
 			return
 			
 		if not data:
