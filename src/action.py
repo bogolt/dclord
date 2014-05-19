@@ -139,9 +139,8 @@ class ActionPanel(scrolled.ScrolledPanel):
 		self.delayed_actions = {} #user->[actions] -1 fleet-id
 		self.pending_actions = {} #user->{act-id: action}
 		
-		#self.actions = {}
-		#self.delayed_acts = {}
-		#self.create_fleet_acts = {}
+		self.actions_sizer = wx.BoxSizer(wx.VERTICAL)
+		self.sizer.Add(self.actions_sizer)
 				
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
@@ -252,8 +251,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 			for act in acts:
 				if revert_actions:
 					act.revert()
-				#if hasattr(act, 'label'):
-				#	act.label.Destroy()
+		self.actions_sizer.DeleteWindows()
 		self.button_perform.Enable(False)
 		self.button_cancel.Enable(False)
 				
@@ -293,7 +291,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 		txt = wx.StaticText(self, label=label)
 		txt.action = action
 		action.label = txt			
-		self.sizer.Add( txt )
+		self.actions_sizer.Add( txt )
 		self.sizer.Layout()
 			
 		self.button_perform.Enable(True)
