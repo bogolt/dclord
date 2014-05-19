@@ -100,7 +100,7 @@ class ActionCreateFleet(Action):
 		
 	def perform(self):
 		self.fleet_id = store.command_create_fleet(self.user_id, self.coord, self.name)
-		print 'created fleet %d from %s %s %s'%(self.fleet_id, self.user_id, self.coord, self.name)
+		#print 'created fleet %d from %s %s %s'%(self.fleet_id, self.user_id, self.coord, self.name)
 		
 	def revert(self):
 		store.remove_object('fleet', {'fleet_id':self.fleet_id})
@@ -168,7 +168,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 		
 		for act_id, act in acts.iteritems():
 			if not act_id in actions_reply:
-				print 'no reply for action %d'%(act_id,)
+				#print 'no reply for action %d'%(act_id,)
 				continue
 			is_ok, ret_id = actions_reply[act_id]
 			if not is_ok:
@@ -219,12 +219,12 @@ class ActionPanel(scrolled.ScrolledPanel):
 			return
 			
 		if not data:
-			print 'failed to load info for user %s'%(key,)
+			#print 'failed to load info for user %s'%(key,)
 			return
 		
 		user_info = import_xml.processRawData(data)
 		if not user_info:
-			print 'wrong data from %s'%(key,)
+			#print 'wrong data from %s'%(key,)
 			return
 
 		user_id = user_info['user_id']
@@ -247,7 +247,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 			s.append(act.create_xml_action(act_id))
 			self.pending_actions[user_id][act_id] = act
 		st = tag('x-dc-perform', ''.join(s))
-		print 'User %s actions: %s'%(store.get_user_name(user_id), st)
+		#print 'User %s actions: %s'%(store.get_user_name(user_id), st)
 		return st
 				
 	def on_cancel_actions(self, evt):
@@ -286,13 +286,13 @@ class ActionPanel(scrolled.ScrolledPanel):
 			fleet_name = store.get_fleet_name(action.fleet_id)
 			fleet = store.get_object('fleet', {'fleet_id':action.fleet_id})
 			if not fleet:
-				print 'oops, fleet %d not found in db, unit move failed'%(action.fleet_id,)
+				#print 'oops, fleet %d not found in db, unit move failed'%(action.fleet_id,)
 				return
 			label = 'Unit %s move to fleet %s[%s] at %d:%d'%(unit_name, fleet_name, user_name, fleet['x'], fleet['y'])
 		elif ActionCreateFleet.NAME == action.action_type:
 			label='Create fleet %s[%s] %d:%d'%(action.name, user_name, action.coord[0], action.coord[1])
 		else:
-			print 'action unknown %s'%(action.action_type,)
+			#print 'action unknown %s'%(action.action_type,)
 			return
 
 		action.perform()

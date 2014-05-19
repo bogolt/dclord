@@ -622,8 +622,9 @@ class DcFrame(wx.Frame):
 		turn = db.getTurn()
 		
 		for acc in config.accounts():
+			if not 'id' in acc:
+				continue
 			user_id = int(acc['id'])
-			
 			
 			#if user_id < 601140:
 			#	continue
@@ -966,9 +967,19 @@ class DcFrame(wx.Frame):
 			#status_text = 'Not authorized' if status == import_raw.XmlHandler.StatusAuthError else 'Turn in progress'
 			self.log('Error processing %s'%(key))
 		else:
+			
+			for login, acc in config.users.iteritems():
+				if login == key and not 'id' in acc:
+					acc['id'] = int(user['user_id'])
+					print 'got user id %s for user %s'%(acc['id'], login)
+					config.users[login] = acc
+					config.saveUsers()
+					
+					config.user_id_dict[acc['id']] = acc
+			
 			if 'name' in user and 'turn' in user:
 				self.backup_xml(path, user)
-			if '1' == user['request']:
+			if 'request' in user and '1' == user['request']:
 				self.process_performed_actions(user['user_id'])
 		
 		#if key in self.recv_data_callback:
