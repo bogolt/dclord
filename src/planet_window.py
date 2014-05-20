@@ -216,9 +216,11 @@ class BuildingsWindows(wx.Frame):
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
+		self.coord = None
 		
 	def set_coord(self, coord):
 		
+		self.coord = coord
 		self.sizer.DeleteWindows()
 		
 		dsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -261,8 +263,12 @@ class BuildingsWindows(wx.Frame):
 			wsizer.Add(wnd)
 			
 			txt = wx.StaticText(self, -1, 'x %s'%(len(builds),))
+			build_more = wx.Button(self, label="+", size=(20,20))
+			build_more.proto_id = bc
 			wsizer.Add(txt)
-
+			wsizer.Add(build_more)
+			
+			build_more.Bind(wx.EVT_LEFT_DOWN, self.on_build)
 		
 		has_bq = None
 		prev_units = []
@@ -294,6 +300,12 @@ class BuildingsWindows(wx.Frame):
 				
 				txt = wx.StaticText(self, -1, ' %d%% %s'%(unit['done']*100/proto['build_speed'],name))
 				wsizer.Add(txt)
+				if 'max_count' in proto and int(proto['max_count'])!=1:
+					build_more = wx.Button(self, label="+", size=(20,20))
+					build_more.proto_id = proto['proto_id']
+					build_more.Bind(wx.EVT_LEFT_DOWN, self.on_build)
+					wsizer.Add(build_more)
+					
 				continue
 			
 			
@@ -306,8 +318,11 @@ class BuildingsWindows(wx.Frame):
 			prev_units = [unit]
 		self.draw_build_stack(prev_units)
 			
-			
 		self.sizer.Layout()
+	
+	def on_build(self, evt):
+		wnd = evt.GetEventObject()
+		wx.PostEvent(self.GetParent(), event.BuildUnit(attr1=wnd.proto_id, attr2=self.coord))
 		
 	def draw_build_stack(self, units):
 		if len(units) == 0:
@@ -339,12 +354,19 @@ class PlanetPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1)
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
+		self.coord = None
 
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
 
 	def select_coord(self, evt):
 		coord = evt.attr1
+		self.coord = coord
+		self.update()
+
+	def update(self):
+		coord = self.coord
+		
 		self.sizer.DeleteWindows()
 		
 		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, '%s:%s'%coord) )
@@ -382,6 +404,11 @@ class PlanetPanel(wx.Panel):
 		buildings.set_coord(coord)
 		self.sizer.Add(buildings)
 		self.sizer.Layout()
+		
+		self.Bind(event.EVT_BUILD_UNIT, self.on_build_unit)
+		
+	def on_build_unit(self, evt):
+		wx.PostEvent(self.GetParent(), evt)
 		
 class GarrisonPanel(wx.Panel):
 	def __init__(self, parent):

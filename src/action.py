@@ -469,7 +469,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 		self.pending_actions[user_id] = {}
 		for act in self.stored_actions[user_id]:
 			# put all actions involing not yet created fleets ( except fleet-create ) into another dict, it will be processed later, when we have real fleet-id
-			if not isinstance(act, ActionCreateFleet) and hasattr(act, 'fleet_id') and act.fleet_id < 0:
+			if (not isinstance(act, ActionCreateFleet) and not isinstance(act, ActionBuild )) and hasattr(act, 'fleet_id') and act.fleet_id < 0:
 				self.delayed_actions.setdefault(user_id, []).append(act)
 				continue
 			act_id+=1
@@ -520,6 +520,8 @@ class ActionPanel(scrolled.ScrolledPanel):
 			label = 'Unit %s move to fleet %s[%s] at %d:%d'%(unit_name, fleet_name, user_name, fleet['x'], fleet['y'])
 		elif ActionCreateFleet.NAME == action.action_type:
 			label='Create fleet %s[%s] %d:%d'%(action.name, user_name, action.coord[0], action.coord[1])
+		elif ActionBuild.NAME == action.action_type:
+			label = 'Build %s on %s'%(action.proto_id, action.coord)
 		else:
 			#print 'action unknown %s'%(action.action_type,)
 			return
