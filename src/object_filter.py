@@ -237,19 +237,21 @@ class FilterPanel(wx.Panel):
 			if user_id in self.accounts:
 				self.accounts[user_id].SetLabel('%s (%s)'%(name, r['turn']))
 				continue
-
-			log.debug("%s => %s"%(user_id, name))
-			login = wx.CheckBox(self, label='%s (%s)'%(name, r['turn']))
-			login.SetValue(True)
-			login.user_id = user_id
-			self.accounts[user_id] = login
-			login.Bind(wx.EVT_CHECKBOX, self.on_user_enable)
-			#cb = wx.CheckBox(self)
-			self.sizer.Add(login)
-			if not self.active_user:
-				self.selectUser(user_id)
-			login.Bind(wx.EVT_LEFT_DCLICK, self.onChangeUser)
-		self.sizer.Layout()
+			
+			self.add_user(r)
+	
+	def add_user(self, user):
+		user_id = user['user_id']
+		login = wx.CheckBox(self, label='%s (%s)'%(user['name'], user['turn']))
+		login.SetValue(True)
+		login.user_id = user_id
+		self.accounts[user_id] = login
+		login.Bind(wx.EVT_CHECKBOX, self.on_user_enable)
+		self.sizer.Add(login)
+		if not self.active_user:
+			self.selectUser(user_id)
+		login.Bind(wx.EVT_LEFT_DCLICK, self.onChangeUser)
+		self.sizer.Layout()		
 		
 	def on_user_enable(self, evt):
 		login = evt.GetEventObject()
