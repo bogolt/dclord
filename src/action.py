@@ -432,6 +432,8 @@ class ActionPanel(scrolled.ScrolledPanel):
 		self.Bind(event.EVT_DATA_DOWNLOAD, self.on_data_downloaded)
 	
 	def update_fleet_id(self, user_id, fleet_id, new_id):
+		if not user_id in self.delayed_actions:
+			return
 		for act in self.delayed_actions[user_id]:
 			if act.fleet_id == fleet_id:
 				act.fleet_id = new_id

@@ -157,6 +157,7 @@ class DcFrame(wx.Frame):
 		
 		self.Bind(event.EVT_USER_ENABLE, self.on_user_enable)
 		self.Bind(event.EVT_BUILD_UNIT, self.on_build_unit)
+		self.Bind(event.EVT_BUILD_CANCEL, self.on_build_cancel)
 		self.Bind(event.EVT_DATA_DOWNLOAD, self.onDownloadRawData)
 		self.Bind(event.EVT_MAP_UPDATE, self.onMapUpdate)
 		self.Bind(event.EVT_USER_SELECT, self.onSelectUser)
@@ -838,6 +839,19 @@ class DcFrame(wx.Frame):
 			return
 		self.actions.add_action(action.ActionBuild(user_planet['user_id'], coord, evt.attr1))
 		self.planet_panel.update()
+
+	def on_build_cancel(self, evt):
+		units = evt.attr1
+		coord = evt.attr2
+		user_planet = store.get_object('user_planet', {'x':coord[0], 'y':coord[1]})
+		if not user_planet:
+			print 'planet %s owner unknown'%(coord,)
+			return
+		print 'cancel build units %s %s'%(units, store.get_user_name(user_planet['user_id']))
+
+		self.actions.add_action(action.ActionCancelBuild(user_planet['user_id'], units[-1]['unit_id']))
+		self.planet_panel.update()
+		
 	# geo explore
 	# load known planets
 	# 1. rename ( baken )

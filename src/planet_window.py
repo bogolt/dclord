@@ -324,6 +324,9 @@ class BuildingsWindows(wx.Frame):
 		wnd = evt.GetEventObject()
 		wx.PostEvent(self.GetParent(), event.BuildUnit(attr1=wnd.proto_id, attr2=self.coord))
 		
+	def on_cancel_build(self, evt):
+		wx.PostEvent(self.GetParent(), event.CancelBuildUnits(attr1=evt.GetEventObject().units, attr2=self.coord))
+		
 	def draw_build_stack(self, units):
 		if len(units) == 0:
 			return
@@ -350,11 +353,17 @@ class BuildingsWindows(wx.Frame):
 		txt = wx.StaticText(self, -1, '%s%s'%(count_text, name))
 		wsizer.Add(txt)
 		
-		if 'max_count' in proto and int(proto['max_count'])!=1:
-			build_more = wx.Button(self, label="+", size=(20,20))
-			build_more.proto_id = proto['proto_id']
-			build_more.Bind(wx.EVT_LEFT_DOWN, self.on_build)
-			wsizer.Add(build_more)
+		if 'max_count' in proto:
+			if int(proto['max_count'])!=1:
+				build_more = wx.Button(self, label="+", size=(20,20))
+				build_more.proto_id = proto['proto_id']
+				build_more.Bind(wx.EVT_LEFT_DOWN, self.on_build)
+				wsizer.Add(build_more)
+
+			build_less = wx.Button(self, label="-", size=(20,20))
+			build_less.units = units
+			build_less.Bind(wx.EVT_LEFT_DOWN, self.on_cancel_build)
+			wsizer.Add(build_less)
 
 
 class PlanetPanel(wx.Panel):
@@ -413,9 +422,14 @@ class PlanetPanel(wx.Panel):
 		self.sizer.Layout()
 		
 		self.Bind(event.EVT_BUILD_UNIT, self.on_build_unit)
+		self.Bind(event.EVT_BUILD_CANCEL, self.on_build_cancel)
 		
 	def on_build_unit(self, evt):
 		wx.PostEvent(self.GetParent(), evt)
+
+	def on_build_cancel(self, evt):
+		wx.PostEvent(self.GetParent(), evt)
+
 		
 class GarrisonPanel(wx.Panel):
 	def __init__(self, parent):
