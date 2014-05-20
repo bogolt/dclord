@@ -155,6 +155,7 @@ class DcFrame(wx.Frame):
 		
 		self.recv_data_callback = {}
 		
+		self.Bind(event.EVT_USER_ENABLE, self.on_user_enable)
 		self.Bind(event.EVT_BUILD_UNIT, self.on_build_unit)
 		self.Bind(event.EVT_DATA_DOWNLOAD, self.onDownloadRawData)
 		self.Bind(event.EVT_MAP_UPDATE, self.onMapUpdate)
@@ -174,6 +175,11 @@ class DcFrame(wx.Frame):
 		#self.Maximize()
 		
 		#self.history.updateTurns(self.map.turn)
+		
+	def on_user_enable(self, evt):
+		user_id = evt.attr1
+		is_enabled = evt.attr2
+		self.map.user_enable(user_id, is_enabled)
 		
 	def onObjectSelect(self, evt):
 		self.planet_panel.select_coord(evt)

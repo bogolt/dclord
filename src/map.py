@@ -67,6 +67,7 @@ class Map(util.BufferedWindow):
 		self.jump_fleets_routes = []
 		#self.filterDrawAreas = bool(config.options['filter']['areas'])
 		self.show_good_planets = None
+		self.users = {}
 		
 		self.planet_filter = []#['owner_id <> 0', 's>30', 't>20', 't<40']
 		self.pf = None
@@ -290,7 +291,7 @@ class Map(util.BufferedWindow):
 		dc.SetPen(wx.Pen(color, width=width))
 		
 		brush = wx.Brush(color)
-		if not brush_type:
+		if not brush_type or (owner_id in self.users and self.users[owner_id]==False):
 			brush.SetStyle(wx.TRANSPARENT)
 		dc.SetBrush(brush)
 
@@ -457,6 +458,10 @@ class Map(util.BufferedWindow):
 		
 		#if self.filterDrawAreas:
 		#	self.drawAreas(dc, rect)
+		
+	def user_enable(self, user_id, is_enabled):
+		self.users[user_id] = is_enabled
+		self.update()
 
 	def draw_jump_fleets(self, dc):
 		if not self.jump_fleets_routes or not self.selected_planet:
