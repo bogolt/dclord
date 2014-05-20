@@ -64,7 +64,7 @@ class PlayerFilter(wx.Window):
 import  wx.lib.scrolledpanel as scrolled
 class PlanetList(scrolled.ScrolledPanel):
 	def __init__(self, parent):
-		scrolled.ScrolledPanel.__init__(self, parent, -1, size=(200,200))
+		scrolled.ScrolledPanel.__init__(self, parent, -1, size=(100,100))
 		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
@@ -205,9 +205,10 @@ class FilterFrame(wx.Panel):
 		if self.GetAutoLayout():
 			self.Layout()
 
-class FilterPanel(wx.Panel):
+
+class FilterPanel(scrolled.ScrolledPanel):
 	def __init__(self, parent):
-		wx.Window.__init__(self, parent, -1, size=(90,40))
+		scrolled.ScrolledPanel.__init__(self, parent, size=(170,50))
 		
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		self.SetSizer(self.sizer)
@@ -220,6 +221,9 @@ class FilterPanel(wx.Panel):
 		self.update()
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
 		self.show_known.Bind(wx.EVT_CHECKBOX, self.onShowKnown)
+		
+		self.SetAutoLayout( 1 )
+		self.SetupScrolling()
 		
 	def onSize(self, evt):
 		if self.GetAutoLayout():
@@ -239,6 +243,10 @@ class FilterPanel(wx.Panel):
 				continue
 			
 			self.add_user(r)
+
+		for r in store.iter_objects_list('user'):
+			if not 'login' in r or not r['login']:
+				self.add_user(r)
 	
 	def add_user(self, user):
 		user_id = user['user_id']
