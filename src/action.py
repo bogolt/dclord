@@ -38,6 +38,9 @@ class Action:
 		
 	def format_action(self, act_id, name, data):
 		return '<act id="%s" name="%s">%s</act>'%(act_id, name, ''.join(data))
+		
+	def get_action_string(self):
+		pass
 
 class ActionJump(Action):
 	NAME = 'jump'
@@ -55,6 +58,19 @@ class ActionJump(Action):
 	def create_xml_action(self, act_id):
 		Action.create_xml_action(self, act_id)
 		return self.format_action(act_id, 'move_fleet', [tag('move_to', '%d:%d'%self.coord), tag('fleet_id', self.fleet_id)])
+
+	def get_action_string(self):
+		fleet = store.get_object('fleet', {'fleet_id':self.fleet_id})
+		if not fleet:
+			print 'Fleet %s not found [%s]'%(self.fleet_id,store.get_user_name(self.user_id))
+			print 'fleets:'
+			for fl in store.iter_objects_list('fleet', {'user_id':self.user_id}):
+				print fl
+			return 'error fleet %s not found [%s]'%(self.fleet_id,store.get_user_name(self.user_id))
+		fromx,fromy = fleet['x'],fleet['y']
+		fleet_name = fleet['name']
+		x,y = self.coord
+		return 'Fleet: "%s" [%s] %d:%d => %d:%d'%(fleet_name, store.get_user_name(self.user_id),  fromx, fromy, x, y)
 
 class ActionUnitMove(Action):
 	NAME = 'unit_move'
@@ -78,6 +94,15 @@ class ActionUnitMove(Action):
 	def create_xml_action(self, act_id):
 		Action.create_xml_action(self, act_id)
 		return self.format_action(act_id, 'move_unit_to_fleet', [tag('fleet_id', self.fleet_id), tag('unit_id', self.unit_id)])
+		
+	def get_action_string(self):
+		unit_name = store.get_unit_name(self.unit_id)
+		fleet_name = store.get_fleet_name(self.fleet_id)
+		fleet = store.get_object('fleet', {'fleet_id':self.fleet_id})
+		if not fleet:
+			#print 'oops, fleet %d not found in db, unit move failed'%(action.fleet_id,)
+			return 'bad action'
+		return 'Unit %s move to fleet %s[%s] at %d:%d'%(unit_name, fleet_name, store.get_user_name(self.user_id), fleet['x'], fleet['y'])
 
 class ActionGeoExplore(Action):
 	NAME = 'explore'
@@ -89,6 +114,9 @@ class ActionGeoExplore(Action):
 	def create_xml_action(self, act_id):
 		Action.create_xml_action(self, act_id)
 		return self.format_action(act_id, 'store_action', [tag('unit_id', self.unit_id), tag('action_id', self.ACTION_GEO_EXPLORE), tag('planetid', '%d:%d'%self.coord)])
+	
+	def get_action_string(self):
+		return 'geo explore [%s] %d:%d'%(store.get_user_name(self.user_id), self.coord[0], self.coord[1])
 		
 class ActionCreateFleet(Action):
 	NAME = 'fleet_create'
@@ -119,6 +147,17 @@ class ActionCreateFleet(Action):
 		store.update_object('flying_fleet', {'fleet_id':self.fleet_id}, {'fleet_id':new_id})
 		store.update_object('fleet_unit', {'fleet_id':self.fleet_id}, {'fleet_id':new_id})
 		self.fleet_id = new_id
+		
+	def get_action_string(self):
+		return 'Create fleet %s[%s] %d:%d'%(self.name, store.get_user_name(self.user_id), self.coord[0], self.coord[1])
+		
+		unit_name = store.get_unit_name(self.unit_id)
+		fleet_name = store.get_fleet_name(self.fleet_id)
+		fleet = store.get_object('fleet', {'fleet_id':self.fleet_id})
+		if not fleet:
+			#print 'oops, fleet %d not found in db, unit move failed'%(action.fleet_id,)
+			return 'bad action'
+		return 'Unit %s move to fleet %s[%s] at %d:%d'%(unit_name, fleet_name, store.get_user_name(self.user_id), fleet['x'], fleet['y'])
 
 class ActionCancelBuild(Action):
 	NAME = "drop_building_from_que"
@@ -137,7 +176,10 @@ class ActionCancelBuild(Action):
 	def create_xml_action(self, act_id):
 		Action.create_xml_action(self, act_id)
 		return self.format_action(act_id, 'drop_building_from_que', [tag('building_id', self.unit_id)])
-		
+	
+	def get_action_string(self):
+		return 'Cancel build %s %s'%(self.unit_id, store.get_user_name(self.user_id))
+
 class ActionBuild(Action):
 	NAME = "add_building_to_que"
 	
@@ -165,6 +207,10 @@ class ActionBuild(Action):
 		store.update_object('garrison_queue_unit', {'unit_id':self.fleet_id}, {'unit_id':new_id})
 		self.fleet_id = new_id
 		
+	def get_action_string(self):
+		return 'Build %s %s on %s'%(self.proto_id, store.get_user_name(self.user_id), self.coord)
+
+		
 class ActionDestroy(Action):
 	NAME = "demolish_building"
 	
@@ -191,7 +237,9 @@ class ActionDestroy(Action):
 			
 		store.update_object('garrison_queue_unit', {'unit_id':self.fleet_id}, {'unit_id':new_id})
 		self.fleet_id = new_id
-		
+
+	def get_action_string(self):
+		return 'Destroy %s %s'%(self.unit_id, store.get_user_name(self.user_id))
 		
 '''
 cancel_cargo_load
@@ -499,35 +547,11 @@ class ActionPanel(scrolled.ScrolledPanel):
 	def add_action(self, action):
 		
 		self.stored_actions.setdefault(action.user_id,[]).append(action)
-		
-		user_name = store.get_user_name(action.user_id)
-		label = ''
-		if ActionJump.NAME == action.action_type:
-			fleet = store.get_object('fleet', {'fleet_id':action.fleet_id})
-			fromx,fromy = fleet['x'],fleet['y']
-			fleet_name = fleet['name']
-			x,y = action.coord
-			label = 'Fleet: "%s" [%s] %d:%d => %d:%d'%(fleet_name, user_name,  fromx, fromy, x, y)
-		elif ActionGeoExplore.NAME == action.action_type:
-			label = 'geo explore [%s] %d:%d'%(user_name, action.coord[0], action.coord[1])
-		elif ActionUnitMove.NAME == action.action_type:
-			unit_name = store.get_unit_name(action.unit_id)
-			fleet_name = store.get_fleet_name(action.fleet_id)
-			fleet = store.get_object('fleet', {'fleet_id':action.fleet_id})
-			if not fleet:
-				#print 'oops, fleet %d not found in db, unit move failed'%(action.fleet_id,)
-				return
-			label = 'Unit %s move to fleet %s[%s] at %d:%d'%(unit_name, fleet_name, user_name, fleet['x'], fleet['y'])
-		elif ActionCreateFleet.NAME == action.action_type:
-			label='Create fleet %s[%s] %d:%d'%(action.name, user_name, action.coord[0], action.coord[1])
-		elif ActionBuild.NAME == action.action_type:
-			label = 'Build %s on %s'%(action.proto_id, action.coord)
-		else:
-			#print 'action unknown %s'%(action.action_type,)
-			return
 
+		# first get string, then perform ( moves fleets ect )
+		txt = wx.StaticText(self, label=action.get_action_string())
 		action.perform()
-		txt = wx.StaticText(self, label=label)
+
 		txt.action = action
 		action.label = txt			
 		self.actions_sizer.Add( txt )
