@@ -349,6 +349,13 @@ class BuildingsWindows(wx.Frame):
 			count_text = 'x%s '%(len(units),)
 		txt = wx.StaticText(self, -1, '%s%s'%(count_text, name))
 		wsizer.Add(txt)
+		
+		if 'max_count' in proto and int(proto['max_count'])!=1:
+			build_more = wx.Button(self, label="+", size=(20,20))
+			build_more.proto_id = proto['proto_id']
+			build_more.Bind(wx.EVT_LEFT_DOWN, self.on_build)
+			wsizer.Add(build_more)
+
 
 class PlanetPanel(wx.Panel):
 	def __init__(self, parent):
