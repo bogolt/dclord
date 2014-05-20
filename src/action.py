@@ -21,10 +21,13 @@ def tag(name, value):
 	return '<%s>%s</%s>'%(name, value, name)
 
 class Action:
-	ACTION_GEO_EXPLORE = 1
-	def __init__(self, action_type, user_id):
+	GEO_EXPLORE = 1
+	KILL_PEOPLE = 101
+	OFFER_VASSALAGE = 102
+	ARC_COLONISE=6
+	COLONY_COLONISE=2
+	def __init__(self, user_id):
 		self.user_id = user_id
-		self.action_type = action_type
 		self.act_id = None
 		
 	def perform(self):
@@ -43,9 +46,8 @@ class Action:
 		pass
 
 class ActionJump(Action):
-	NAME = 'jump'
 	def __init__(self, user_id, fleet_id, coord):
-		Action.__init__(self, self.NAME, user_id)
+		Action.__init__(self, user_id)
 		self.coord = coord
 		self.fleet_id = fleet_id
 		
@@ -73,9 +75,8 @@ class ActionJump(Action):
 		return 'Fleet: "%s" [%s] %d:%d => %d:%d'%(fleet_name, store.get_user_name(self.user_id),  fromx, fromy, x, y)
 
 class ActionUnitMove(Action):
-	NAME = 'unit_move'
 	def __init__(self, user_id, fleet_id, unit_id):
-		Action.__init__(self, self.NAME, user_id)
+		Action.__init__(self, user_id)
 		self.unit_id = unit_id
 		self.fleet_id = fleet_id
 		
@@ -104,19 +105,19 @@ class ActionUnitMove(Action):
 			return 'bad action'
 		return 'Unit %s move to fleet %s[%s] at %d:%d'%(unit_name, fleet_name, store.get_user_name(self.user_id), fleet['x'], fleet['y'])
 
-class ActionGeoExplore(Action):
-	NAME = 'explore'
-	def __init__(self, user_id, unit_id, coord):
-		Action.__init__(self, self.NAME, user_id)
+class ActionStore(Action):
+	def __init__(self, user_id, unit_id, coord, action_type_id):
+		Action.__init__(self, user_id)
 		self.unit_id = unit_id
 		self.coord = coord
+		self.action_type_id = action_type_id
 
 	def create_xml_action(self, act_id):
 		Action.create_xml_action(self, act_id)
-		return self.format_action(act_id, 'store_action', [tag('unit_id', self.unit_id), tag('action_id', self.ACTION_GEO_EXPLORE), tag('planetid', '%d:%d'%self.coord)])
+		return self.format_action(act_id, 'store_action', [tag('unit_id', self.unit_id), tag('action_id', self.action_type_id), tag('planetid', '%d:%d'%self.coord)])
 	
 	def get_action_string(self):
-		return 'geo explore [%s] %d:%d'%(store.get_user_name(self.user_id), self.coord[0], self.coord[1])
+		return 'action %s [%s] %d:%d'%(self.action_type_id, store.get_user_name(self.user_id), self.coord[0], self.coord[1])
 		
 class ActionCreateFleet(Action):
 	NAME = 'fleet_create'

@@ -932,7 +932,7 @@ class DcFrame(wx.Frame):
 			at_least_one = False
 			for coord, unit_id in acts.iteritems():
 				#print 'explore (%s) %s'%(coord, unit_id)
-				self.actions.add_action(action.ActionGeoExplore(user_id, unit_id, coord))
+				self.actions.add_action(action.ActionStore(user_id, unit_id, coord, action.Action.GEO_EXPLORE))
 				#self.pending_actions.explore_planet( coord, unit_id )
 				at_least_one = True
 			
