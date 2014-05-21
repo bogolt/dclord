@@ -35,7 +35,7 @@ class Action:
 	OFFER_VASSALAGE = 102
 	ARC_COLONISE=6
 	COLONY_COLONISE=2
-	OUTPOST_COLONISE = 9999
+	OUTPOST_COLONISE = 5
 	def __init__(self, user_id):
 		self.user_id = user_id
 		self.act_id = None
