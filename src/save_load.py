@@ -183,7 +183,7 @@ def load_user_data(path):
 		load_csv_table(path, 'proto_action')
 		
 		store.normalize_user_fleets(user['user_id'])
-		
+
 
 geo_size_loaded = set()
 def load_geo_size(path, left_top, size):
@@ -303,6 +303,8 @@ def load_local_data():
 				if f == config.options['data']['sync_key']:
 					continue
 				load_data(os.path.join(os.path.join(config.options['data']['sync_path'], f)))
+				
+	store.remove_temporary_fleets()
 
 def load_data(path):
 	

@@ -596,6 +596,14 @@ class Store:
 		cur.execute('delete from flying_fleet WHERE fleet_id IN (select fleet_id from fleet)')
 		
 		self.conn.commit()
+		
+	def remove_temporary_fleets(self):
+		cur = self.conn.cursor()
+			
+		cur.execute('delete from fleet WHERE fleet_id < 0')
+		cur.execute('delete from flying_fleet WHERE fleet_id < 0')
+		cur.execute('delete from fleet_unit WHERE fleet_id < 0')
+		self.conn.commit()
 
 	def normalize_fleets(self):
 		for u in self.iter_objects_list('user'):
