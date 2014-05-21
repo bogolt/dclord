@@ -28,7 +28,9 @@ def get_colony_population(action):
 	elif action==Action.OUTPOST_COLONISE:
 		return 10
 	return 0
-
+# EUNALVW geo scout  ( W already scouted, known )
+# E -EMPTY
+#WUNALV - kill peopple ( not empty )
 class Action:
 	GEO_EXPLORE = 1
 	KILL_PEOPLE = 101
