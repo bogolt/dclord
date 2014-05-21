@@ -118,12 +118,19 @@ class ActionUnitMove(Action):
 		return 'Unit %s move to fleet %s[%s] at %d:%d'%(unit_name, fleet_name, store.get_user_name(self.user_id), fleet['x'], fleet['y'])
 
 class ActionStore(Action):
-	def __init__(self, user_id, unit_id, coord, action_type_id):
+	def __init__(self, user_id, unit_id, fleet_id, coord, action_type_id):
 		Action.__init__(self, user_id)
 		self.unit_id = unit_id
 		self.coord = coord
 		self.action_type_id = action_type_id
+		self.fleet_id = fleet_id
 
+	def perform(self):
+		store.add_data('action', {'action_type':self.action_type_id, 'x':self.coord[0], 'y':self.coord[1], 'fleet_id':self.fleet_id, 'unit_id':self.unit_id, 'user_id':self.user_id})
+		
+	def revert(self):
+		store.remove_object('action', {'unit_id':self.unit_id})
+			
 	def create_xml_action(self, act_id):
 		Action.create_xml_action(self, act_id)
 		return self.format_action(act_id, 'store_action', [tag('unit_id', self.unit_id), tag('action_id', self.action_type_id), tag('planetid', '%d:%d'%self.coord)])

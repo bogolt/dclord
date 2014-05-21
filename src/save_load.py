@@ -88,6 +88,8 @@ def save_user_data(user_id, path):
 	save_csv_table(path, 'fleet', user_filter)
 	save_csv_table(path, 'proto', user_filter)
 	
+	save_csv_table(path, 'action', user_filter)
+	
 	fleet_unit_writer = csv_open( os.path.join(path, 'fleet_unit.csv'), store.keys('fleet_unit'))
 	unit_writer = csv_open( os.path.join(path, 'unit.csv'), store.keys('unit'))
 	for fleet in store.iter_objects_list('fleet', {'user_id':user_id}):
@@ -181,6 +183,8 @@ def load_user_data(path):
 		
 		load_csv_table(path, 'unit')
 		load_csv_table(path, 'proto_action')
+		
+		load_csv_table(path, 'action')
 		
 		store.normalize_user_fleets(user['user_id'])
 

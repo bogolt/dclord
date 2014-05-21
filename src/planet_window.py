@@ -155,8 +155,8 @@ class FleetPanel(scrolled.ScrolledPanel):
 					for action_type in [action.Action.COLONY_COLONISE, action.Action.ARC_COLONISE, action.Action.OUTPOST_COLONISE]:
 						action_colonize = store.get_object('proto_action', {'proto_id':proto['proto_id'], 'proto_action_id':action_type})
 						if action_colonize:
-							colonize_button = wx.Button(pane, label='colonize %s'%(action.get_colony_population(action_type)))
-							colonize_button.action =action_type, unit['unit_id'], self.coord, u['user_id']
+							colonize_button = wx.Button(pane, label='Colonize %s'%(action.get_colony_population(action_type)))
+							colonize_button.action =action_type, unit['unit_id'], fleet['fleet_id'], self.coord, u['user_id']
 							self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
 							sizer.Add( colonize_button , 1, wx.EXPAND )
 
@@ -164,8 +164,8 @@ class FleetPanel(scrolled.ScrolledPanel):
 					#TODO: check if our mult, or ally, and notify user about it
 					action_kill_people = store.get_object('proto_action', {'proto_id':proto['proto_id'], 'proto_action_id':action.Action.KILL_PEOPLE})
 					if action_kill_people:
-						colonize_button = wx.Button(pane, label='kill people')
-						colonize_button.action = action.Action.KILL_PEOPLE, unit['unit_id'], self.coord, u['user_id']
+						colonize_button = wx.Button(pane, label='Kill people')
+						colonize_button.action = action.Action.KILL_PEOPLE, unit['unit_id'], fleet['fleet_id'], self.coord, u['user_id']
 						self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
 						sizer.Add( colonize_button , 1, wx.EXPAND )
 
@@ -182,23 +182,6 @@ class FleetPanel(scrolled.ScrolledPanel):
 			if not name:
 				name = get_unit_name(int(proto['carapace']))
 			hbox.Add(wx.StaticText(pane, label=name), 1, wx.EXPAND)
-		
-		if None:
-			for unit in store.get_db.db.iter_objects_list(db.Db.ALIEN_UNIT,{'=':{'fleet_id':fleet['id']}}):
-				hbox = wx.BoxSizer(wx.HORIZONTAL)
-				sizer.Add(hbox, 1, wx.EXPAND)
-			
-				img = image.getCarapaceImage(int(unit['carapace']), int(unit['color']) )
-				
-				if img:
-					bitmap = wx.StaticBitmap(pane)
-					bitmap.SetBitmap(img)
-					hbox.Add(bitmap, 1, wx.EXPAND)
-				else:
-					print 'image not found for unit %s, carp %s, color %s'%(unit['id'],  int(unit['carapace']), int(unit['color']) )
-
-				name = get_unit_name(int(unit['carapace']))
-				hbox.Add(wx.StaticText(pane, label=name), 1, wx.EXPAND)
 
 		border = wx.BoxSizer()
 		border.Add(sizer, 1, wx.EXPAND|wx.ALL)
@@ -224,7 +207,6 @@ class FleetPanel(scrolled.ScrolledPanel):
 	
 	def onFleetSelect(self, evt):
 		obj = evt.GetEventObject()
-		print 'down %s'%(obj,)
 		fleet = self.fleets[obj]
 		print fleet
 

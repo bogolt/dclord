@@ -197,6 +197,12 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			if not 'results' in self.user:
 				self.user['results'] = {}
 			self.user['results'][int(attrs['id'])] = (unicode(attrs['result'])==u'ok', ret_id)
+		elif 'actions-requested' == name:
+			self.parent = name
+		elif 'act' == name and self.parent == 'actions-requested':
+			data = getAttrs(attrs, {'x':'x','y':'y','u':'unit_id','fleet':'fleet_id', 'act':'action_type','id':'cancel_id'})
+			data['user_id'] = self.user_id
+			self.store.add_data('action', data)
 				
 	def endElement(self, name):
 		if name in ['user-planets', 'fleets', 'allien-fleets', 'harrison', 'building_class', 'actions-requested']:

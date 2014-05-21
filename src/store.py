@@ -31,7 +31,8 @@ tables = {'planet':['x', 'y', 'o','e','m','t','s', 'user_id', 'name', 'turn'],
 		'diplomacy':['user_id', 'other_user_id', 'relation'], #dip relation from user to other_user
 		'proto':['proto_id', 'user_id', 'fly_speed', 'aim_bomb', 'color', 'build_speed', 'require_people', 'carapace', 'fly_range', 'class', 'cost_second', 'cost_main', 'cost_money', 'is_transportable', 'require_tech_level', 'support_second', 'name', 'stealth_level', 'bonus_s', 'bonus_m', 'bonus_o', 'max_count', 'bonus_e', 'support_main', 'weight', 'damage_laser', 'is_ground_unit', 'is_serial', 'aim_laser', 'is_spaceship', 'transport_capacity', 'is_offensive', 'detect_range', 'damage_bomb', 'bonus_production', 'description', 'scan_strength', 'hp', 'defence_laser', 'defence_bomb', 'carrier_capacity', 'laser_number', 'is_building', 'cost_people', 'bomb_number', 'is_war'],
 		'proto_action':['proto_action_id', 'proto_id', 'max_count', "cost_people", "cost_main", "cost_money", "cost_second", "planet_can_be"],
-		'hw':['x','y', 'user_id']
+		'hw':['x','y', 'user_id'],
+		'action':['x','y','user_id','action_type','unit_id','cancel_id','fleet_id']
 }
 
 DIP_RELATION_UNSPECIFIED = -1
@@ -245,6 +246,16 @@ class Store:
 				build_order integer default 0
 				)""")
 		
+		cur.execute("""create table if not exists action(
+				unit_id integer PRIMARY KEY,
+				x integer(2) not null,
+				y integer(2) not null,
+				action_type integer not null,
+				fleet_id integer,
+				user_id integer not null,
+				cancel_id integer
+				)""")
+
 		cur.execute("""create table if not exists proto(
 				proto_id integer PRIMARY KEY,
 				user_id integer not null,
@@ -342,6 +353,7 @@ class Store:
 		cur.execute('delete from fleet WHERE user_id=?', (user_id,))
 		cur.execute('delete from flying_fleet WHERE user_id=?', (user_id,))
 		
+		cur.execute('delete from action WHERE user_id=?', (user_id,))
 		
 		# mark all user-taken planets as empty
 		cur.execute('update planet set user_id=0 WHERE user_id=?', (user_id,))
