@@ -145,27 +145,29 @@ class FleetPanel(scrolled.ScrolledPanel):
 			obj_carp = int(unit['proto_id']), int(proto['carapace']), int(proto['color'])
 			
 			if is_controlled:
-				# get unit actions ( colony, kill-people )
-				action_colonize_colony = store.get_object('proto_action', {'proto_id':proto['proto_id'], 'proto_action_id':action.Action.COLONY_COLONISE})
-				if action_colonize_colony:
-					colonize_button = wx.Button(pane, label='colonize 5K')
-					colonize_button.action = action.Action.COLONY_COLONISE, unit['unit_id'], self.coord, u['user_id']
-					self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
-					sizer.Add( colonize_button , 1, wx.EXPAND )
-								
-				action_colonize_ark = store.get_object('proto_action', {'proto_id':proto['proto_id'], 'proto_action_id':action.Action.ARC_COLONISE})
-				if action_colonize_ark:
-					colonize_button = wx.Button(pane, label='colonize 30K')
-					colonize_button.action = action.Action.ARC_COLONISE, unit['unit_id'], self.coord, u['user_id']
-					self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
-					sizer.Add( colonize_button , 1, wx.EXPAND )
+				planet = store.get_object('planet', {'x':self.coord[0], 'y':self.coord[1]})
+				inhabited = False
+				if planet and planet['user_id'] and int(planet['user_id']) > 0:
+					inhabited = True
 					
-				action_kill_people = store.get_object('proto_action', {'proto_id':proto['proto_id'], 'proto_action_id':action.Action.KILL_PEOPLE})
-				if action_kill_people:
-					colonize_button = wx.Button(pane, label='kill people')
-					colonize_button.action = action.Action.KILL_PEOPLE, unit['unit_id'], self.coord, u['user_id']
-					self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
-					sizer.Add( colonize_button , 1, wx.EXPAND )
+				# get unit actions ( colony, kill-people )
+				if not inhabited:
+					for action_type in [action.Action.COLONY_COLONISE, action.Action.ARC_COLONISE, action.Action.OUTPOST_COLONISE]:
+						action_colonize = store.get_object('proto_action', {'proto_id':proto['proto_id'], 'proto_action_id':action_type})
+						if action_colonize:
+							colonize_button = wx.Button(pane, label='colonize %s'%(action.get_colony_population(action_type)))
+							colonize_button.action =action_type, unit['unit_id'], self.coord, u['user_id']
+							self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
+							sizer.Add( colonize_button , 1, wx.EXPAND )
+
+				if inhabited and planet['user_id'] != u['user_id']:
+					#TODO: check if our mult, or ally, and notify user about it
+					action_kill_people = store.get_object('proto_action', {'proto_id':proto['proto_id'], 'proto_action_id':action.Action.KILL_PEOPLE})
+					if action_kill_people:
+						colonize_button = wx.Button(pane, label='kill people')
+						colonize_button.action = action.Action.KILL_PEOPLE, unit['unit_id'], self.coord, u['user_id']
+						self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
+						sizer.Add( colonize_button , 1, wx.EXPAND )
 
 			img = image.get_image( int(unit['proto_id']), int(proto['carapace']), int(proto['color']) )
 			

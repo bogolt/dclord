@@ -19,6 +19,15 @@ log = logging.getLogger('dclord')
 
 def tag(name, value):
 	return '<%s>%s</%s>'%(name, value, name)
+	
+def get_colony_population(action):
+	if action == Action.ARC_COLONISE:
+		return 30000
+	elif action == Action.COLONY_COLONISE:
+		return 5000
+	elif action==Action.OUTPOST_COLONISE:
+		return 10
+	return 0
 
 class Action:
 	GEO_EXPLORE = 1
@@ -26,6 +35,7 @@ class Action:
 	OFFER_VASSALAGE = 102
 	ARC_COLONISE=6
 	COLONY_COLONISE=2
+	OUTPOST_COLONISE = 9999
 	def __init__(self, user_id):
 		self.user_id = user_id
 		self.act_id = None
