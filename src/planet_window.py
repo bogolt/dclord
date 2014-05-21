@@ -497,10 +497,13 @@ class GarrisonPanel(wx.Panel):
 			for unit in units:
 				main_frame.actions.add_action(action.ActionUnitMove(user_id, create_fleet_action.fleet_id, unit['unit_id']))
 		
-		self.select_coord(self.coord)
+		self.set_coord(self.coord)
 		
 	def select_coord(self, evt):
 		coord = evt.attr1
+		self.set_coord(coord)
+		
+	def set_coord(self, coord):
 		self.coord = coord
 		
 		self.button_fleet.Disable()

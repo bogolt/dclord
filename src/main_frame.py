@@ -196,6 +196,7 @@ class DcFrame(wx.Frame):
 			fleet = store.get_object('fleet', {'fleet_id':fleet_id})
 			if not fleet:
 				continue
+			print 'calculate route for fleet %s'%(fleet,)
 			route = self.calculate_route( fleet, evt.attr1 )
 			if route:
 				routes.append( route )
