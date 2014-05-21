@@ -497,7 +497,7 @@ class GarrisonPanel(wx.Panel):
 			for unit in units:
 				main_frame.actions.add_action(action.ActionUnitMove(user_id, create_fleet_action.fleet_id, unit['unit_id']))
 		
-		self.set_coord(self.coord)
+		wx.PostEvent(self.GetParent(), event.SelectObject(attr1=self.coord))
 		
 	def select_coord(self, evt):
 		coord = evt.attr1
