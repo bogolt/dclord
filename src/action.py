@@ -102,7 +102,7 @@ class ActionUnitMove(Action):
 		fleet = store.get_object('fleet', {'fleet_id':self.fleet_id})
 		if not fleet:
 			#print 'oops, fleet %d not found in db, unit move failed'%(action.fleet_id,)
-			return 'bad action'
+			return 'Fleet %s not found in db'%(self.fleet_id,)
 		return 'Unit %s move to fleet %s[%s] at %d:%d'%(unit_name, fleet_name, store.get_user_name(self.user_id), fleet['x'], fleet['y'])
 
 class ActionStore(Action):
@@ -122,7 +122,7 @@ class ActionStore(Action):
 class ActionCreateFleet(Action):
 	NAME = 'fleet_create'
 	def __init__(self, user_id, name, coord):
-		Action.__init__(self, self.NAME, user_id)
+		Action.__init__(self, user_id)
 		self.fleet_id = None
 		self.coord = coord
 		self.name = name

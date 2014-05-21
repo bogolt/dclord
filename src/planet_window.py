@@ -465,15 +465,39 @@ class GarrisonPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Window.__init__(self, parent, -1, size=(120,200))
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		self.units = {}
+		self.units_sizer = wx.BoxSizer(wx.VERTICAL)
 		self.coord = None
-		self.selected_units = set()
+		self.selected_units = {}
 		
 		self.button_fleet = wx.Button(self, label='to fleet')
 		self.sizer.Add(self.button_fleet)
 		self.button_fleet.Disable()
 		self.SetSizer(self.sizer)
+		self.sizer.Add(self.units_sizer)
 		self.sizer.Layout()
+		self.button_fleet.Bind(wx.EVT_BUTTON, self.on_fleet_create)
+		
+	def on_fleet_create(self, evt):
+		main_frame = self.GetParent()
+
+		user_planet = store.get_object('user_planet', {'x':self.coord[0], 'y':self.coord[1]})
+		if not user_planet:
+			return
+			
+		user_id = user_planet['user_id']
+
+		# get fleet name
+		
+		# create new fleet
+		create_fleet_action = action.ActionCreateFleet(user_id, 'Fleet', self.coord)
+		main_frame.actions.add_action(create_fleet_action)
+
+		# move units there
+		for proto_id, units in self.selected_units.iteritems():
+			for unit in units:
+				main_frame.actions.add_action(action.ActionUnitMove(user_id, create_fleet_action.fleet_id, unit['unit_id']))
+		
+		self.select_coord(self.coord)
 		
 	def select_coord(self, evt):
 		coord = evt.attr1
@@ -481,15 +505,12 @@ class GarrisonPanel(wx.Panel):
 		
 		self.button_fleet.Disable()
 		
-		self.selected_units = set()
+		self.selected_units = {}
+		self.units_sizer.DeleteWindows()
 		
-		for wnd in self.units.iterkeys():
-			wnd.Destroy()
-		self.sizer.Layout()
-		self.units = {}
-		
-		planet = store.get_object('planet', {'x':coord[0], 'y':coord[1]})
-		if not planet or 'user_id' not in planet:
+		user_planet = store.get_object('user_planet', {'x':coord[0], 'y':coord[1]})
+		if not user_planet:
+			self.sizer.Layout()
 			return
 		
 		item_windows = {}
@@ -516,9 +537,11 @@ class GarrisonPanel(wx.Panel):
 		for bc, item_list in items.iteritems():
 			p = protos[bc]
 			wnd = wx.Window(self, style=wx.SUNKEN_BORDER)
+			wnd.proto_id = bc
+			wnd.units = item_list
 			sz = wx.BoxSizer(wx.HORIZONTAL)
 			wnd.SetSizer(sz)
-			self.sizer.Add(wnd)
+			self.units_sizer.Add(wnd)
 			if 'carapace' in p and p['carapace']:
 				img = image.getCarapaceImage(int(p['carapace']), int(p['color']))
 			else:
@@ -547,26 +570,23 @@ class GarrisonPanel(wx.Panel):
 			wnd.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
 			bmp.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
 			text.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
-			self.units[wnd] = bc
 
 		self.sizer.Layout()
 		
 	def onLeftDown(self, evt):
-		wnd = obj = evt.GetEventObject()
-		if 'wxStaticText' == obj.GetClassName() or 'wxStaticBitmap' == obj.GetClassName():
-			wnd = obj.GetParent()
+		wnd = evt.GetEventObject()
+		if 'wxStaticText' == wnd.GetClassName() or 'wxStaticBitmap' == wnd.GetClassName():
+			wnd = wnd.GetParent()
 		
-		if wnd in self.selected_units:
-			print 'reset bg color'
+		if wnd.proto_id in self.selected_units:
 			wnd.SetBackgroundColour(wx.NullColor)
-			self.selected_units.remove(wnd)
+			del self.selected_units[wnd.proto_id]
 		else:
-			bc = self.units[wnd]
-			self.selected_units.add(wnd)
+			self.selected_units[wnd.proto_id] = wnd.units
 			selected_unit_color = '#008800'
 			wnd.SetBackgroundColour(selected_unit_color)
 		
-		if self.selected_units:	
+		if len(self.selected_units)>0:
 			self.button_fleet.Enable()
 		else:
 			self.button_fleet.Disable()
