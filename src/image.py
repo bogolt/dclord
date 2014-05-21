@@ -16,7 +16,7 @@ def loadBitmap(rel_path, dest_width = 0):
 		return None
 	img = wx.Image(imgPath)
 	if not img:
-		print 'Creating empty bitmap for %s with %s' %(rel_path, dest_width)
+		#print 'Creating empty bitmap for %s with %s' %(rel_path, dest_width)
 		bmp = wx.Bitmap()
 		bmp.SetSize((dest_width, dest_width))
 		return bmp
@@ -26,7 +26,7 @@ def loadBitmap(rel_path, dest_width = 0):
 	return img.ConvertToBitmap()
 
 def loadCarapaceImage( carapace, color, dest_width = 0 ):
-	print 'loading carapace bitmap %s %s'%(carapace, color)
+	#print 'loading carapace bitmap %s %s'%(carapace, color)
 	img = loadBitmap( 'carps/%s_%s.gif'%(carapace,color), dest_width)
 	global image_carapace_cache
 	image_carapace_cache[ (carapace, color, dest_width) ] = img
@@ -38,7 +38,7 @@ def getCarapaceImage(carapace, color = None, dest_width = 0):
 	return image_carapace_cache.setdefault((key, dest_width), loadCarapaceImage(carapace, color, dest_width))
 
 def loadBcImage(bc, dest_width = 0):
-	print 'loading bc bitmap %s'%(bc,)
+	#print 'loading bc bitmap %s'%(bc,)
 	img = loadBitmap( '%s.gif'%(bc,), dest_width)
 	global image_bc_cache
 	image_bc_cache[ (bc, dest_width) ] = img

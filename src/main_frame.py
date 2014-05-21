@@ -524,7 +524,7 @@ class DcFrame(wx.Frame):
 				continue
 
 			self.pending_actions.user_id = user_id
-			log.info('send scouts %s size %s'%(acc['login'], min_size))
+			#log.info('send scouts %s size %s'%(acc['login'], min_size))
 					
 			# find units that can geo-explore
 			# find the ones that are already in fleets in one of our planets
@@ -533,25 +533,25 @@ class DcFrame(wx.Frame):
 			ready_scout_fleets = {}
 			# get all fleets over our planets
 			for planet in store.iter_objects_list('open_planet', {'user_id':user_id}):
-				print 'open planet %s'%(planet,)
+				#print 'open planet %s'%(planet,)
 				coord = get_coord(planet)
 				for fleet in store.iter_objects_list('fleet', {'user_id':user_id, 'x':coord[0], 'y':coord[1]}):
 					if value_in(self.exclude_fleet_names, fleet['name']):
 						continue
 					units = store.get_fleet_units(fleet['fleet_id'])
 					if len(units) != 1:
-						print 'fleet %s has wrong units count ( != 1 ) %s, skipping it'%(fleet, units)						
+						#print 'fleet %s has wrong units count ( != 1 ) %s, skipping it'%(fleet, units)						
 						continue
 					unit = units[0]
 					if int(unit['unit_id']) in self.manual_control_units:
-						print 'unit %s reserved for manual control, skipping it'%(unit,)
+						#print 'unit %s reserved for manual control, skipping it'%(unit,)
 						continue
 
 					if not self.is_geo_scout(unit):
-						print 'unit %s is not geo-scout, skipping it'%(unit,)
+						#print 'unit %s is not geo-scout, skipping it'%(unit,)
 						continue
 					#fly_range = max(fly_range, )
-					print 'unit %s on planet %s for fleet %s is geo-scout'%(unit, coord, fleet)
+					#print 'unit %s on planet %s for fleet %s is geo-scout'%(unit, coord, fleet)
 					# ok, this is geo-scout, single unit in fleet, on our planet
 					#ready_scout_fleets.append((coord, fleet))
 					_,r = store.get_fleet_speed_range(fleet['fleet_id'])
@@ -561,7 +561,7 @@ class DcFrame(wx.Frame):
 			
 			# get possible planets to explore in nearest distance
 			for coord in ready_scout_fleets.keys():
-				print 'load geo size centered at %s with range %s'%(coord, int(fly_range))
+				#print 'load geo size centered at %s with range %s'%(coord, int(fly_range))
 				save_load.load_geo_size_center(coord, int(fly_range))
 			
 			# jump to nearest/biggest unexplored planet
@@ -577,19 +577,19 @@ class DcFrame(wx.Frame):
 				#dy = lt[1]-fly_range, lt[1]+fly_range
 				for p in store.iter_planets_size(pos=coord, fly_range=max_fly_range, size_min=min_size, bigger_first = True):
 					if not (p['s']>=min_size and p['s']<=max_size):
-						print 'planet %s not fit the size'%(p,)
+						#print 'planet %s not fit the size'%(p,)
 						continue
 					dest = get_coord(p)
 					if dest in exclude:
 						continue
 					dist = util.distance(dest, coord)
 					if dist > fly_range:
-						print 'planet %s is too far away'%(p,)
+						#print 'planet %s is too far away'%(p,)
 						continue
 						
 					planet = db.get_planet(dest)
 					if planet and 'o' in planet and planet['o']:
-						print 'planet %s already explored'%(p,)
+						#print 'planet %s already explored'%(p,)
 						continue
 					
 					has_flying_geo_scouts = False
@@ -601,7 +601,7 @@ class DcFrame(wx.Frame):
 							already_has_scout = True
 							break
 					if already_has_scout:
-						print 'planet %s has scount fleet on it'%(p,)
+						#print 'planet %s has scount fleet on it'%(p,)
 						continue
 						
 					already_fly_geo_scouts = False
@@ -611,30 +611,27 @@ class DcFrame(wx.Frame):
 							#self.actions.add_action( action.ActionGeoExplore(user_id, ':dest, 'fleet_id':fleet['fleet_id']}))
 							break
 					if already_fly_geo_scouts:
-						print 'planet %s has flying scount fleet'%(p,)
+						#print 'planet %s has flying scount fleet'%(p,)
 						continue
 
 					possible_planets.append( (dist, dest) )
-					print 'add possible planet %s'%(dest,)
+					#print 'add possible planet %s'%(dest,)
 
 				for fleet, fleet_range in fleets:
-					print 'check planets for fleet %s'%(fleet,)
+					#print 'check planets for fleet %s'%(fleet,)
 					for dist, planet in sorted(possible_planets):
 						if dist > fleet_range:
-							print 'planet %s too scary'%(p,)
+							#print 'planet %s too scary'%(p,)
 							continue
 						# ok fly to it
 						self.actions.add_action( action.ActionJump(user_id, fleet['fleet_id'], planet ))
 						#self.pending_actions.fleetMove(fleet['id'], planet)
 						exclude.add( planet )
-						print 'jump %s from %s to %s'%(fleet, coord, planet)
+						#print 'jump %s from %s to %s'%(fleet, coord, planet)
 						possible_planets.remove( (dist, planet ) )
 						break
 							
 			#self.perform_actions()
-
-	def perform_commands(self, acc, cmds):
-		cmds = {'move':[(fleet_id, (x,y))], 'create_fleet':[('name', (x,y))], 'unit_to_fleet':[(unit_id, fleet_id)], 'geo_explore':[unit_id], 'colonize':[unit_id], 'arc_colonize':[unit_id], 'build':[], 'cancel_colonize':[colonize_action], 'cancel_jump':[fleet_id]}
 	
 	def onMakeScoutFleets(self, _):		
 		# get all planets
@@ -681,7 +678,7 @@ class DcFrame(wx.Frame):
 				coord = get_coord(planet)
 				#print 'checking harrison for planet %s'%(planet,)
 				for unit in store.get_garrison_units(coord, value_in=('proto_id', probe_ids)):
-					print 'found unit %s on planet %s'%(unit, planet,)
+					#print 'found unit %s on planet %s'%(unit, planet,)
 					action_create = action.ActionCreateFleet(user_id, fleet_name, coord)
 					self.actions.add_action(action_create)
 					fleet_id = action_create.fleet_id
@@ -863,11 +860,11 @@ class DcFrame(wx.Frame):
 			#self.perform_actions()
 
 	def on_build_unit(self, evt):
-		print 'build unit %s on %s'%(evt.attr1, evt.attr2)
+		#print 'build unit %s on %s'%(evt.attr1, evt.attr2)
 		coord = evt.attr2
 		user_planet = store.get_object('user_planet', {'x':coord[0], 'y':coord[1]})
 		if not user_planet:
-			print 'planet %s owner unknown'%(coord,)
+			#print 'planet %s owner unknown'%(coord,)
 			return
 		self.actions.add_action(action.ActionBuild(user_planet['user_id'], coord, evt.attr1))
 		self.planet_panel.update()
@@ -877,10 +874,8 @@ class DcFrame(wx.Frame):
 		coord = evt.attr2
 		user_planet = store.get_object('user_planet', {'x':coord[0], 'y':coord[1]})
 		if not user_planet:
-			print 'planet %s owner unknown'%(coord,)
+			#print 'planet %s owner unknown'%(coord,)
 			return
-		print 'cancel build units %s %s'%(units, store.get_user_name(user_planet['user_id']))
-
 		self.actions.add_action(action.ActionCancelBuild(user_planet['user_id'], units[-1]['unit_id']))
 		self.planet_panel.update()
 		

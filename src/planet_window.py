@@ -124,8 +124,9 @@ class FleetPanel(scrolled.ScrolledPanel):
 			sizer.Add(wx.StaticText(pane, label='%0.2f / %0.2f'%(speed, rng)), 1, wx.EXPAND)
 
 		#can we contrl the fleet?
-		is_controlled = 'login' in u and u['login'] in config.users and rng >= 1 and (not 'in_transit' in fleet or fleet['in_transit']==0)
-		if is_controlled:
+		is_controlled = 'login' in u and u['login'] in config.users
+		
+		if is_controlled and rng >= 1 and (not 'in_transit' in fleet or fleet['in_transit']==0):
 			jump_button = wx.ToggleButton(pane, label='jump')
 			jump_button.fleet_id = fleet['fleet_id']
 			sizer.Add(jump_button, 1, wx.EXPAND)
