@@ -202,7 +202,7 @@ class ActionCancelBuild(Action):
 	NAME = "drop_building_from_que"
 	
 	def __init__(self, user_id, unit_id):
-		Action.__init__(self, self.NAME, user_id)
+		Action.__init__(self, user_id)
 		self.unit_id = unit_id
 		self.queue_unit = store.get_object('garrison_queue_unit', {'unit_id':self.unit_id})
 		
@@ -223,7 +223,7 @@ class ActionBuild(Action):
 	NAME = "add_building_to_que"
 	
 	def __init__(self, user_id, coord, proto_id):
-		Action.__init__(self, self.NAME, user_id)
+		Action.__init__(self, user_id)
 		self.coord = coord
 		self.proto_id = proto_id
 		self.fleet_id = None #it's actually building_id
@@ -254,7 +254,7 @@ class ActionDestroy(Action):
 	NAME = "demolish_building"
 	
 	def __init__(self, user_id, unit_id):
-		Action.__init__(self, self.NAME, user_id)
+		Action.__init__(self, user_id)
 		self.unit_id = unit_id
 		self.unit = store.get_object('unit', {'unit_id':self.unit_id})
 		self.garrison_unit = store.get_object('garrison_unit', {'unit_id':self.unit_id})
