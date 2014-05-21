@@ -137,6 +137,25 @@ class ActionStore(Action):
 	
 	def get_action_string(self):
 		return 'action %s [%s] %d:%d'%(self.action_type_id, store.get_user_name(self.user_id), self.coord[0], self.coord[1])
+	
+class ActionCancel(Action):
+	def __init__(self, user_id, action_id):
+		Action.__init__(self, user_id)
+		self.action_id = action_id
+		self.action = store.get_object('action', {'cancel_id':self.action_id})
+
+	def perform(self):
+		store.remove_object('action', {'cancel_id':self.action_id})
+
+	def revert(self):
+		store.add_data('action', self.action)
+			
+	def create_xml_action(self, act_id):
+		Action.create_xml_action(self, act_id)
+		return self.format_action(act_id, 'cancel_action', [tag('action_id', self.action_id)])
+	
+	def get_action_string(self):
+		return 'cancel action %s [%s]'%(self.action_id, store.get_user_name(self.user_id))
 		
 class ActionCreateFleet(Action):
 	NAME = 'fleet_create'
@@ -465,6 +484,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 		acts = self.pending_actions[user_id]
 		del self.pending_actions[user_id]
 		
+		update_actions_required = False
 		for act_id, act in acts.iteritems():
 			if not act_id in actions_reply:
 				#print 'no reply for action %d'%(act_id,)
@@ -475,9 +495,15 @@ class ActionPanel(scrolled.ScrolledPanel):
 				act.revert()
 			elif is_ok and (isinstance(act, ActionCreateFleet) or isinstance(act, ActionBuild)):
 				self.update_fleet_id(user_id, act.fleet_id, ret_id)
+			elif is_ok and isinstance(act, ActionStore):
+				update_actions_required = True
 		
 		if user_id in self.delayed_actions:
 			del self.delayed_actions[user_id]
+			
+		if update_actions_required:
+			self.GetParent().update_user(user_id)
+			
 	
 	def on_perform_actions(self, evt):
 		self.do_perform()

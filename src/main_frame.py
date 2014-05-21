@@ -155,7 +155,7 @@ class DcFrame(wx.Frame):
 		
 		self.recv_data_callback = {}
 		
-		
+		self.Bind(event.EVT_CANCEL_ACTION, self.on_cancel_action)
 		self.Bind(event.EVT_STORE_ACTION, self.on_store_action)
 		self.Bind(event.EVT_USER_ENABLE, self.on_user_enable)
 		self.Bind(event.EVT_BUILD_UNIT, self.on_build_unit)
@@ -290,6 +290,14 @@ class DcFrame(wx.Frame):
 		save_load.load_local_data()
 		save_load.save_local_data()
 
+	def on_cancel_action(self, evt):
+		user_id, unit_id, cancel_action_id = evt.attr1
+		if not cancel_action_id:
+			# action is not send to server yet
+			store.remove_object('action', {'unit_id':unit_id})
+		else:
+			self.actions.add_action(action.ActionCancel(user_id, cancel_action_id))
+
 	def on_store_action(self, evt):
 		act_id, unit_id, fleet_id, coord, user_id = evt.attr1
 		self.actions.add_action(action.ActionStore(user_id, unit_id, fleet_id, coord, act_id))
@@ -415,7 +423,6 @@ class DcFrame(wx.Frame):
 
 	def onUpdate(self, event):
 		'download and process info from server'
-		import loader
 		l = loader.AsyncLoader()
 		
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
@@ -427,7 +434,25 @@ class DcFrame(wx.Frame):
 			for msg_type in ['all', 'known_planets', 'fleetsmessages']:
 				l.getDcData(self, acc['login'], msg_type, out_dir)
 		l.start()
+		
+	def update_user(self, user_id):
+		l = loader.AsyncLoader()
+		
+		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
+		user = store.get_object('user', {'user_id':user_id})
+		if not user:
+			print 'no user %s found'%(user_id,)
+			return
+		
+		acc = config.users[user['login']]
+		if not acc:
+			print 'no login/password for user %s specified'%(user['name'],)
+			return
 
+		log.info('requesting user %s info'%(acc['login'],))
+		l.getUserInfo(self, acc['login'], out_dir)
+		l.start()
+		
 	def onUpload(self, event):
 		'upload pending events on server'
 		

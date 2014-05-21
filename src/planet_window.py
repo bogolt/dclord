@@ -155,19 +155,35 @@ class FleetPanel(scrolled.ScrolledPanel):
 					for action_type in [action.Action.COLONY_COLONISE, action.Action.ARC_COLONISE, action.Action.OUTPOST_COLONISE]:
 						action_colonize = store.get_object('proto_action', {'proto_id':proto['proto_id'], 'proto_action_id':action_type})
 						if action_colonize:
-							colonize_button = wx.Button(pane, label='Colonize %s'%(action.get_colony_population(action_type)))
-							colonize_button.action =action_type, unit['unit_id'], fleet['fleet_id'], self.coord, u['user_id']
-							self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
-							sizer.Add( colonize_button , 1, wx.EXPAND )
+							c_action = store.get_object('action', {'unit_id':unit['unit_id']})
+							if c_action:
+								# already colonizing
+								cancel_button = wx.Button(pane, label='Cancel colonize %s'%(action.get_colony_population(action_type)))
+								cancel_button.cancel_action = u['user_id'], unit['unit_id'], c_action['cancel_id']
+								self.Bind(wx.EVT_BUTTON, self.on_cancel_action, cancel_button)
+								sizer.Add( colonize_button , 1, wx.EXPAND )
+							else:
+								colonize_button = wx.Button(pane, label='Colonize %s'%(action.get_colony_population(action_type)))
+								colonize_button.action = action_type, unit['unit_id'], fleet['fleet_id'], self.coord, u['user_id']
+								self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
+								sizer.Add( colonize_button , 1, wx.EXPAND )
 
 				if inhabited and planet['user_id'] != u['user_id']:
 					#TODO: check if our mult, or ally, and notify user about it
 					action_kill_people = store.get_object('proto_action', {'proto_id':proto['proto_id'], 'proto_action_id':action.Action.KILL_PEOPLE})
 					if action_kill_people:
-						colonize_button = wx.Button(pane, label='Kill people')
-						colonize_button.action = action.Action.KILL_PEOPLE, unit['unit_id'], fleet['fleet_id'], self.coord, u['user_id']
-						self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
-						sizer.Add( colonize_button , 1, wx.EXPAND )
+						c_action = store.get_object('action', {'unit_id':unit['unit_id']})
+						if c_action:
+							# already colonizing
+							cancel_button = wx.Button(pane, label='Cancel kill people')
+							cancel_button.cancel_action = u['user_id'], unit['unit_id'], c_action['cancel_id']
+							self.Bind(wx.EVT_BUTTON, self.on_cancel_action, cancel_button)
+							sizer.Add( cancel_button , 1, wx.EXPAND )
+						else:
+							colonize_button = wx.Button(pane, label='Kill people')
+							colonize_button.action = action.Action.KILL_PEOPLE, unit['unit_id'], fleet['fleet_id'], self.coord, u['user_id']
+							self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
+							sizer.Add( colonize_button , 1, wx.EXPAND )
 
 			img = image.get_image( int(unit['proto_id']), int(proto['carapace']), int(proto['color']) )
 			
@@ -198,6 +214,10 @@ class FleetPanel(scrolled.ScrolledPanel):
 	def on_store_action(self, evt):
 		obj = evt.GetEventObject()
 		wx.PostEvent(self.GetParent(), event.StoreAction(attr1=obj.action))
+		
+	def on_cancel_action(self, evt):
+		obj = evt.GetEventObject()
+		wx.PostEvent(self.GetParent(), event.CancelAction(attr1=obj.cancel_action))		
 		
 	def on_jump(self, evt):
 		self.GetParent().on_fleet_jump_prepare(evt.GetEventObject().fleet_id)
