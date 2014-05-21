@@ -155,6 +155,8 @@ class DcFrame(wx.Frame):
 		
 		self.recv_data_callback = {}
 		
+		
+		self.Bind(event.EVT_STORE_ACTION, self.on_store_action)
 		self.Bind(event.EVT_USER_ENABLE, self.on_user_enable)
 		self.Bind(event.EVT_BUILD_UNIT, self.on_build_unit)
 		self.Bind(event.EVT_BUILD_CANCEL, self.on_build_cancel)
@@ -286,6 +288,10 @@ class DcFrame(wx.Frame):
 	def sync_data(self):
 		save_load.load_local_data()
 		save_load.save_local_data()
+
+	def on_store_action(self, evt):
+		act_id, unit_id, coord, user_id = evt.attr1
+		self.actions.add_action(action.ActionStore(user_id, unit_id, coord, act_id))
 		
 	def on_fleet_jump_prepare(self, fleet_id):
 

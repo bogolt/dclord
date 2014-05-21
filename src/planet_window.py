@@ -6,6 +6,7 @@ import event
 import config
 import image
 import unit_list
+import action
 from store import store
 
 import  wx.lib.scrolledpanel as scrolled
@@ -30,6 +31,7 @@ class FleetPanel(scrolled.ScrolledPanel):
 		self.sizer = wx.BoxSizer(wx.VERTICAL)
 		
 		self.fleets = {}
+		self.coord = None
 				
 		self.SetSizer(self.sizer)
 		self.sizer.Layout()
@@ -47,6 +49,7 @@ class FleetPanel(scrolled.ScrolledPanel):
 		self.sizer.DeleteWindows()
 		self.fleets = {}
 		
+		self.coord = evt.attr1
 		x,y = evt.attr1
 		for fleet in store.iter_objects_list('fleet', {'x':x, 'y':y}):
 			self.add_fleet(fleet)
@@ -121,7 +124,8 @@ class FleetPanel(scrolled.ScrolledPanel):
 			sizer.Add(wx.StaticText(pane, label='%0.2f / %0.2f'%(speed, rng)), 1, wx.EXPAND)
 
 		#can we contrl the fleet?
-		if 'login' in u and u['login'] in config.users and rng >= 1 and (not 'in_transit' in fleet or fleet['in_transit']==0):
+		is_controlled = 'login' in u and u['login'] in config.users and rng >= 1 and (not 'in_transit' in fleet or fleet['in_transit']==0)
+		if is_controlled:
 			jump_button = wx.ToggleButton(pane, label='jump')
 			jump_button.fleet_id = fleet['fleet_id']
 			sizer.Add(jump_button, 1, wx.EXPAND)
@@ -139,6 +143,29 @@ class FleetPanel(scrolled.ScrolledPanel):
 				print 'Prototype not found for %s'%(unit,)
 				continue
 			obj_carp = int(unit['proto_id']), int(proto['carapace']), int(proto['color'])
+			
+			if is_controlled:
+				# get unit actions ( colony, kill-people )
+				action_colonize_colony = store.get_object('proto_action', {'proto_id':proto['proto_id'], 'proto_action_id':action.Action.COLONY_COLONISE})
+				if action_colonize_colony:
+					colonize_button = wx.Button(pane, label='colonize 5K')
+					colonize_button.action = action.Action.COLONY_COLONISE, unit['unit_id'], self.coord, u['user_id']
+					self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
+					sizer.Add( colonize_button , 1, wx.EXPAND )
+								
+				action_colonize_ark = store.get_object('proto_action', {'proto_id':proto['proto_id'], 'proto_action_id':action.Action.ARC_COLONISE})
+				if action_colonize_ark:
+					colonize_button = wx.Button(pane, label='colonize 30K')
+					colonize_button.action = action.Action.ARC_COLONISE, unit['unit_id'], self.coord, u['user_id']
+					self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
+					sizer.Add( colonize_button , 1, wx.EXPAND )
+					
+				action_kill_people = store.get_object('proto_action', {'proto_id':proto['proto_id'], 'proto_action_id':action.Action.KILL_PEOPLE})
+				if action_kill_people:
+					colonize_button = wx.Button(pane, label='kill people')
+					colonize_button.action = action.Action.KILL_PEOPLE, unit['unit_id'], self.coord, u['user_id']
+					self.Bind(wx.EVT_BUTTON, self.on_store_action, colonize_button)
+					sizer.Add( colonize_button , 1, wx.EXPAND )
 
 			img = image.get_image( int(unit['proto_id']), int(proto['carapace']), int(proto['color']) )
 			
@@ -183,9 +210,12 @@ class FleetPanel(scrolled.ScrolledPanel):
 		cp.Bind(wx.EVT_LEFT_DOWN, self.onFleetSelect)
 		self.fleets[cp] = fleet
 	
+	def on_store_action(self, evt):
+		obj = evt.GetEventObject()
+		wx.PostEvent(self.GetParent(), event.StoreAction(attr1=obj.action))
+		
 	def on_jump(self, evt):
 		self.GetParent().on_fleet_jump_prepare(evt.GetEventObject().fleet_id)
-		#print 'jump from %s'%(
 	
 	def OnPaneChanged(self, evt=None):
 		self.sizer.Layout()
