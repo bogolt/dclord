@@ -133,8 +133,8 @@ class ActionCreateFleet(Action):
 		
 	def revert(self):
 		store.remove_object('fleet', {'fleet_id':self.fleet_id})
-		#Do we need to remove all flying_fleets with this id as well?? and units which belong to them??
-		# Anyway thir actions will not be performed as fleet-id will remain negative
+		# maybe it already left the planet
+		store.remove_object('flying_fleet', {'fleet_id':self.fleet_id})
 		
 	def create_xml_action(self, act_id):
 		Action.create_xml_action(self, act_id)
