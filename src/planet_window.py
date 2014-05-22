@@ -162,7 +162,7 @@ class FleetPanel(scrolled.ScrolledPanel):
 								cancel_button = wx.Button(pane, label='Cancel colonize %s'%(action.get_colony_population(action_type)))
 								cancel_button.cancel_action = u['user_id'], unit['unit_id'], c_action['cancel_id']
 								self.Bind(wx.EVT_BUTTON, self.on_cancel_action, cancel_button)
-								sizer.Add( colonize_button , 1, wx.EXPAND )
+								sizer.Add( cancel_button , 1, wx.EXPAND )
 							else:
 								colonize_button = wx.Button(pane, label='Colonize %s'%(action.get_colony_population(action_type)))
 								colonize_button.action = action_type, unit['unit_id'], fleet['fleet_id'], self.coord, u['user_id']
