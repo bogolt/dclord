@@ -132,8 +132,8 @@ class FleetPanel(scrolled.ScrolledPanel):
 			sizer.Add(jump_button, 1, wx.EXPAND)
 			
 			self.Bind(wx.EVT_TOGGLEBUTTON, self.on_jump, jump_button)
-		else:
-			print 'user %s not controllable'%(u,)
+		#else:
+		#	print 'user %s not controllable'%(u,)
 		
 		for unit in store.get_fleet_units(fleet['fleet_id']):
 			hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -192,8 +192,8 @@ class FleetPanel(scrolled.ScrolledPanel):
 				bitmap = wx.StaticBitmap(pane)
 				bitmap.SetBitmap(img)
 				hbox.Add(bitmap, 1, wx.EXPAND)
-			else:
-				print 'image not found for unit %s, bc %s, carp %s, color %s'%(unit['unit_id'], int(unit['proto_id']), int(proto['carapace']), int(proto['color']) )
+			#else:
+			#	print 'image not found for unit %s, bc %s, carp %s, color %s'%(unit['unit_id'], int(unit['proto_id']), int(proto['carapace']), int(proto['color']) )
 
 			name = proto['name']
 			if not name:
@@ -340,16 +340,17 @@ class BuildingsWindows(wx.Frame):
 				
 				race = store.get_object('race', {'user_id':user_id})
 				
-				if proto['is_war'] == 1:
-					build_modifier = race['modifier_build_war']
-				else:
-					build_modifier = race['modifier_build_peace']
+				build_modifier = 0
+				#if proto['is_war'] == 1:
+				#	build_modifier = race['modifier_build_war']
+				#else:
+				#	build_modifier = race['modifier_build_peace']
 
 				total_speed = proto['build_speed'] - proto['build_speed']*build_modifier/100.0
 				# if we're lucky?
 				if proto['proto_id'] == 13:
 					govs_count = len(store.get_governers(user_id))
-					total_speed = pow(govs_count, 1.4) * proto['build_speed']
+					total_speed = pow(1.5, govs_count) * proto['build_speed']
 
 				percent_done = int(unit['done']*100/total_speed)
 

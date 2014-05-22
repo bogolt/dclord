@@ -12,7 +12,7 @@ image_bc_cache = {}
 def loadBitmap(rel_path, dest_width = 0):
 	imgPath = os.path.join(config.options['data']['images'], rel_path)
 	if not os.path.exists(imgPath):
-		log.error('image %s does not exist'%(imgPath,))
+		#log.error('image %s does not exist'%(imgPath,))
 		return None
 	img = wx.Image(imgPath)
 	if not img:

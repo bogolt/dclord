@@ -497,7 +497,7 @@ class DcFrame(wx.Frame):
 	
 	def is_geo_scout(self, unit):
 		for act in store.iter_objects_list('proto_action', {'proto_id':unit['proto_id']}):
-			print 'proto action %s'%(act,)
+			#print 'proto action %s'%(act,)
 			if act['proto_action_id']== request.RequestMaker.GEO_EXPLORE:
 				return True
 		return False

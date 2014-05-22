@@ -495,7 +495,7 @@ class Store:
 			cur.execute('update planet set o=:o, e=:e, m=:m, t=:t, s=:s WHERE x=:x AND y=:y', planet)
 			self.conn.commit()
 		
-		if 'turn' in planet and planet['turn'] and int(planet['turn']) >= pl['turn']:
+		if 'turn' in planet and planet['turn'] and int(planet['turn']) > pl['turn']:
 			# make sure they will be cleaned up if currently exists ( removing user from planet )
 			if not 'user_id' in planet:
 				planet['user_id'] = None
