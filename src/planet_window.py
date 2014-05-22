@@ -349,7 +349,7 @@ class BuildingsWindows(wx.Frame):
 				# if we're lucky?
 				if proto['proto_id'] == 13:
 					govs_count = len(store.get_governers(user_id))
-					total_speed = pow(govs_count, 1.4) * 20000
+					total_speed = pow(govs_count, 1.4) * proto['build_speed']
 
 				percent_done = int(unit['done']*100/total_speed)
 
