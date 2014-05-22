@@ -495,14 +495,22 @@ class Store:
 			cur.execute('update planet set o=:o, e=:e, m=:m, t=:t, s=:s WHERE x=:x AND y=:y', planet)
 			self.conn.commit()
 		
-		if 'turn' in planet and planet['turn'] and int(planet['turn']) > pl['turn']:
-			# make sure they will be cleaned up if currently exists ( removing user from planet )
-			if not 'user_id' in planet:
-				planet['user_id'] = None
-			if not 'name' in planet:
-				planet['name'] = None
-			cur.execute('update planet set user_id=:user_id, name=:name, turn=:turn WHERE x=:x AND y=:y', planet)
-			self.conn.commit()
+		if 'turn' in planet and planet['turn']:
+			if int(planet['turn']) > pl['turn']:
+				# make sure they will be cleaned up if currently exists ( removing user from planet )
+				if not 'user_id' in planet:
+					planet['user_id'] = None
+				if not 'name' in planet:
+					planet['name'] = None
+				cur.execute('update planet set user_id=:user_id, name=:name, turn=:turn WHERE x=:x AND y=:y', planet)
+				self.conn.commit()
+			elif int(planet['turn']) == pl['turn']:
+				if not 'user_id' in planet or planet['user_id'] == '' or int(planet['user_id'])==0:
+					planet['user_id'] = pl['user_id']
+				if not 'name' in planet or planet['name'] == '':
+					planet['name'] = pl['name']
+				cur.execute('update planet set user_id=:user_id, name=:name, turn=:turn WHERE x=:x AND y=:y', planet)
+				self.conn.commit()
 		
 	def add_action_result(self, action_id, is_ok, return_id = None):
 		self.conn.cursor().execute('update requested_action set is_ok=?, return_id=? WHERE action_id=?', (is_ok, return_id, action_id))
