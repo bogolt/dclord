@@ -257,7 +257,7 @@ class Store:
 				)""")
 
 		cur.execute("""create table if not exists proto(
-				proto_id integer PRIMARY KEY,
+				proto_id integer not null,
 				user_id integer not null,
 				class integer,
 				carapace integer,
@@ -318,7 +318,8 @@ class Store:
 				
 				detect_range real,
 				scan_strength real,
-				stealth_level real
+				stealth_level real,
+				PRIMARY KEY (user_id, proto_id)
 				)""")
 				
 		cur.execute("""create table if not exists proto_action(

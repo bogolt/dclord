@@ -263,10 +263,15 @@ class BuildingsWindows(wx.Frame):
 		
 		dups = {}
 		protos = {}
+		
+		up = store.get_object('user_planet', {'x':coord[0], 'y':coord[1]})
+		if not up:
+			return
+		user_id = up['user_id']
 		# buildings	if ours
 		for building in store.get_garrison_units(coord):
 			bc = building['proto_id']
-			p = store.get_object('proto', {'proto_id':bc})
+			p = store.get_object('proto', {'proto_id':bc, 'user_id':user_id})
 			if not p:
 				print 'proto not found for %s'%(building,)
 				continue
@@ -316,7 +321,7 @@ class BuildingsWindows(wx.Frame):
 				self.draw_build_stack(prev_units)
 				prev_units = []
 				
-				proto = store.get_object('proto', {'proto_id':unit['proto_id']})
+				proto = store.get_object('proto', {'proto_id':unit['proto_id'], 'user_id':user_id})
 				
 				img = image.getBcImage(unit['proto_id'], 20)
 				if not img:
@@ -333,7 +338,22 @@ class BuildingsWindows(wx.Frame):
 				if not name:
 					name = get_unit_name(int(proto['carapace']))
 				
-				txt = wx.StaticText(self, -1, ' %d%% %s'%(unit['done']*100/proto['build_speed'],name))
+				race = store.get_object('race', {'user_id':user_id})
+				
+				if proto['is_war'] == 1:
+					build_modifier = race['modifier_build_war']
+				else:
+					build_modifier = race['modifier_build_peace']
+
+				total_speed = proto['build_speed'] - proto['build_speed']*build_modifier/100.0
+				# if we're lucky?
+				if proto['proto_id'] == 13:
+					govs_count = len(store.get_governers(user_id))
+					total_speed = pow(govs_count, 1.4) * 20000
+
+				percent_done = int(unit['done']*100/total_speed)
+
+				txt = wx.StaticText(self, -1, ' %d%% %s'%(percent_done, name))
 				wsizer.Add(txt)
 				if 'max_count' in proto and int(proto['max_count'])!=1:
 					build_more = wx.Button(self, label="+", size=(20,20))
