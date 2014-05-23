@@ -216,11 +216,7 @@ class FilterPanel(scrolled.ScrolledPanel):
 		self.show_known = wx.CheckBox(self, -1, "Inhabited planets")
 		self.show_known.SetValue( int(config.options['filter']['inhabited_planets']))
 		self.sizer.Add(self.show_known)
-		
-		#self.label_my = wx.StaticText('my users')
-		#self.label_my = wx.StaticText('my users')
-		#self.label_my = wx.StaticText('my users')
-		
+
 		self.my_users = wx.BoxSizer(wx.VERTICAL)
 		self.sizer.Add(self.my_users)
 		
@@ -231,10 +227,11 @@ class FilterPanel(scrolled.ScrolledPanel):
 		self.sizer.Add(self.other_users)
 		
 		self.active_user_id = None
-		self.active_user_label = None
 		
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
 		self.show_known.Bind(wx.EVT_CHECKBOX, self.onShowKnown)
+		
+		self.users = {}
 		
 		self.SetAutoLayout( 1 )
 		self.SetupScrolling()
@@ -248,7 +245,7 @@ class FilterPanel(scrolled.ScrolledPanel):
 		self.my_users.DeleteWindows()
 		self.access_users.DeleteWindows()
 		self.other_users.DeleteWindows()
-		self.active_user_label = None
+		self.users = {}
 		
 		for user in store.iter_objects_list('user'):
 			user_id = int(user['user_id'])
@@ -285,13 +282,12 @@ class FilterPanel(scrolled.ScrolledPanel):
 		label_text = user['name']
 		if 'turn' in user and user['turn'] and int(user['turn'])>0:
 			label_text += ' %s'%(user['turn'],)
-		
-		if user['user_id'] == self.active_user_id:
-			label_text = '*'+label_text
-			
+					
 		label_name = wx.StaticText(self, label=label_text)
+		self.users[user_id] = label_name
+		if user['user_id'] == self.active_user_id:
+			label_name.SetForegroundColour(sel_color)
 		
-		#	label_name.SetForegroundColour(sel_color)
 		label_name.user_id = user_id
 		label_name.Bind(wx.EVT_LEFT_DCLICK, self.onChangeUser)
 		sizer.Add(label_name)
@@ -304,12 +300,7 @@ class FilterPanel(scrolled.ScrolledPanel):
 	def onChangeUser(self, evt):
 		obj = evt.GetEventObject()
 		self.selectUser(obj.user_id)
-	
-	def get_user_label(self, user):
-		user = store.get_object('user', {'user_id':user_id})
-
-		return label_text
-		
+			
 	def unselect_user(self):
 		if self.active_user_label:
 			self.active_user_label.SetLabel(self.active_user_label.GetLabel()[1:])
@@ -320,21 +311,11 @@ class FilterPanel(scrolled.ScrolledPanel):
 		if user_id == self.active_user_id:
 			return
 		
-		self.unselect_user()
+		if self.active_user_id in self.users:
+			self.users[self.active_user_id].SetForegroundColour(def_color)
 		
 		self.active_user_id = user_id
-		users = [u for u in self.my_users.GetChildren()]
-		users += [u for u in self.access_users.GetChildren()]
-		for user_label_sz in users:
-			user_label = user_label_sz.GetWindow()
-			if hasattr(user_label, 'user_id') and user_label.user_id == user_id:
-				#user_label.SetForegroundColour(sel_color)
-				self.active_user_label.SetLabel('*'+self.active_user_label.GetLabel())
-				self.active_user_label = user_label
-				self.my_users.Layout()
-				self.sizer.Layout()
-				return
-		
+		self.users[self.active_user_id].SetForegroundColour(sel_color)
 		wx.PostEvent(self.GetParent(), event.UserSelect(attr1=user_id, attr2=None))
 	
 	def onShowKnown(self, evt):
