@@ -216,67 +216,124 @@ class FilterPanel(scrolled.ScrolledPanel):
 		self.show_known = wx.CheckBox(self, -1, "Inhabited planets")
 		self.show_known.SetValue( int(config.options['filter']['inhabited_planets']))
 		self.sizer.Add(self.show_known)
-		self.active_user = None
-		self.accounts = {}
-		self.update()
+		
+		#self.label_my = wx.StaticText('my users')
+		#self.label_my = wx.StaticText('my users')
+		#self.label_my = wx.StaticText('my users')
+		
+		self.my_users = wx.BoxSizer(wx.VERTICAL)
+		self.sizer.Add(self.my_users)
+		
+		self.access_users = wx.BoxSizer(wx.VERTICAL)
+		self.sizer.Add(self.access_users)
+		
+		self.other_users = wx.BoxSizer(wx.VERTICAL)
+		self.sizer.Add(self.other_users)
+		
+		self.active_user_id = None
+		self.active_user_label = None
+		
 		self.Bind(wx.EVT_SIZE, self.onSize, self)
 		self.show_known.Bind(wx.EVT_CHECKBOX, self.onShowKnown)
 		
 		self.SetAutoLayout( 1 )
 		self.SetupScrolling()
+		self.update()
 		
 	def onSize(self, evt):
 		if self.GetAutoLayout():
 			self.Layout()
 		
 	def update(self):
-		log.debug('update tasks %d'%(len(self.accounts),))
-		for r in store.iter_objects_list('user'):
-			user_id = int(r['user_id'])
-			name = r['name']
+		self.my_users.DeleteWindows()
+		self.access_users.DeleteWindows()
+		self.other_users.DeleteWindows()
+		self.active_user_label = None
+		
+		for user in store.iter_objects_list('user'):
+			user_id = int(user['user_id'])
 			
-			if not 'login' in r or not r['login']:
-				continue
-
-			if user_id in self.accounts:
-				self.accounts[user_id].SetLabel('%s (%s)'%(name, r['turn']))
-				continue
+			sz = wx.BoxSizer(wx.HORIZONTAL)
+			self.add_user(user, sz)
 			
-			self.add_user(r)
+			if not 'login' in user or not user['login']:
+				self.other_users.Add(sz)
+			elif user['login'] in config.users:
+				self.my_users.Add(sz)
+			else:
+				self.access_users.Add(sz)
+		
+		if self.my_users.GetChildren():
+			self.my_users.Insert(before=0, item=wx.StaticText(self, label='my'))
 
-		for r in store.iter_objects_list('user'):
-			if not 'login' in r or not r['login']:
-				self.add_user(r)
+		if self.access_users.GetChildren():
+			self.access_users.Insert(before=0, item=wx.StaticText(self, label='access'))
+
+		if self.other_users.GetChildren():
+			self.other_users.Insert(before=0, item=wx.StaticText(self, label='other'))
+		
+		self.sizer.Layout()
 	
-	def add_user(self, user):
+	def add_user(self, user, sizer):
 		user_id = user['user_id']
-		login = wx.CheckBox(self, label='%s (%s)'%(user['name'], user['turn']))
-		login.SetValue(True)
-		login.user_id = user_id
-		self.accounts[user_id] = login
-		login.Bind(wx.EVT_CHECKBOX, self.on_user_enable)
-		self.sizer.Add(login)
-		if not self.active_user:
-			self.selectUser(user_id)
-		login.Bind(wx.EVT_LEFT_DCLICK, self.onChangeUser)
-		self.sizer.Layout()		
+		cb_show_planets = wx.CheckBox(self)
+		cb_show_planets.user_id = user_id
+		cb_show_planets.SetValue(True)
+		cb_show_planets.Bind(wx.EVT_CHECKBOX, self.on_user_enable)
+		sizer.Add(cb_show_planets)
+
+		label_text = user['name']
+		if 'turn' in user and user['turn'] and int(user['turn'])>0:
+			label_text += ' %s'%(user['turn'],)
+		
+		if user['user_id'] == self.active_user_id:
+			label_text = '*'+label_text
+			
+		label_name = wx.StaticText(self, label=label_text)
+		
+		#	label_name.SetForegroundColour(sel_color)
+		label_name.user_id = user_id
+		label_name.Bind(wx.EVT_LEFT_DCLICK, self.onChangeUser)
+		sizer.Add(label_name)
 		
 	def on_user_enable(self, evt):
-		login = evt.GetEventObject()
-		user_id = login.user_id
-		wx.PostEvent(self.GetParent(), event.UserEnable( attr1=user_id, attr2=login.IsChecked()))
+		obj = evt.GetEventObject()
+		user_id = obj.user_id
+		wx.PostEvent(self.GetParent(), event.UserEnable( attr1=user_id, attr2=obj.IsChecked()))
 	
 	def onChangeUser(self, evt):
-		for login, obj in self.accounts.iteritems():
-			if obj == evt.GetEventObject():
-				#print 'choosing user %s'%(login,)
-				self.selectUser(login)
-				
+		obj = evt.GetEventObject()
+		self.selectUser(obj.user_id)
+	
+	def get_user_label(self, user):
+		user = store.get_object('user', {'user_id':user_id})
+
+		return label_text
+		
+	def unselect_user(self):
+		if self.active_user_label:
+			self.active_user_label.SetLabel(self.active_user_label.GetLabel()[1:])
+		self.active_user_label = None
+		self.active_user_id = None
+	
 	def selectUser(self, user_id):
-		if self.active_user:
-			self.accounts[self.active_user].SetForegroundColour(def_color)
-		self.accounts[user_id].SetForegroundColour(sel_color)
-		self.active_user = user_id
+		if user_id == self.active_user_id:
+			return
+		
+		self.unselect_user()
+		
+		self.active_user_id = user_id
+		users = [u for u in self.my_users.GetChildren()]
+		users += [u for u in self.access_users.GetChildren()]
+		for user_label_sz in users:
+			user_label = user_label_sz.GetWindow()
+			if hasattr(user_label, 'user_id') and user_label.user_id == user_id:
+				#user_label.SetForegroundColour(sel_color)
+				self.active_user_label.SetLabel('*'+self.active_user_label.GetLabel())
+				self.active_user_label = user_label
+				self.my_users.Layout()
+				self.sizer.Layout()
+				return
 		
 		wx.PostEvent(self.GetParent(), event.UserSelect(attr1=user_id, attr2=None))
 	
