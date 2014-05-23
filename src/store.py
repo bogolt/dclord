@@ -511,6 +511,7 @@ class Store:
 					planet['name'] = pl['name']
 				cur.execute('update planet set user_id=:user_id, name=:name, turn=:turn WHERE x=:x AND y=:y', planet)
 				self.conn.commit()
+				
 		
 	def add_action_result(self, action_id, is_ok, return_id = None):
 		self.conn.cursor().execute('update requested_action set is_ok=?, return_id=? WHERE action_id=?', (is_ok, return_id, action_id))
@@ -616,6 +617,17 @@ class Store:
 		
 		cur.execute('delete from flying_fleet WHERE fleet_id IN (select fleet_id from fleet)')
 		
+		self.conn.commit()
+
+	def normalize_user_planets(self):
+		cur = self.conn.cursor()
+		for user in self.iter_objects_list('user'):
+			if 'login' in user and user['login']:
+				turn = user['turn']
+				user_id = user['user_id']
+				for planet in self.iter_objects_list('user_planet', {'user_id':user_id}):
+					planet['turn'] = turn
+					self.update_planet(planet)
 		self.conn.commit()
 		
 	def remove_temporary_fleets(self):

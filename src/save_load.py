@@ -297,6 +297,7 @@ def load_common_data(path):
 		load_geo_size_at((int(planet['x']), int(planet['y'])))
 		
 	store.remove_duplicate_planets()
+	store.normalize_user_planets()
 	
 def load_local_data():
 	load_data(config.options['data']['path'])
