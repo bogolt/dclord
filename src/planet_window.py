@@ -77,8 +77,12 @@ class FleetPanel(scrolled.ScrolledPanel):
 		for unit in store.iter_objects_list('alien_unit', {'fleet_id':fleet['fleet_id']}):
 			hbox = wx.BoxSizer(wx.HORIZONTAL)
 			sizer.Add(hbox, 1, wx.EXPAND)
-		
-			img = image.getCarapaceImage(int(unit['carapace']), int(unit['color']) )
+			
+			carp = unit['carapace']
+			if carp == 0:
+				img = image.getBcImage(unit['class'])
+			else:
+				img = image.getCarapaceImage(carp, unit['color'] )
 			
 			if img:
 				bitmap = wx.StaticBitmap(pane)
