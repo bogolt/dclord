@@ -551,7 +551,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 		
 		user_info = import_xml.processRawData(data)
 		if not user_info:
-			#print 'wrong data from %s'%(key,)
+			log.error('Wrong data for login %s'%(key,))
 			return
 
 		user_id = user_info['user_id']
@@ -574,7 +574,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 			s.append(act.create_xml_action(act_id))
 			self.pending_actions[user_id][act_id] = act
 		st = tag('x-dc-perform', ''.join(s))
-		#print 'User %s actions: %s'%(store.get_user_name(user_id), st)
+		log.debug('User %s actions: %s'%(user_id, st))
 		return st
 				
 	def on_cancel_actions(self, evt):
