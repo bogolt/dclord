@@ -344,6 +344,10 @@ class Store:
 		cur.execute("delete from unit WHERE unit_id IN ( select unit_id from fleet_unit WHERE fleet_id IN (select fleet_id FROM fleet WHERE user_id=?))", (user_id,))
 		cur.execute("delete from fleet_unit WHERE fleet_id IN (select fleet_id FROM fleet WHERE user_id=?)", (user_id,))
 
+		# and flying fleet units
+		cur.execute("delete from unit WHERE unit_id IN ( select unit_id from fleet_unit WHERE fleet_id IN (select fleet_id FROM flying_fleet WHERE user_id=?))", (user_id,))
+		cur.execute("delete from fleet_unit WHERE fleet_id IN (select fleet_id FROM flying_fleet WHERE user_id=?)", (user_id,))
+
 		# garrisons
 		for user_planet in self.iter_objects_list('user_planet', {'user_id':user_id}):
 			cur.execute('delete from unit WHERE unit_id IN ( select unit_id from garrison_unit WHERE garrison_unit.x = ? and garrison_unit.y = ?)', (user_planet['x'], user_planet['y']))
