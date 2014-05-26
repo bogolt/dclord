@@ -67,6 +67,9 @@ class FleetPanel(scrolled.ScrolledPanel):
 		label = ''
 		if ft < max_t:
 			label = '[-%d] '%(max_t - ft,)
+			if max_t - ft > 100:
+				# fleet info is too old
+				return
 
 		cp = wx.CollapsiblePane(self, label=label+'%s'%fleet['name'], style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
 		self.sizer.Add(cp)
