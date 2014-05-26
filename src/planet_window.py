@@ -62,7 +62,13 @@ class FleetPanel(scrolled.ScrolledPanel):
 			
 
 	def add_alien_fleet(self, fleet):
-		cp = wx.CollapsiblePane(self, label='%s'%fleet['name'], style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
+		ft = fleet['turn']
+		max_t = store.max_turn()
+		label = ''
+		if ft < max_t:
+			label = '[-%d] '%(max_t - ft,)
+
+		cp = wx.CollapsiblePane(self, label=label+'%s'%fleet['name'], style=wx.CP_DEFAULT_STYLE|wx.CP_NO_TLW_RESIZE)
 		self.sizer.Add(cp)
 		pane = cp.GetPane()
 		

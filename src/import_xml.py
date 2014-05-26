@@ -150,6 +150,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				
 				self.store.add_data(table, data)
 			elif 'allien-fleet' == name:
+				data['turn'] = self.user['turn']
 				self.store.add_data('alien_'+table, data)
 				
 		elif 'u' == name:
