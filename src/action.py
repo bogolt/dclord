@@ -30,7 +30,8 @@ def get_colony_population(action):
 	return 0
 # EUNALVW geo scout  ( W already scouted, known )
 # E -EMPTY
-#WUNALV - kill peopple ( not empty )
+# Unknown, Neutral, Lord, Vassal, knoWn, Empty
+#WUNALV - kill peopple ( not empty ) 
 class Action:
 	GEO_EXPLORE = 1
 	KILL_PEOPLE = 101
@@ -64,9 +65,11 @@ class ActionJump(Action):
 		self.fleet_id = fleet_id
 		
 	def perform(self):
+		log.debug('local perform action Jump [user %s, fleet %s, coord: %s]'%(self.user_id, self.fleet_id, self.coord))
 		store.command_fleet_jump(self.fleet_id, self.coord)
 		
 	def revert(self):
+		log.debug('local revert action Jump [user %s, fleet %s, coord: %s]'%(self.user_id, self.fleet_id, self.coord))
 		store.command_fleet_cancel_jump(self.fleet_id)
 
 	def create_xml_action(self, act_id):
@@ -76,11 +79,8 @@ class ActionJump(Action):
 	def get_action_string(self):
 		fleet = store.get_object('fleet', {'fleet_id':self.fleet_id})
 		if not fleet:
-			print 'Fleet %s not found [%s]'%(self.fleet_id,store.get_user_name(self.user_id))
-			print 'fleets:'
-			for fl in store.iter_objects_list('fleet', {'user_id':self.user_id}):
-				print fl
-			return 'error fleet %s not found [%s]'%(self.fleet_id,store.get_user_name(self.user_id))
+			log.error('Jump failed - fleet not found in db [user %s, fleet %s, coord: %s]'%(self.user_id, self.fleet_id, self.coord))
+			return 'Jump failed - fleet not found in db [user %s, fleet %s, coord: %s]'%(self.user_id, self.fleet_id, self.coord)
 		fromx,fromy = fleet['x'],fleet['y']
 		fleet_name = fleet['name']
 		x,y = self.coord
@@ -113,7 +113,7 @@ class ActionUnitMove(Action):
 		fleet_name = store.get_fleet_name(self.fleet_id)
 		fleet = store.get_object('fleet', {'fleet_id':self.fleet_id})
 		if not fleet:
-			#print 'oops, fleet %d not found in db, unit move failed'%(action.fleet_id,)
+			log.error('Unit move failed - fleet not found in db [user %s, fleet %s, unit: %s]'%(self.user_id, self.fleet_id, self.unit_id))
 			return 'Fleet %s not found in db'%(self.fleet_id,)
 		return 'Unit %s move to fleet %s[%s] at %d:%d'%(unit_name, fleet_name, store.get_user_name(self.user_id), fleet['x'], fleet['y'])
 
@@ -487,10 +487,11 @@ class ActionPanel(scrolled.ScrolledPanel):
 		update_actions_required = False
 		for act_id, act in acts.iteritems():
 			if not act_id in actions_reply:
-				#print 'no reply for action %d'%(act_id,)
+				log.error('no reply for action %d'%(act_id,))
 				continue
 			is_ok, ret_id = actions_reply[act_id]
 			if not is_ok:
+				log.debug('action %d failed, reverting local change'%(act_id,))
 				# revert action in the local-db ( and on the map )
 				act.revert()
 			elif is_ok and (isinstance(act, ActionCreateFleet) or isinstance(act, ActionBuild)):
@@ -507,11 +508,11 @@ class ActionPanel(scrolled.ScrolledPanel):
 	
 	def on_perform_actions(self, evt):
 		self.do_perform()
-		return
 		
 	def do_perform(self):
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
+		log.debug('preparing directory %s to load action result'%(out_dir,))
 
 		l = loader.AsyncLoader()
 		at_leat_one = False
@@ -520,6 +521,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 				continue
 			user = store.get_user(user_id)
 			if 'login' in user and user['login']:
+				log.debug('Storing actions for user %s'%(user_id,))
 				l.sendActions(self, user['login'], self.prepare_actions_request(user_id), out_dir)
 				at_leat_one = True
 		
