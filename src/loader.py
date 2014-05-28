@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import wx
 import httplib
 from threading import Thread
@@ -56,6 +57,7 @@ class AsyncLoader(Thread):
 		log.info('response read, closing connection')
 		#don't forget to close http connection
 		conn.close()
+		log.info('reporting successful download for %s'%(key,))
 		wx.PostEvent(cb, event.DataDownload(attr1=key, attr2=out))
 		return True
 	
@@ -73,7 +75,7 @@ class AsyncLoader(Thread):
 		args = {'host':config.options['network']['host'], 'cb':cb, 'query_type':'POST', 'query':query, 'opts':opts, 'key':login, 'outpath':outpath}
 		
 		self.args.append(args)
-		
+
 	def getUserInfo(self, cb, login, out_dir = None):
 		d = os.path.join(util.getTempDir(), 'raw_data') if not out_dir else out_dir
 		self.getDcData(cb, login, 'all', d)

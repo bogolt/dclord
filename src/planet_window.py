@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import wx.aui
 import logging
 import db

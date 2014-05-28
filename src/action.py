@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import wx
 import wx.aui
 import logging
@@ -522,7 +523,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 			user = store.get_user(user_id)
 			if 'login' in user and user['login']:
 				log.debug('Storing actions for user %s'%(user_id,))
-				l.sendActions(self, user['login'], self.prepare_actions_request(user_id), out_dir)
+				l.sendActions(self, config.get_user_login(user['user_id']), self.prepare_actions_request(user_id), out_dir)
 				at_leat_one = True
 		
 		# clear action list

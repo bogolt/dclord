@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import wx
 import csv
 import platform
@@ -130,8 +131,23 @@ def loadAccounts():
 			u['id'] = user_id
 			user_id_dict[user_id] = u
 		if 'login' in u and 'password' in u:
+			print 'loaded user %s'%(u,)
 			users[u['login']] = u
+			
+def has_user(login):
+	global users
 
+	return login in users
+	
+def get_user_login(user_id):
+	global users
+	
+	for user in users.itervalues():
+		if int(user['id']) == int(user_id):
+			return user['login']
+
+	return None
+	
 def set_user_id(login, user_id):
 	global users
 	global user_id_dict
@@ -170,7 +186,3 @@ def accounts():
 	global users
 	for acc in users.values():
 		yield acc
-
-def has_user(login):
-	return login in users
-	

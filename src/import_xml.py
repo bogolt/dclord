@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import xml.sax
 import store
 import os

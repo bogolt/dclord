@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import wx
 import logging
 from store import store
@@ -247,15 +248,19 @@ class FilterPanel(scrolled.ScrolledPanel):
 		self.other_users.DeleteWindows()
 		self.users = {}
 		
+		print config.users
 		for user in store.iter_objects_list('user'):
 			user_id = int(user['user_id'])
+			#print user
+			#login = unicode(user['login']) #.encode('utf-8')
+			#print login
 			
 			sz = wx.BoxSizer(wx.HORIZONTAL)
 			self.add_user(user, sz)
 			
 			if not 'login' in user or not user['login']:
 				self.other_users.Add(sz)
-			elif user['login'] in config.users:
+			elif config.has_user(user['login']):
 				self.my_users.Add(sz)
 			else:
 				self.access_users.Add(sz)

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import wx.aui
 import logging
 import os.path
@@ -50,6 +52,13 @@ formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 h.setFormatter(formatter)
 log.addHandler(h)
 log.setLevel(logging.DEBUG)
+
+# create debug file handler and set level to debug
+handler = logging.FileHandler("dclord.log", "w")
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s %(levelname)s - %(message)s")
+handler.setFormatter(formatter)
+log.addHandler(handler)
 
 def value_in(values, value):
 	for v in values:
@@ -427,6 +436,7 @@ class DcFrame(wx.Frame):
 		
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		util.assureDirClean(out_dir)
+		
 		for acc in config.accounts():
 			if self.command_selected_user and int(acc['id']) != self.map.selected_user_id:
 				continue
@@ -1024,9 +1034,10 @@ class DcFrame(wx.Frame):
 			#status_text = 'Not authorized' if status == import_raw.XmlHandler.StatusAuthError else 'Turn in progress'
 			self.log('Error processing %s'%(key))
 		else:
-			
 			for login, acc in config.users.iteritems():
-				if login == key and not 'id' in acc:
+				ll = unicode(login)
+				kk = unicode(key)
+				if ll == kk and not 'id' in acc:
 					acc['id'] = int(user['user_id'])
 					print 'got user id %s for user %s'%(acc['id'], login)
 					config.users[login] = acc

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from store import store
 import csv
 import os
@@ -6,8 +7,10 @@ import util
 import config
 import sqlite3
 
-unicode_strings = [u'name', u'description']
+unicode_strings = [u'name',u'login', u'description']
 #last_sync = {}
+
+log = logging.getLogger('dclord')
 
 def csv_open(path, keys):
 	writer = csv.DictWriter(open(path, 'wt'), fieldnames=keys)
@@ -74,6 +77,7 @@ def load_csv(path):
 
 def save_user_data(user_id, path):
 	util.assureDirExist(path)
+	log.info('saving user %s %s'%(user_id, path))
 	
 	user_filter = {'user_id':user_id}
 	save_csv_table(path, 'user', user_filter)
@@ -146,9 +150,9 @@ def save_data(path):
 	save_common_data(os.path.join(path, 'common'))
 	
 	user_base_path = os.path.join(path, 'users')
-	for user in store.iter_objects_list('user'):
-		if user['login'] and config.has_user(user['login']):
-			save_user_data(user['user_id'], os.path.join(user_base_path, user['name']))
+	for user in config.users.itervalues():
+		user_id = user['id']
+		save_user_data(user_id, os.path.join(user_base_path, store.get_user_name(user_id)))
 	
 def load_user_data(path):
 	for user in iter_csv_table(path, 'user'):
