@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import wx
-import httplib
+import http.client
 from threading import Thread
 import urllib
+import urllib.parse
 import os.path
 import event
 import logging
@@ -40,7 +41,7 @@ class AsyncLoader(Thread):
 		key = args['key']
 		cb = args['cb']
 		log.info('async-loader executing query %s'%(args,))
-		conn = httplib.HTTPConnection(args['host'])
+		conn = http.client.HTTPConnection(args['host'])
 		conn.set_debuglevel(int(config.options['network']['debug']))
 		conn.request(args['query_type'], args['query'], args['opts'])
 		r = conn.getresponse()
@@ -64,7 +65,7 @@ class AsyncLoader(Thread):
 	def getDcData(self, cb, login, data_type, out_dir, custom_opts = None):
 		srv_dir = 'perform_x_actions' if custom_opts else 'empire_info'
 		query = '/frames/%s/on/%s/asxml/'%(srv_dir, data_type,)
-		opts = 'login=%s&pwd=%s&action=login'%(urllib.quote(login.encode('utf-8')),urllib.quote((config.users[login]['password']).encode('utf-8')))
+		opts = 'login=%s&pwd=%s&action=login'%(urllib.parse.quote(login.encode('utf-8')),urllib.parse.quote((config.users[login]['password']).encode('utf-8')))
 		if custom_opts:
 			opts += '&xactions=%s'%(custom_opts,)
 		

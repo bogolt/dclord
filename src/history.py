@@ -39,9 +39,9 @@ class HistoryPanel(wx.Window):
 		
 	def onTurnSelected(self, evt):
 		ind = evt.GetSelection()
-		for turn, index in self.turns.iteritems():
+		for turn, index in self.turns.items():
 			if index == ind:
-				print 'set turn %d'%(turn,)
+				print('set turn %d'%(turn,))
 				wx.PostEvent(self.GetParent(), event.TurnSelected(attr1=turn))
 				break
 	

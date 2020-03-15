@@ -76,7 +76,7 @@ class UnitPrototypeListWindow(wx.Window):
 		log.info('setting protos for user %s'%(self.player_id,))
 		fly_range=1
 		fly_speed=2
-		self.sizer.DeleteWindows()
+		self.sizer.Clear(delete_windows=True)
 		for p in db.prototypes(['fly_range>=%s'%(fly_range,), 'fly_speed>=%s'%(fly_speed,), 'owner_id=%s'%(self.player_id,)]):
 			self.sizer.Add( UnitPrototypeWindow(self, p))
 		self.sizer.Layout()

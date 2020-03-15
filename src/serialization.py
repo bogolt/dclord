@@ -21,7 +21,7 @@ def save_table(table, keys = None, flt = None, out_dir = None, join_info = None,
 	if not keys:
 		keys = db.db.table_keys[table]
 	
-	print '%s %s'%(pt, table)
+	print('%s %s'%(pt, table))
 	path = os.path.join(pt, '%s.csv'%(table,))
 		
 	try:
@@ -38,30 +38,30 @@ def save_table(table, keys = None, flt = None, out_dir = None, join_info = None,
 					if s in p and p[s]:
 						p[s] = p[s].encode('utf-8')
 				writer.writerow(p)
-			except UnicodeEncodeError, e:
+			except UnicodeEncodeError as e:
 				log.error('failed convert data %s - %s'%(p, e))
 		return writer
-	except IOError, e:
+	except IOError as e:
 		log.error('failed writing data to csv file %s: %s'%(path, e))
 	
 
 def save():
-	for table, keys in db.Db.table_keys.iteritems():
+	for table, keys in db.Db.table_keys.items():
 		save_table(table)
 		
 
 	
 
 def save_owned_users():
-	for user_id, user in config.user_id_dict.iteritems():
+	for user_id, user in config.user_id_dict.items():
 		save_user(user)
 	
 def save_user(user_info):
 	
-	print 'saving user %s'%(user_info,)
+	print('saving user %s'%(user_info,))
 	user = db.db.get_object(db.Db.USER, {'=':{'id':user_info['id']}})
 	if not user:
-		print 'no data found for user %s'%(user_info,)
+		print( 'no data found for user %s'%(user_info,))
 		return
 	
 	pt = '/tmp/out/' #  config.options['data']['path']
@@ -73,7 +73,7 @@ def save_user(user_info):
 	# include turn key
 	save_table(db.Db.PLANET, db.db.table_keys[db.Db.PLANET], out_dir=pt)
 	
-	for table, keys in db.Db.table_keys.iteritems():
+	for table, keys in db.Db.table_keys.items():
 		# saved separately
 		if table == db.Db.PLANET:
 			continue
@@ -124,7 +124,7 @@ def get_user_nickname():
 def load_sync_data():
 	sync_path = config.options['data']['sync_path']
 	if not sync_path or sync_path == '':
-		print 'sync path not specified, sync not performed'
+		print('sync path not specified, sync not performed')
 		return
 		
 	turns_path = os.path.join(sync_path, 'turns')
@@ -176,14 +176,14 @@ def save_sync_data():
 	
 	sync_path = config.options['data']['sync_path']
 	if not sync_path or sync_path == '':
-		print 'sync path not specified, sync not performed'
+		print('sync path not specified, sync not performed')
 		return
 		
 	turns_path = os.path.join(sync_path, 'turns/%s'%(db.getTurn(),))
 		
 	nick = get_user_nickname()
 	if not nick:
-		print 'no users found, nothing to save'
+		print('no users found, nothing to save')
 		return
 	#print 'user nick is %s'%(nick,)
 	
@@ -204,7 +204,7 @@ def export_owner_planets(players_list):
 	player_ids = [p['player_id'] for p in players_list]
 	for planet in db.db.iter_objects_list(db.Db.PLANET, {'in':{'owner_id':player_ids}}):
 		player = db.db.get_object(db.Db.PLAYER, {'=':{'player_id':planet['owner_id']}})
-		print '%s:%s %s'%(planet['x'], planet['y'], player['name'])
+		print('%s:%s %s'%(planet['x'], planet['y'], player['name']))
 
 def export_planets_csv(pt):
 	path = os.path.join(pt, 'dc_map_export.csv')
@@ -231,9 +231,9 @@ def export_planets_csv(pt):
 					if s in planet and planet[s]:
 						planet[s] = planet[s].encode('utf-8')
 				writer.writerow(planet)
-			except UnicodeEncodeError, e:
+			except UnicodeEncodeError as e:
 				log.error('failed convert data %s - %s'%(planet, e))
-	except IOError, e:
+	except IOError as e:
 		log.error('failed writing data to csv file %s: %s'%(path, e))
 
 
@@ -252,7 +252,7 @@ def load_table(table_name, turn, external_path = None):
 				if s in p and p[s]:
 					p[s] = p[s].decode('utf-8')
 			todel = []
-			for k,v in p.iteritems():
+			for k,v in p.items():
 				if v == '' or v==unicode(''):
 					todel.append(k)
 			for td in todel:
@@ -264,7 +264,7 @@ def load_table(table_name, turn, external_path = None):
 				t = turn
 			
 			db.db.smart_update_object(table_name, t, p)
-	except IOError, e:
+	except IOError as e:
 		#print e
 		#print 'failed to load table %s %s'%(table_name, unicode(e).decode('utf-8'))
 		try:
@@ -288,7 +288,7 @@ def loadCsv(file_name, turn_n = None):
 				if s in p and p[s]:
 					p[s] = p[s].decode('utf-8')
 			yield p
-	except IOError, e:
+	except IOError as e:
 		log.error('failed to load csv %s: %s'%(file_name, e))	
 	log.info('loading %s done'%(file_name,))
 
@@ -310,7 +310,7 @@ def load_geo_size_all(path):
 		#print 'load all geo sizes from %s'%path
 		for p in csv.DictReader(open(path, 'rt')):
 			db.set_planet_geo_size(p)
-	except IOError, e:
+	except IOError as e:
 		log.error('failed to load csv %s: %s'%(path, e))
 
 geo_size_loaded = set()
@@ -338,7 +338,7 @@ def load_geo_size(path, left_top, size):
 			db.set_planet_geo_size(p)
 		
 		geo_size_loaded.add(path)
-	except IOError, e:
+	except IOError as e:
 		log.error('failed to load csv %s: %s'%(path, e))		
 
 def load_all_visible_geo(path ):
@@ -351,7 +351,7 @@ def load_all_visible_geo(path ):
 						p[s] = p[s].decode('utf-8')
 				db.setData('planet_size', p, None)
 				yield p
-		except IOError, e:
+		except IOError as e:
 			log.error('failed to load csv %s: %s'%(path, e))	
 
 def get_coord_point_left(v):
@@ -447,14 +447,14 @@ def load(turn_n = None, ev_cb = None):
 	#TODO: make async ( other thread )
 	
 	turn = getLastTurn(ev_cb)
-	for table, keys in db.Db.table_keys.iteritems():
-		print 'load table %s'%(table,)
+	for table, keys in db.Db.table_keys.items():
+		print('load table %s'%(table,))
 		load_table(table, turn)
 		
 	#save_owned_users()
 
 	owned_ids = [obj['id'] for obj in db.db.iter_objects_list(db.Db.USER)]
-	print 'got owned ids: %s'%(owned_ids,)
+	print('got owned ids: %s'%(owned_ids,))
 	players = db.db.get_objects_list(db.Db.PLAYER, {'not in':{'player_id':owned_ids}})
 	#export_owner_planets(players)
 	load_sync_data()

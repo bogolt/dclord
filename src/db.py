@@ -72,13 +72,13 @@ class Db:
 		self.has_turn = [Db.PLANET, Db.USER_PLANET, Db.FLEET, Db.FLYING_FLEET, Db.FLYING_ALIEN_FLEET, Db.ALIEN_UNIT]
 		#self.has_coord_keys = [Db.PLANET,  Db.FLYING_ALIEN_FLEET, Db.GARRISON_UNIT, Db.GARRISON_QUEUE_UNIT]
 		
-		for table, keys in self.table_keys.iteritems():
+		for table, keys in self.table_keys.items():
 			if table in self.has_turn:
 				self.table_keys[table] = tuple(list(keys)+['turn'])
 				#keys = tuple(
 
-		for table, keys in self.table_keys.iteritems():
-			print '%s %s'%(table, keys)
+		for table, keys in self.table_keys.items():
+			print('%s %s'%(table, keys))
 
 		
 		# table Db.FLYING_ALIEN_FLEET has no primary key
@@ -357,9 +357,9 @@ class Db:
 			#	print 'insert old %s %s'%(table_name, data)
 			self.cur.execute('insert or replace into %s%s values(%s)'%(table_name, keys,','.join('?'*len(keys))),tuple(data.values()))
 			self.conn.commit()
-		except sqlite3.Error, e:
+		except sqlite3.Error as e:
 			log.error('Error "%s", when executing: insert or replace into %s%s values%s'%(e, table_name,keys,tuple(data.values())))
-			print traceback.format_stack()
+			print(traceback.format_stack())
 	
 
 	def get_objects_list(self, table, flt):
@@ -402,40 +402,40 @@ class Db:
 			key_list = join_info[1]
 			#key_my = join_info[1]
 			#key_other = join_info[2]
-			print 'join %s %s %s'%(table, flt, join_info)
+			print('join %s %s %s'%(table, flt, join_info))
 			suffix = ' JOIN %s ON (%s)'%(table_other, ' AND '.join(['%s.%s=%s.%s'%(table, key_my, table_other, key_other) for key_my, key_other in key_list]))
-			print suffix
+			print(suffix)
 			
 		if not flt:
 			try:
 				c.execute('%s %s%s'%(query_type, table, suffix))
 			except sqlite3.OperationalError as e:
-				print 'Select %s from %s, error: %s'%(keys, table, e)
+				print('Select %s from %s, error: %s'%(keys, table, e))
 				raise
 
 			return c
 		
 		where_conds = []
 		values_dict = {}
-		for cond, key_pairs in flt.iteritems():
+		for cond, key_pairs in flt.items():
 			if cond == 'between':
 				where_conds.append(' and '.join(['%s between :%s and :%s'%(key, key+'1', key+'2') for key in key_pairs]))
-				for k,v in key_pairs.iteritems():
+				for k,v in key_pairs.items():
 					values_dict[k+'1'] = v[0]
 					values_dict[k+'2'] = v[1]
 			elif cond == 'in':
 				
-				where_conds.append(' and '.join(['%s in (%s)'%(key, ','.join(to_str_list(value_list))) for key, value_list in key_pairs.iteritems()]))
+				where_conds.append(' and '.join(['%s in (%s)'%(key, ','.join(to_str_list(value_list))) for key, value_list in key_pairs.items()]))
 				#print 'WHERE IN: %s'%(where_conds,)
-				#for k,v in key_pairs.iteritems():
+				#for k,v in key_pairs.items():
 				#	values_dict[k+'1'] = v[0]
 				#	values_dict[k+'2'] = v[1]
 			elif cond == 'not in':
 				#print 'check not in %s %s'%(cond, key_pairs)
-				where_conds.append(' and '.join(['%s not in (%s)'%(key, ','.join(to_str_list(value_list))) for key, value_list in key_pairs.iteritems()]))
-				print 'WHERE COND: %s, filter: %s'%(where_conds, flt)
+				where_conds.append(' and '.join(['%s not in (%s)'%(key, ','.join(to_str_list(value_list))) for key, value_list in key_pairs.items()]))
+				print('WHERE COND: %s, filter: %s'%(where_conds, flt))
 			else:
-				where_conds.append(' and '.join(['%s %s :%s'%(key, cond, key) for key in key_pairs.iterkeys()]))
+				where_conds.append(' and '.join(['%s %s :%s'%(key, cond, key) for key in key_pairs.keys()]))
 				values_dict.update(key_pairs)
 			
 		where_str = ' and '.join(where_conds)
@@ -444,10 +444,10 @@ class Db:
 		try:
 			c.execute(s, values_dict)
 		except sqlite3.OperationalError as e:
-			print 'Select %s with %s, error: %s'%(s, values_dict, e)
+			print('Select %s with %s, error: %s'%(s, values_dict, e))
 			raise
 		except sqlite3.ProgrammingError as e:
-			print 'Select %s with %s, error: %s'%(s, values_dict, e)
+			print('Select %s with %s, error: %s'%(s, values_dict, e))
 			raise
 		return c
 		
@@ -459,7 +459,7 @@ class Db:
 			#print 'get %s %s'%(table, flt)
 			r = self.select(table, flt, keys).fetchone()
 		except TypeError as e:
-			print 'get object failed: with %s %s, error: %s'%(table, flt, e)
+			print('get object failed: with %s %s, error: %s'%(table, flt, e))
 			return None
 		if not r:
 			return None
@@ -495,7 +495,7 @@ class Db:
 			self.cur.execute('insert or replace into %s (%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key,) for key in data.keys()])), data)
 			self.conn.commit()
 		except sqlite3.OperationalError as e:
-			print 'Update error: %s, table %s, filter %s, data %s'%(e, table, flt, data)
+			print('Update error: %s, table %s, filter %s, data %s'%(e, table, flt, data))
 		
 	def update_object(self, table, flt, data):
 		if flt and 'turn' in data:
@@ -511,9 +511,9 @@ class Db:
 			#	print 'insert %s %s'%(table,p)
 			self.cur.execute('insert or replace into %s (%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key,) for key in data.keys()])), data)
 		except sqlite3.OperationalError as e:
-			print 'Update error: %s, table %s, filter %s, data %s'%(e, table, flt, data)
+			print('Update error: %s, table %s, filter %s, data %s'%(e, table, flt, data))
 			c = self.select(table, {}, data.keys())
-			print c.fetchone()
+			print(c.fetchone())
 			raise
 		self.conn.commit()
 		return True
@@ -547,18 +547,18 @@ class Db:
 		try:
 			self.cur.execute('delete from %s WHERE %s'%(table_name, ' AND '.join(data)))
 			self.conn.commit()
-		except sqlite3.Error, e:
+		except sqlite3.Error as e:
 			log.error('Error "%s", when executing: delete from %s WHERE %s'%(e, table_name, ' AND '.join(data)))
-			print traceback.format_stack()
+			print(traceback.format_stack())
 			
 	def updateObject(self, table_name, flt, values, turn_n = None):
 		#table_name = '%s_%s'%(table, turn_n) if turn_n else table
 		try:
-			self.cur.execute('update %s SET %s WHERE %s'%(table_name, ','.join(['%s=%s'%(k,v) for k,v in values.iteritems()]), ' AND '.join(flt)))
+			self.cur.execute('update %s SET %s WHERE %s'%(table_name, ','.join(['%s=%s'%(k,v) for k,v in values.items()]), ' AND '.join(flt)))
 			self.conn.commit()
-		except sqlite3.Error, e:
+		except sqlite3.Error as e:
 			log.error('Error "%s", when executing: delete from %s WHERE %s'%(e, table_name, ' AND '.join(data)))
-			print traceback.format_stack()		
+			print(traceback.format_stack())
 		
 
 	#def getAnything(self):
@@ -594,12 +594,12 @@ class Db:
 			yield r
 	
 	def add_pending_action(self, act_id, table, action_type, data):
-		print 'add pending action %s %s %s %s'%(act_id, table, action_type, data)
+		print('add pending action %s %s %s %s'%(act_id, table, action_type, data))
 		self.pending_actions.setdefault(act_id, []).append((table, action_type, data))
 		
 	def perform_pending_action(self, act_id, return_id = None):
 		if act_id not in self.pending_actions:
-			print 'action %s not in pending actions: %s'%(act_id, self.pending_actions.keys())
+			print('action %s not in pending actions: %s'%(act_id, self.pending_actions.keys()))
 			return
 		actions = self.pending_actions[act_id]
 		for table, action_type, data in actions:
@@ -607,14 +607,14 @@ class Db:
 				data['id'] = return_id
 				
 			if action_type == 'insert':
-				print 'exec pending insert %s %s %s'%(table, data, db.max_turn)
+				print('exec pending insert %s %s %s'%(table, data, db.max_turn))
 				self.addObject(table, data, db.max_turn)
 			elif action_type == 'erase':
-				print 'exec pending erase %s %s %s'%(table, data, db.max_turn)
+				print('exec pending erase %s %s %s'%(table, data, db.max_turn))
 				self.eraseObject(table, data, db.max_turn)
 			elif action_type == 'update':
 				flt, values = data
-				print 'exec pending update %s %s %s %s'%(table, flt, values, db.max_turn)
+				print('exec pending update %s %s %s %s'%(table, flt, values, db.max_turn))
 				self.updateObject(table, flt, values, db.max_turn)
 				
 		
@@ -648,7 +648,7 @@ class Db:
 		self.cur.execute('insert or replace into %s(x,y,user_id) values(:x, :y, :user_id)'%(Db.OPEN_PLANET,), (x,y,user_id))
 		self.conn.commit()
 
-db = Db()	
+db = Db()
 
 def set_open_planet(coord, user_id):
 	db.set_open_planet(coord, user_id)
@@ -705,8 +705,8 @@ def items(table_name, flt, keys, _ = None, verbose = False):
 		log.debug('sql: %s'%(s,))
 	try:
 		c.execute(s)
-	except sqlite3.Error, e:
-		print traceback.format_stack()
+	except sqlite3.Error as e:
+		print(traceback.format_stack())
 		log.error('Error %s, when executing: %s\ntable %s, filter: %s'%(e, s, table_name, flt,))
 	for r in c:
 		yield dict(zip(keys,r))
@@ -852,9 +852,9 @@ def get_prototype(bc, keys = None):
 
 def get_units_class(turn_n, flt):
 	cls = []
-	print 'class with filter %s'%(flt,)
+	print('class with filter %s'%(flt,))
 	for proto in prototypes(flt):
-		print 'got proto %s'%(proto,)
+		print('got proto %s'%(proto,))
 		cls.append( proto['id'] )
 	return cls
 
@@ -880,13 +880,13 @@ def getUserHw(user_id, turn_n = None):
 	t = turn_n if turn_n else getTurn()
 	for u in items('hw', ['player_id=%s'%(user_id,)], ('hw_x', 'hw_y'), t):
 		return int(u['hw_x']), int(u['hw_y'])
-	print 'hw for user %s turn %s not found'%(user_id, t)
+	print('hw for user %s turn %s not found'%(user_id, t))
 	return 550,550
 
 def setSqlValues(data):
 	d = {}
 	for k,v in data.items():
-		print '%s="%s" ( %s )'%(k,v,type(v))
+		print('%s="%s" ( %s )'%(k,v,type(v)))
 		if not v:
 			v = 'NULL'		
 		elif isinstance(v, str) or isinstance(v, unicode):
@@ -903,7 +903,7 @@ def updateRow(table, conditions, data):
 	#d = setSqlValues(data)
 	keys = []
 	values = []
-	for k,v in data.iteritems():
+	for k,v in data.items():
 		if not v or v=='':
 			continue
 		keys.append(k)
@@ -933,7 +933,7 @@ def smartUpdate(table, conds, data, turn_n = None):
 
 def joinInfo(old, new_info):
 	joined = new_info.copy()
-	for k,v in old.iteritems():
+	for k,v in old.items():
 		if not k in joined:
 			joined[k] = v
 			continue

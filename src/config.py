@@ -4,7 +4,7 @@ import csv
 import platform
 import os
 import os.path
-import ConfigParser
+import configparser
 import codecs
 import logging
 import util
@@ -102,7 +102,7 @@ def loadOptions():
 	with open( path, 'rt') as f:
 		data = json.loads(f.read())
 		
-	for k,v in data.iteritems():
+	for k,v in data.items():
 		options[k].update(v)
 		
 	if not options['data']['sync_key']:
@@ -119,9 +119,13 @@ def loadAccounts():
 	new_name = os.path.join(getOptionsDir(), users_file_name)
 	if not os.path.exists(new_name):
 		return
-		
-	with open(new_name) as f:
-		user_list = json.loads(f.read())
+	
+	user_list = []
+	try:
+		with open(new_name) as f:
+			user_list = json.loads(f.read())
+	except Exception as e:
+		print("oops, could not read users at %s with %s"%(new_name, e))
 		
 	global users
 	for u in user_list:
@@ -131,7 +135,7 @@ def loadAccounts():
 			u['id'] = user_id
 			user_id_dict[user_id] = u
 		if 'login' in u and 'password' in u:
-			print 'loaded user %s'%(u,)
+			print('loaded user %s'%(u,))
 			users[u['login']] = u
 			
 def has_user(login):
@@ -142,7 +146,7 @@ def has_user(login):
 def get_user_login(user_id):
 	global users
 	
-	for user in users.itervalues():
+	for user in users.values():
 		if int(user['id']) == int(user_id):
 			return user['login']
 
@@ -158,7 +162,7 @@ def set_user_id(login, user_id):
 def saveUsers():
 	path = os.path.join(getOptionsDir(), users_file_name)
 	with open(path, 'wt') as f:
-		f.write(json.dumps([user for user in users.itervalues()], indent=4))
+		f.write(json.dumps([user for user in users.values()], indent=4))
 
 def loadAll():
 	global options

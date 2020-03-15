@@ -17,7 +17,7 @@ def timed(f):
 		start = time()
 		result = f(*args, **kwds)
 		elapsed = time() - start
-		print "%s took %f time to finish" % (f.__name__, elapsed)
+		print("%s took %f time to finish" % (f.__name__, elapsed))
 		return result
 	return wrapper
 
@@ -92,8 +92,8 @@ def timeit(method):
         result = method(*args, **kw)
         te = time.time()
 
-        print '%r (%r, %r) %2.2f sec' % \
-              (method.__name__, args, kw, te-ts)
+        print('%r (%r, %r) %2.2f sec' % \
+              (method.__name__, args, kw, te-ts))
         return result
 
     return timed
@@ -115,7 +115,7 @@ class BufferedWindow(wx.Window):
 		dc_src = wx.MemoryDC()
 		dc_src.SelectObject(self.image)
 		w,h = self.image.GetSize()
-		img = wx.EmptyBitmap( w, h)
+		img = wx.Bitmap( w, h)
 		dc.SelectObject(img)
 		dc.Clear()
 		ofs = add(offset, self.shift_rest)
@@ -166,7 +166,7 @@ class BufferedWindow(wx.Window):
 	
 	def resize(self, _ = None):
 		w,h = self.GetClientSize()
-		self.image = wx.EmptyBitmap(w,h)
+		self.image = wx.Bitmap(w,h)
 		self.update()
 		
 	def onPaint(self, _):

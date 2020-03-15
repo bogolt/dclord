@@ -59,7 +59,7 @@ class Router:
 				return [self.start_pos] + r
 			return []
 		
-		print 'route: fleet needs landing'
+		print('route: fleet needs landing')
 		# fleet starts on non-jumpable planet
 		for pl in store.iter_open_planets(self.fly_range, self.start_pos, self.dest_pos, self.exclude_planets):
 			# it can appear here
@@ -67,10 +67,10 @@ class Router:
 				continue
 				
 			self.exclude_planets.append(pl)
-			print 'route: landing found %s'%(pl,)
+			print('route: landing found %s'%(pl,))
 			
 			if pl == self.dest_pos:
-				print 'route found: direct jump'
+				print('route found: direct jump')
 				return [self.start_pos, pl]
 			
 			r = self.route_next(pl)
@@ -82,10 +82,10 @@ class Router:
 		
 	def route_next(self, cur_pos):
 		dist = util.distance(cur_pos, self.dest_pos)
-		print 'route: looking from %s (%f left)'%(cur_pos, dist)
+		print('route: looking from %s (%f left)'%(cur_pos, dist))
 		# are we close enough for direct jump?
 		if dist <= self.fly_range:
-			print 'route found: direct jump from %s'%(cur_pos,)
+			print('route found: direct jump from %s'%(cur_pos,))
 			return [self.dest_pos]
 		
 		for pl in store.iter_open_planets(self.fly_range*2, cur_pos, self.dest_pos, self.exclude_planets):
@@ -114,7 +114,7 @@ class Router:
 			#	print 'route: jump to %s, distance: %s'%(pl, jump_dist)
 			
 			if cur_pos == self.dest_pos:
-				print 'route found: %s'%(pl,)
+				print('route found: %s'%(pl,))
 				return r
 
 			res = self.route_next(pl)
@@ -161,7 +161,7 @@ class Router:
 def route_find(fleet, fly_range, dest_pos):
 	r = Router( fleet, fly_range, dest_pos )
 	res = r.find_route()
-	print res
+	print(res)
 	return res
 
 import unittest
@@ -182,7 +182,7 @@ class AlgorithmTest(unittest.TestCase):
 		store.add_open_planet({'x':105, 'y':104, 'user_id':1})
 		store.add_open_planet({'x':110, 'y':121, 'user_id':1})
 		res = router.find_route()
-		print '%s'%(res,)
+		print('%s'%(res,))
 		
 if __name__ == '__main__':
 	unittest.main()
@@ -234,10 +234,10 @@ class PathFinder:
 		while prev != self.start_pos:
 			ps = self.routes[prev]
 			route[prev] = ps
-			print 'route: %s %s'%(prev, ps[0])
+			print('route: %s %s'%(prev, ps[0]))
 			prev = ps[0]
 		
-		print 'ret route %s'%(route,)
+		print('ret route %s'%(route,))
 		return route
 
 	def best_route(self):
@@ -251,11 +251,11 @@ class PathFinder:
 			#print 'route: %s %s'%(prev, ps[0])
 			prev = ps[0]
 		
-		print 'ret route %s'%(route,)
+		print('ret route %s'%(route,))
 		return route
 		
 	def step(self):
-		print '======================'
+		print('======================')
 		self.fill_possible()
 		self.calculate_next_step()
 		
@@ -304,13 +304,13 @@ class PathFinder:
 		
 		if not min_length:
 			return None
-		print 'path %s %s %d'%(point, best_route, min_length)
+		print('path %s %s %d'%(point, best_route, min_length))
 		return best_route, min_length
 		
 	
 	def calculate_next_step(self):
 		self.new_routes = []
-		for pos, src_list in self.possible.iteritems():
+		for pos, src_list in self.possible.items():
 			#print 'look for best route to %s from %s'%(pos, src_list)
 			bp = self.best_path(pos, src_list)
 			if bp:
@@ -344,13 +344,13 @@ class PathFinder:
 				log.info("add possible route %s %s, angle %d"%(pos, point, angle ))
 				self.possible.setdefault(point, []).append(pos)
 			
-		print 'possible %d points: %s ' % (len(self.possible), self.possible,)
+		print('possible %d points: %s ' % (len(self.possible), self.possible,))
 			
 		
 
 	def find(self):
 		p, self.possible = self.possible,{}
-		for pt, src in p.iteritems():
+		for pt, src in p.items():
 			d = get_distance(self.end_pos, pt)
 			s = get_distance(self.end_pos, src)
 			if d > s:

@@ -103,7 +103,7 @@ class DcFrame(wx.Frame):
 		if 1 == int(config.options['map']['show_good']):
 			self.onShowGood(None)
 		#self.map.set_planet_filter(self.planet_filter)
-		print 'map turn is set to %s'%(self.map.turn,)
+		print('map turn is set to %s'%(self.map.turn,))
 		self.map.update()
 
 		self.started = False
@@ -205,7 +205,7 @@ class DcFrame(wx.Frame):
 			fleet = store.get_object('fleet', {'fleet_id':fleet_id})
 			if not fleet:
 				continue
-			print 'calculate route for fleet %s'%(fleet,)
+			print('calculate route for fleet %s'%(fleet,))
 			route = self.calculate_route( fleet, evt.attr1 )
 			if route:
 				routes.append( route )
@@ -451,12 +451,12 @@ class DcFrame(wx.Frame):
 		out_dir = os.path.join(util.getTempDir(), config.options['data']['raw-dir'])
 		user = store.get_object('user', {'user_id':user_id})
 		if not user:
-			print 'no user %s found'%(user_id,)
+			print('no user %s found'%(user_id,))
 			return
 		
 		acc = config.users[user['login']]
 		if not acc:
-			print 'no login/password for user %s specified'%(user['name'],)
+			print('no login/password for user %s specified'%(user['name'],))
 			return
 
 		log.info('requesting user %s info'%(acc['login'],))
@@ -576,7 +576,7 @@ class DcFrame(wx.Frame):
 			
 			# jump to nearest/biggest unexplored planet
 			exclude = set()
-			for coord, fleets in ready_scout_fleets.iteritems():
+			for coord, fleets in ready_scout_fleets.items():
 				max_fly_range = 0
 				for f,r in fleets:
 					max_fly_range = max(max_fly_range, r)
@@ -942,7 +942,7 @@ class DcFrame(wx.Frame):
 			acts = {}
 			
 			# get all fleet units, check if explore capable
-			for coord, planet_fleets in pl.iteritems():
+			for coord, planet_fleets in pl.items():
 				for fleet_id in planet_fleets:
 					for unit in store.get_fleet_units(fleet_id):
 						#print '%s %s unit %s'%(coord, fleet_id, unit)
@@ -967,7 +967,7 @@ class DcFrame(wx.Frame):
 			#actions.createNewFleet(hw_planet, 'a_new_shiny_fleet')
 			
 			at_least_one = False
-			for coord, unit_id in acts.iteritems():
+			for coord, unit_id in acts.items():
 				fleet_unit = store.get_object('fleet_unit', {'unit_id':unit_id})
 				self.actions.add_action(action.ActionStore(user_id, unit_id, fleet_unit['fleet_id'], coord, action.Action.GEO_EXPLORE))
 				#self.pending_actions.explore_planet( coord, unit_id )
@@ -1034,12 +1034,12 @@ class DcFrame(wx.Frame):
 			#status_text = 'Not authorized' if status == import_raw.XmlHandler.StatusAuthError else 'Turn in progress'
 			self.log('Error processing %s'%(key))
 		else:
-			for login, acc in config.users.iteritems():
-				ll = unicode(login)
-				kk = unicode(key)
+			for login, acc in config.users.items():
+				ll = login
+				kk = key
 				if ll == kk and not 'id' in acc:
 					acc['id'] = int(user['user_id'])
-					print 'got user id %s for user %s'%(acc['id'], login)
+					print('got user id %s for user %s'%(acc['id'], login))
 					config.users[login] = acc
 					config.saveUsers()
 					

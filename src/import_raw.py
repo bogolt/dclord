@@ -93,7 +93,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 	def startElement(self, name, attrs):
 		if XmlHandler.NodeDC == name:
 			self.user.update( getAttrs(attrs, {'user':'name', 'id':'id', 'turn-n':'turn'}) )
-			print 'loaded user %s'%(self.user,)
+			print('loaded user %s'%(self.user,))
 			
 			if 'id' in self.user and 'turn' in self.user:
 				self.storeArchive()
@@ -101,7 +101,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			if 'turn' in self.user:
 				self.turn = int(self.user['turn'])
 				db.db.set_turn(self.turn)
-				print 'prepare turn %s'%(self.turn,)
+				print('prepare turn %s'%(self.turn,))
 				
 		elif XmlHandler.Errors == name:
 			log.error('Found errors node')
@@ -125,7 +125,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.UserInfo == name:
 			d = getAttrs(attrs, {'homeworldx':'hw_x', 'homeworldy':'hw_y', 'race-id':'race_id', 'login':"login"})
 			self.user.update( d )
-			print 'update user %s'%(self.user,)
+			print('update user %s'%(self.user,))
 			
 			db.db.set_object('hw', {'hw_x':d['hw_x'], 'hw_y':d['hw_y'], 'player_id':self.user['id']})
 			user_obj = db.db.get_object(db.Db.USER, {'=':{'id':self.user['id']}})
@@ -256,7 +256,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 				data['arrival_turn'] = int(self.user['turn'])+tta
 				data['user_id'] = self.user['id']
 				if 'owner_id' in data:
-					print 'got owner of flying alient fleet: %s'%(data,)
+					print('got owner of flying alient fleet: %s'%(data,))
 					del data['owner_id']
 				self.obj_id = None
 				#data['turn']=self.turn
@@ -269,8 +269,8 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 		elif XmlHandler.Garrison == name:
 			self.pos = getAttrs(attrs, {'x':'x', 'y':'y'})
 			self.obj_id = None
-			db.eraseObject(db.Db.GARRISON_QUEUE_UNIT, ['%s=%s'%(k,v) for k,v in self.pos.iteritems()], self.turn)
-			#db.eraseObject(db.Db.GARRISON_UNIT, ['%s=%s'%(k,v) for k,v in self.pos.iteritems()], self.turn)
+			db.eraseObject(db.Db.GARRISON_QUEUE_UNIT, ['%s=%s'%(k,v) for k,v in self.pos.items()], self.turn)
+			#db.eraseObject(db.Db.GARRISON_UNIT, ['%s=%s'%(k,v) for k,v in self.pos.items()], self.turn)
 			
 		elif XmlHandler.AlienUnit == name:
 			if self.obj_id:
@@ -305,15 +305,15 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.iframe = True
 		elif XmlHandler.PerformAction == name and self.iframe:
 			data = getAttrs(attrs, {'id':'id', 'result':'result', 'return-id':'return-id'})
-			print 'got attrs %s, data %s'%(attrs, data)
+			print('got attrs %s, data %s'%(attrs, data))
 			act_id = int(data['id'])
-			print 'got action id %s'%(act_id,)
+			print('got action id %s'%(act_id,))
 			ret_id = 0
 			if 'return-id' in data:
 				ret_id = data['return-id']
 
 			if 'result' in data and unicode(data['result'])==unicode('ok'):
-				print 'final result ret-id %s'%(ret_id,)
+				print('final result ret-id %s'%(ret_id,))
 				db.setData('requested_action', {'id':act_id, 'user_id':self.user['id'], 'return_id':ret_id, 'is_ok':1})
 				db.perform_pending_action(act_id, ret_id)
 			#self.actions.append( (act_id, ret_id) )
@@ -356,7 +356,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 
 			
 def load_xml(path, path_archive):
-	print 'load xml %s %s'%(path, path_archive)
+	print('load xml %s %s'%(path, path_archive))
 	p = xml.sax.make_parser()
 	handler = XmlHandler(path_archive)
 	p.setContentHandler(handler)
@@ -369,8 +369,13 @@ def processRawData(path):
 	util.assureDirExist(xml_dir)
 	base = os.path.basename(path)
 	xml_path = os.path.join(xml_dir, base[:-3])
-	util.unpack(path, xml_path)
-	return load_xml(xml_path, path)
+	load_xml(path, path)
+	# try:
+	# 	util.unpack(path, xml_path)
+	# except Exception as e:
+	# 	print("unpack failed: %s"%(e,))
+	# 	load_xml(path, path)
+	# return load_xml(xml_path, path)
 
 def processAllUnpacked():
 	xml_dir = os.path.join(util.getTempDir(), config.options['data']['raw-xml-dir'])
@@ -387,5 +392,5 @@ def processAllUnpacked():
 			at_least_one = True
 		if at_least_one:
 			serialization.save()
-	except OSError, e:
+	except OSError as e:
 		log.error('unable to load raw data: %s'%(e,))

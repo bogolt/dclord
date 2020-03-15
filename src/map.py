@@ -245,7 +245,7 @@ class Map(util.BufferedWindow):
 			else:
 				return []
 		except TypeError as e:
-			print 'Error %s with planet %s'%(e, planet)
+			print('Error %s with planet %s'%(e, planet))
 			return []
 
 		return [col]
@@ -505,7 +505,7 @@ class Map(util.BufferedWindow):
 			color = config.options['map']['route_found_color']
 			routes = self.pf.best_route()
 		
-		for posA, route_info in routes.iteritems():
+		for posA, route_info in routes.items():
 			posB = route_info[0]
 			arx,ary = self.relPos(posA)
 			brx,bry = self.relPos(posB)
@@ -526,7 +526,7 @@ class Map(util.BufferedWindow):
 	def centerAt(self, logicPos):
 		#print 'before centering offset is %s %s'%(self.offset_pos, logicPos)
 		if logicPos == (0,0):
-			print traceback.format_exc()
+			print(traceback.format_exc())
 		self.offset_pos = util.sub(logicPos, util.div(self.screen_size, 2))
 		#print 'after centering offset is %s'%(self.offset_pos,)
 		self.update()
@@ -544,7 +544,7 @@ class Map(util.BufferedWindow):
 		dc.SetTextForeground(config.options['map']['coordinate_color'])
 		startx = int(self.offset_pos[self.X])
 		
-		dc.SetClippingRect(wx.Rect(max_w, 0, size[0], size[1]))
+		dc.SetClippingRegion(wx.Rect(max_w, 0, size[0], size[1]))
 		for x in range(startx, startx + self.screen_size[self.X], every_nth):
 			rx,_ = self.relPos((x, 30))
 			dc.DrawText(str(x), rx-dc.GetTextExtent(str(x))[0]/2, 0)
@@ -552,7 +552,7 @@ class Map(util.BufferedWindow):
 
 		starty = int(self.offset_pos[self.Y])+1
 		
-		dc.SetClippingRect(wx.Rect(0, max_h, size[0], size[1]))
+		dc.SetClippingRegion(wx.Rect(0, max_h, size[0], size[1]))
 		every_nth = bestFit(max_h, self.cell_size)
 		for y in range(starty, starty + self.screen_size[self.Y], every_nth):
 			_,ry = self.relPos((20, y))
@@ -563,7 +563,7 @@ class Map(util.BufferedWindow):
 		hw_pos = store.get_object('hw', {'user_id': user_id})
 		self.selected_user_governers_count = 0
 		if not hw_pos:
-			print 'cannot get hw of %s'%user_id
+			print('cannot get hw of %s'%user_id)
 			return
 		self.selected_user_id = user_id
 		self.centerAt( (int(hw_pos['x']), int(hw_pos['y'])) )

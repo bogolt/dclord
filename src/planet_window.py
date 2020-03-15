@@ -47,7 +47,7 @@ class FleetPanel(scrolled.ScrolledPanel):
 			self.Layout()
 			
 	def set_fleets(self, evt):
-		self.sizer.DeleteWindows()
+		self.sizer.Clear(delete_windows=True)
 		self.fleets = {}
 		
 		self.coord = evt.attr1
@@ -99,7 +99,7 @@ class FleetPanel(scrolled.ScrolledPanel):
 				bitmap.SetBitmap(img)
 				hbox.Add(bitmap, 1, wx.EXPAND)
 			else:
-				print 'image not found for unit %s, carp %s, color %s'%(unit['unit_id'],  int(unit['carapace']), int(unit['color']) )
+				print('image not found for unit %s, carp %s, color %s'%(unit['unit_id'],  int(unit['carapace']), int(unit['color']) ))
 
 			name = get_unit_name(int(unit['carapace']))
 			hbox.Add(wx.StaticText(pane, label=name), 1, wx.EXPAND)
@@ -155,7 +155,7 @@ class FleetPanel(scrolled.ScrolledPanel):
 			
 			proto = store.get_object('proto', {'proto_id':unit['proto_id']})
 			if not proto:
-				print 'Prototype not found for %s'%(unit,)
+				print('Prototype not found for %s'%(unit,))
 				continue
 			obj_carp = int(unit['proto_id']), int(proto['carapace']), int(proto['color'])
 			
@@ -243,7 +243,7 @@ class FleetPanel(scrolled.ScrolledPanel):
 	def onFleetSelect(self, evt):
 		obj = evt.GetEventObject()
 		fleet = self.fleets[obj]
-		print fleet
+		print(fleet)
 
 
 class PlanetGeoWindow(wx.Window):
@@ -270,7 +270,7 @@ class BuildingsWindows(wx.Frame):
 	def set_coord(self, coord):
 		
 		self.coord = coord
-		self.sizer.DeleteWindows()
+		self.sizer.Clear(delete_windows=True)
 		
 		dsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sizer.Add(dsizer)
@@ -287,7 +287,7 @@ class BuildingsWindows(wx.Frame):
 			bc = building['proto_id']
 			p = store.get_object('proto', {'proto_id':bc, 'user_id':user_id})
 			if not p:
-				print 'proto not found for %s'%(building,)
+				print('proto not found for %s'%(building,))
 				continue
 				
 			if int(p['is_building']) != 1:
@@ -305,7 +305,7 @@ class BuildingsWindows(wx.Frame):
 				wnd.SetBitmap(img)
 			dsizer.Add(wnd)
 
-		for bc, builds in dups.iteritems():
+		for bc, builds in dups.items():
 			img = image.getBcImage(bc, 20)
 			
 			wsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -453,7 +453,7 @@ class PlanetPanel(wx.Panel):
 	def update(self):
 		coord = self.coord
 		
-		self.sizer.DeleteWindows()
+		self.sizer.Clear(delete_windows=True)
 		
 		self.sizer.Add( wx.StaticText(self, wx.ID_ANY, '%s:%s'%coord) )
 		
@@ -533,7 +533,7 @@ class GarrisonPanel(wx.Panel):
 		main_frame.actions.add_action(create_fleet_action)
 
 		# move units there
-		for proto_id, units in self.selected_units.iteritems():
+		for proto_id, units in self.selected_units.items():
 			for unit in units:
 				main_frame.actions.add_action(action.ActionUnitMove(user_id, create_fleet_action.fleet_id, unit['unit_id']))
 		
@@ -549,7 +549,7 @@ class GarrisonPanel(wx.Panel):
 		self.button_fleet.Disable()
 		
 		self.selected_units = {}
-		self.units_sizer.DeleteWindows()
+		self.units_sizer.Clear(delete_windows=True)
 		
 		user_planet = store.get_object('user_planet', {'x':coord[0], 'y':coord[1]})
 		if not user_planet:
@@ -577,7 +577,7 @@ class GarrisonPanel(wx.Panel):
 			protos[bc] = p
 			
 		
-		for bc, item_list in items.iteritems():
+		for bc, item_list in items.items():
 			p = protos[bc]
 			wnd = wx.Window(self, style=wx.SUNKEN_BORDER)
 			wnd.proto_id = bc
@@ -657,7 +657,7 @@ class InfoPanel(wx.Panel):
 		if turn:
 			self.turn = turn
 		log.info('updating info panel, pos %s turn %d'%(self.pos, self.turn))
-		self.sizer.DeleteWindows()
+		self.sizer.Clear(delete_windows=True)
 		#self.sizer.Add( PlanetWindow(self, self.pos, self.turn, True) )
 		#self.sizer.Add( FleetWindow(self, self.pos, self.turn), 1, flag=wx.EXPAND | wx.ALL)
 		self.sizer.Layout()

@@ -486,7 +486,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 		del self.pending_actions[user_id]
 		
 		update_actions_required = False
-		for act_id, act in acts.iteritems():
+		for act_id, act in acts.items():
 			if not act_id in actions_reply:
 				log.error('no reply for action %d'%(act_id,))
 				continue
@@ -517,7 +517,7 @@ class ActionPanel(scrolled.ScrolledPanel):
 
 		l = loader.AsyncLoader()
 		at_leat_one = False
-		for user_id, acts in self.stored_actions.iteritems():
+		for user_id, acts in self.stored_actions.items():
 			if len(acts) == 0:
 				continue
 			user = store.get_user(user_id)
@@ -583,11 +583,11 @@ class ActionPanel(scrolled.ScrolledPanel):
 		self.stored_actions = {}
 		
 	def remove_action_items(self, revert_actions = False):
-		for acts in self.stored_actions.itervalues():
+		for acts in self.stored_actions.values():
 			for act in acts:
 				if revert_actions:
 					act.revert()
-		self.actions_sizer.DeleteWindows()
+		self.actions_sizer.Clear(delete_windows=True)
 		self.button_perform.Enable(False)
 		self.button_cancel.Enable(False)
 				

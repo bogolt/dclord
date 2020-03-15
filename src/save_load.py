@@ -41,21 +41,21 @@ def load_csv_table(path, table):
 		f = os.path.join(path, '%s.csv'%(table,))
 		#last_sync[f] = os.stat(f).st_mtime
 		for p in csv.DictReader(open(f, 'rt')):
-			store.add_data(table, {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()})
+			store.add_data(table, {k:(v if (k in unicode_strings and v) else v) for k,v in p.items()})
 	except OSError as e:
 		pass
 		#print 'Load csv table %s %s failed: %s'%(path, table, e)
 	except IOError as e:
 		pass
 	except sqlite3.IntegrityError as e:
-		print 'Load csv table %s failed: %s'%(table, e)
+		print('Load csv table %s failed: %s'%(table, e))
 		
 def iter_csv_table(path, table):
 	try:
 		f = os.path.join(path, '%s.csv'%(table,))
 		#last_sync[f] = os.stat(f).st_mtime
 		for p in csv.DictReader(open(f, 'rt')):
-			yield {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()}
+			yield {k:(v if (k in unicode_strings and v) else v) for k,v in p.items()}
 	except OSError as e:
 		pass
 		#print 'Load csv table %s %s failed: %s'%(path, table, e)	
@@ -67,7 +67,7 @@ def iter_csv(path):
 	objs = []
 	#last_sync[path] = os.stat(path).st_mtime
 	for p in csv.DictReader(open(path, 'rt')):
-		yield {k:(v.decode('utf8') if (k in unicode_strings and v) else v) for k,v in p.items()}
+		yield {k:(v if (k in unicode_strings and v) else v) for k,v in p.items()}
 			
 def load_csv(path):
 	objs = []
@@ -150,7 +150,7 @@ def save_data(path):
 	save_common_data(os.path.join(path, 'common'))
 	
 	user_base_path = os.path.join(path, 'users')
-	for user in config.users.itervalues():
+	for user in config.users.values():
 		user_id = user['id']
 		save_user_data(user_id, os.path.join(user_base_path, store.get_user_name(user_id)))
 	
@@ -162,7 +162,7 @@ def load_user_data(path):
 		if store_user and 'turn' in store_user:
 			store_user_turn = store_user['turn']
 			if store_user_turn and int(store_user_turn) >= turn:
-				print 'User %s already exist in db, actual db turn info %s'%(store_user['name'], store_user_turn)
+				print('User %s already exist in db, actual db turn info %s'%(store_user['name'], store_user_turn))
 				continue
 		store.add_user(user)
 	
@@ -218,7 +218,7 @@ def load_geo_size(path, left_top, size):
 			store.add_planet_size(p)
 		
 		geo_size_loaded.add(path)
-	except IOError, e:
+	except IOError as e:
 		log.error('failed to load geo size csv %s: %s'%(path, e))		
 
 def load_all_visible_geo(path ):
@@ -228,10 +228,10 @@ def load_all_visible_geo(path ):
 			for p in csv.DictReader(open(os.path.join(path,f), 'rt')):
 				for s in unicode_strings:
 					if s in p and p[s]:
-						p[s] = p[s].decode('utf-8')
+						p[s] = p[s]
 				db.setData('planet_size', p, None)
 				yield p
-		except IOError, e:
+		except IOError as e:
 			log.error('failed to load csv %s: %s'%(path, e))
 
 def load_geo_size_rect(left_top, size):

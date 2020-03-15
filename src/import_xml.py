@@ -188,7 +188,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			try:
 				self.store.add_data('proto_action', data)
 			except sqlite3.IntegrityError as e:
-				print 'Failed to add proto_action %s: %s, parent is %s, attrs: %s'%(data, e, self.parent_id, attrs)
+				print('Failed to add proto_action %s: %s, parent is %s, attrs: %s'%(data, e, self.parent_id, attrs))
 		elif 'rel' == name:
 			data = getAttrs(attrs, {'player':'other_user_id', 'name':'name', 'type':'relation'})
 			self.store.add_user_info(data['other_user_id'], data['name'])
@@ -213,7 +213,7 @@ class XmlHandler(xml.sax.handler.ContentHandler):
 			self.parent_coord = None
 			
 def load_xml(path):
-	print 'load xml %s'%(path)
+	print('load xml %s'%(path))
 	p = xml.sax.make_parser()
 	handler = XmlHandler()
 	p.setContentHandler(handler)
@@ -226,8 +226,8 @@ def processRawData(path):
 	util.assureDirExist(xml_dir)
 	base = os.path.basename(path)
 	xml_path = os.path.join(xml_dir, base[:-3])
-	util.unpack(path, xml_path)
-	return load_xml(xml_path)
+	# util.unpack(path, xml_path)
+	return load_xml(path)
 
 def processAllUnpacked():
 	xml_dir = os.path.join(util.getTempDir(), config.options['data']['raw-xml-dir'])
@@ -244,7 +244,7 @@ def processAllUnpacked():
 			at_least_one = True
 		if at_least_one:
 			save_load.save()
-	except OSError, e:
+	except OSError as e:
 		log.error('unable to load raw data: %s'%(e,))
 
 

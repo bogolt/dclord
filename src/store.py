@@ -45,7 +45,7 @@ DIP_RELATION_LORD = 4
 
 def extract(d, key_list):
 	r = {}
-	for key, value in d.iteritems():
+	for key, value in d.items():
 		if key in key_list:
 			r[key] = value
 	return r
@@ -444,11 +444,15 @@ class Store:
 		cur = self.conn.cursor()
 		
 		data = extract(raw_data, tables[table])
+		toDelete = []
 		for k,v in data.items():
 			if isinstance(v, str) and len(v) == 0:
-				del data[k]
+				toDelete.append(k)
+				# del data[k]
+		for k in toDelete:
+			del data[k]
 		
-		s = 'insert or replace into %s(%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key_name,) for key_name in data.iterkeys()]))
+		s = 'insert or replace into %s(%s) values(%s)'%(table, ','.join(data.keys()), ','.join([':%s'%(key_name,) for key_name in data.keys()]))
 		#print s, data
 		cur.execute(s, data)
 		self.conn.commit()
@@ -473,7 +477,7 @@ class Store:
 		'check data turn for max value'
 		#if not 'turn' in data or not data['turn']:
 		#	return
-		u = self.get_object(table, {k:v for k,v in data.iteritems() if k in filter_keys})
+		u = self.get_object(table, {k:v for k,v in data.items() if k in filter_keys})
 		if u and u['turn'] and int(u['turn']) > int(data['turn']):
 			return
 		
@@ -702,20 +706,20 @@ class Store:
 		
 	def remove_object(self, table, conds):
 		cur = self.conn.cursor()
-		s = 'delete from %s WHERE %s'%(table, ' and '.join(['%s=?'%(key_name,) for key_name in conds.iterkeys()]))
+		s = 'delete from %s WHERE %s'%(table, ' and '.join(['%s=?'%(key_name,) for key_name in conds.keys()]))
 		cur.execute(s, tuple(conds.values()))
 		self.conn.commit()
 		
 	def update_object(self, table, conds, new_values):
 		cur = self.conn.cursor()
-		s = 'update %s set %s WHERE %s'%(table,  ','.join(['%s=?'%(key,) for key in new_values.iterkeys()]), ' and '.join(['%s=?'%(key_name,) for key_name in conds.iterkeys()]))
+		s = 'update %s set %s WHERE %s'%(table,  ','.join(['%s=?'%(key,) for key in new_values.keys()]), ' and '.join(['%s=?'%(key_name,) for key_name in conds.keys()]))
 		cur.execute(s, tuple(new_values.values() + conds.values()))
 		self.conn.commit()
 
 	def get_object(self, table, conds):
 		cur = self.conn.cursor()
 		keys = tables[table]
-		s = 'select %s from %s WHERE %s'%(','.join(keys), table, ' and '.join(['%s=?'%(key_name,) for key_name in conds.iterkeys()]))
+		s = 'select %s from %s WHERE %s'%(','.join(keys), table, ' and '.join(['%s=?'%(key_name,) for key_name in conds.keys()]))
 		cur.execute(s, tuple(conds.values()))
 		r = cur.fetchone()
 		if not r:
@@ -801,7 +805,7 @@ class Store:
 		conds_str = []
 
 		if conds and len(conds) > 0:
-			conds_str += ['%s=%s'%(key_name,value) for key_name,value in conds.iteritems()]
+			conds_str += ['%s=%s'%(key_name,value) for key_name,value in conds.items()]
 			
 		if rect:
 			conds_str += ['x between %s AND %s AND y between %s AND %s'%rect]

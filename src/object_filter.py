@@ -57,7 +57,7 @@ class PlayerFilter(wx.Window):
 		self.GetParent().updatePlanets()
 		
 	def player_ids(self):
-		for uid, cb in self.users.iteritems():
+		for uid, cb in self.users.items():
 			if cb.IsChecked():
 				yield uid
 
@@ -81,7 +81,7 @@ class PlanetList(scrolled.ScrolledPanel):
 		return False
 		
 	def addPlanets(self, players, buildings = None):
-		self.sizer.DeleteWindows()
+		self.sizer.Clear(delete_windows=True)
 		
 		for pl_id in players.player_ids():
 			for planet in db.planets(db.getTurn(), ['owner_id=%d'%(pl_id,)] ):
@@ -167,7 +167,7 @@ class BuildingFilter(wx.Window):
 	def get_selected_buildings(self):
 		buildings_id_ids_list = []
 		
-		for bid, bcb in self.buildings.iteritems():
+		for bid, bcb in self.buildings.items():
 			if bcb.is_on():
 				buildings_id_ids_list.append( bid )
 		return buildings_id_ids_list
@@ -243,12 +243,12 @@ class FilterPanel(scrolled.ScrolledPanel):
 			self.Layout()
 		
 	def update(self):
-		self.my_users.DeleteWindows()
-		self.access_users.DeleteWindows()
-		self.other_users.DeleteWindows()
+		self.my_users.Clear(delete_windows=True)
+		self.access_users.Clear(delete_windows=True)
+		self.other_users.Clear(delete_windows=True)
 		self.users = {}
 		
-		print config.users
+		print(config.users)
 		for user in store.iter_objects_list('user'):
 			user_id = int(user['user_id'])
 			#print user
@@ -266,13 +266,13 @@ class FilterPanel(scrolled.ScrolledPanel):
 				self.access_users.Add(sz)
 		
 		if self.my_users.GetChildren():
-			self.my_users.Insert(before=0, item=wx.StaticText(self, label='my'))
+			self.my_users.Insert(index=0, window=wx.StaticText(self, label='my'))
 
 		if self.access_users.GetChildren():
-			self.access_users.Insert(before=0, item=wx.StaticText(self, label='access'))
+			self.access_users.Insert(index=0, window=wx.StaticText(self, label='access'))
 
 		if self.other_users.GetChildren():
-			self.other_users.Insert(before=0, item=wx.StaticText(self, label='other'))
+			self.other_users.Insert(index=0, window=wx.StaticText(self, label='other'))
 		
 		self.sizer.Layout()
 	

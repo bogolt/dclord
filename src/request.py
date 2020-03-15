@@ -51,7 +51,7 @@ class RequestMaker:
 		
 		# cannot move this far
 		if dist > rng:
-			print 'Error - attempt to move fleet %s to distance %s which is longer then fleet max range %s'%(fleetId, dist, rng)
+			print('Error - attempt to move fleet %s to distance %s which is longer then fleet max range %s'%(fleetId, dist, rng))
 		
 		turns = int(math.ceil(dist / speed))
 		u = store.get_user(fleet['user_id'])
@@ -104,16 +104,16 @@ class RequestMaker:
 			for unit in db.garrison_units(db.getTurn(), ['id=%s'%(unitId,)], ('x', 'y', 'class', 'hp')):
 				u = unit
 			if not u:
-				print 'local unit %s not found'%(unitId,)
+				print('local unit %s not found'%(unitId,))
 				return act
-			print 'get garrison unit %s'%(u,)
+			print('get garrison unit %s'%(u,))
 			db.add_pending_action(self.act_id, db.Db.GARRISON_UNIT, 'erase', {'id':unitId})
 			del u['x']
 			del u['y']
 			u['fleet_id'] = fleetId
 			db.add_pending_action(self.act_id, db.Db.UNIT, 'insert', u)
 		else:
-			print 'get fleet unit %s'%(u,)
+			print('get fleet unit %s'%(u,))
 			db.add_pending_action(self.act_id, db.Db.UNIT, 'update', ({'id':unitId}, {'fleet_id':fleetId}))
 			
 		return act
