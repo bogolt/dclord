@@ -369,13 +369,13 @@ def processRawData(path):
 	util.assureDirExist(xml_dir)
 	base = os.path.basename(path)
 	xml_path = os.path.join(xml_dir, base[:-3])
-	load_xml(path, path)
-	# try:
-	# 	util.unpack(path, xml_path)
-	# except Exception as e:
-	# 	print("unpack failed: %s"%(e,))
-	# 	load_xml(path, path)
-	# return load_xml(xml_path, path)
+	# load_xml(path, path)
+	try:
+		util.unpack(path, xml_path)
+	except Exception as e:
+		print("unpack failed: %s"%(e,))
+		load_xml(path, path)
+	return load_xml(xml_path, path)
 
 def processAllUnpacked():
 	xml_dir = os.path.join(util.getTempDir(), config.options['data']['raw-xml-dir'])
